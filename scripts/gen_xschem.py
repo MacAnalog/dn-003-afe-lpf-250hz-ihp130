@@ -1,4 +1,13 @@
-"""Generate the schematic of record from a certified `Design`, not by hand.
+"""Generate a schematic from a certified `Design` -- the FALLBACK, not the default.
+
+**Prefer porting.** For a topology carried forward from the originating campaign,
+that checkout already holds a human-placed, properly routed drawing, and it
+transfers almost verbatim: it uses the generic `devices/{p,n}mos4.sym`, whose pin
+geometry is identical to `sg13g2_pr`'s, so every wire endpoint survives a symbol
+swap. See doc/journal/port-the-drawing-dont-redraw-it.md. What this script emits
+is correct and gate-passing but NOT reviewable -- a grid of devices joined by
+`lab_pin` labels with no routed wires. Use it for a cell that has no prior
+drawing, and as the connectivity reference to check a port against.
 
 Rule 2 says decks are BUILT, never text-edited.  A schematic is the same kind of
 artefact and gets the same treatment: `lpf_core_*.sch`, its symbol and the
