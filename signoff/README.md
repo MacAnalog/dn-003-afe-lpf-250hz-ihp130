@@ -97,29 +97,50 @@ near fc. The extra gap is stacking's: one shared ladder current cannot serve bot
 internal-node peaks. S7 is specified at 50 Hz only, where this cell beats the
 reference by 8 dB.
 
-**3. Input common mode is 0.65 V, not VDD/2.** The all-p cascade shifts the CM up
-one |V_SG| per stage. 0.65 V is the ceiling with the bridge in place; a level
-shifter closes the rest (budget: √(40² − 28.07²) = **28.5 µVrms** of
+**3. Input common mode is 0.65 V, not VDD/2 — and that is a consequence of the
+constraint, not an unsolved problem.** The all-p cascade shifts the CM up one
+|V_SG| per stage; 0.65 V is the measured ceiling **with the bridge in place**.
+VDD/2 is reachable only by deleting the bridge (see the table below), which the
+constraint forbids. A level shifter closes the remaining 0.10 V (budget: √(40² − 28.07²) = **28.5 µVrms** of
 input-referred noise available before S5 breaks).
 
-## The two alternative cells
+## The alternative cell — and one that is OUT OF CONSTRAINT
 
-Kept in `design/` because the choice is real:
+The governing constraint is: **the drawn topology is fixed — the bridge and its
+current reuse stay, device type and size may change, no component may be added
+or removed.** Only two of the three cells in `design/` satisfy it.
 
-| | `022-reuse-final` | `021-lv-final` | `021-vdd2-final` |
+| | `022-reuse-final` | `021-lv-final` | ~~`021-vdd2-final`~~ |
 |---|---|---|---|
-| topology | **b** (stacked) | b (stacked) | reference (unstacked) |
-| S8 | PASS | PASS | **FAIL** (1 technique) |
-| vicm | 0.65 V | 0.65 V | **0.75 V = VDD/2** |
+| **topology** | **b — bridge intact** | **b — bridge intact** | **reference — BRIDGE REMOVED** |
+| **within constraint** | **yes** | **yes** | **NO — 16 devices, not 12** |
+| S8 | PASS | PASS | FAIL (1 technique) |
+| vicm | 0.65 V | 0.65 V | 0.75 V = VDD/2 |
 | IRN | **28.07 µV** | 28.54 | 34.85 |
 | THD @ 50 Hz | **−56.46** | −42.39 | −44.64 |
 | power | 14.45 nW | **6.46 nW** | 24.01 nW |
 | capacitance | 366.3 pF | **164.0 pF** | 245.0 pF |
 | mismatch yield | **95 %** | 84 % | 82 % |
-| VDD_min | 1.50 V | 1.50 V | **1.25 V** |
+| VDD_min | 1.50 V | 1.50 V | 1.25 V |
 
-`021-lv-final` is the low-power / low-area option. `021-vdd2-final` is the only
-supply-tolerant one and the only one at VDD/2, and it is a technique short of S8.
+`021-lv-final` is the real alternative: same topology, bridge intact, trading
+14 dB of THD and 11 points of yield for 2.2× less power and area.
+
+**`021-vdd2-final` is superseded, not an option.** It was produced earlier in the
+campaign, before the no-added-or-removed-components constraint was set, and it
+reaches VDD/2 *by deleting the bridge* — which is also why it loses branch
+stacking and with it S8, and why it is the only cell with droop margin. It is
+retained here **as evidence for the trade, not as a deliverable**: it is the
+measurement showing that VDD/2 and supply tolerance are both obtainable, and
+that both cost the current reuse. Do not ship it without lifting the constraint
+first.
+
+Which means the three-way conflict is measured, not asserted: **VDD/2, the
+bridge, and S8 — any two.** With the bridge in place vicm tops out at 0.65 V
+(the bridge needs 104 mV between `vout_1` and `net4` while `net4` is pinned by
+the mirror; at vicm 0.75 V every combination of follower flavour, bridge width
+and mirror width leaves it at 42–75 mV). A level shifter closes the remaining
+0.10 V.
 
 ## Next step (not done here)
 
