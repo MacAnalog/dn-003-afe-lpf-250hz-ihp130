@@ -1,6 +1,6 @@
 # 021 — the publication cell: a flat, monotone 4-pole that holds every line
 
-**Status: CLOSED 2026-08-12 — TWO deliverable cells, and the choice between them is real.** `021-lv-final` (branch-stacked + lv follower, **vicm 0.65 V**): all of S1–S8 including S8, **28.54 µV**, 6.46 nW, 164.0 pF, **84 % mismatch yield** — but **no supply-droop margin**. `021-vdd2-final` (unstacked, lv followers, **vicm = VDD/2 = 0.75 V**): S1–S7, 34.85 µV, 24.01 nW, 245.0 pF, 82 % yield, **VDD_min 1.25 V**, 6/22 corners — but **one technique short of S8**. See §4.7. `021-final` (all-hv, vicm 0.20 V) is superseded and kept as the control.
+**Status: CLOSED 2026-08-12 — `022-reuse-final` is the deliverable.** The ORIGINAL branch-stacked topology, bridge and current reuse intact, made to work in SG13G2 by device **type and size only** (42 connections byte-identical): all of S1–S8, **IRN 28.07 µV**, **THD −56.46 dB**, ph 341.42°, 14.45 nW, 366.3 pF, **95 % mismatch yield** — the best cell in the repo on every spec axis. **Proven unfixable within the constraint:** supply rejection. A threshold-referenced reuse ladder cannot hold ±2 % fc over a drooping rail at any flavour or size (§6). `021-lv-final` (6.46 nW, 164 pF) is the low-power/low-area alternative; `021-vdd2-final` is the only VDD/2 cell but is a technique short of S8.
 
 | | |
 |---|---|
@@ -444,6 +444,109 @@ self-cascode composite on the bias devices (its noise claim is refuted and
 carried forward as such, but its **HD3** claim is untested here). That is a
 change to the bias devices, not to the signal topology, and it is the next
 round's first job.
+
+
+## 6. The original topology, made to work — `022-reuse-final`
+
+Constraint for this round: **topology `b` exactly as drawn — the bridge and its
+current reuse stay — and only device *type* and *size* may change. No component
+added or removed.** All 42 device connections are byte-identical.
+
+### What the PDK actually offers
+
+`sg13_lv_nmos`, `sg13_lv_pmos`, `sg13_hv_nmos`, `sg13_hv_pmos` — **four MOS
+flavours, no lvt/hvt/svt V_t-variant family**, and lv_nmos is unusable here
+(1.6–5.1 nA at Vgs = 0, more than the branch current). So the palette is two
+p-types and one usable n-type.
+
+### The structural fact that makes flavour the only lever
+
+The reuse ladder pins `|V_SG|(gmf_b) + |V_SG|(bridge) = VDD − vbn ≈ 1.14 V`, i.e.
+~0.57 V each. Widening both raises the current — measured 2.15 → 55.9 nA over
+100× — but **gm/ID stays at 24.5 throughout**: in weak inversion `I ∝ (W/L)` and
+the constraint fixes the *density*, so sizing cannot move the inversion level at
+all. Only V_th can:
+
+| ladder flavour | V_ov at 0.57 V | regime | outcome |
+|---|---|---|---|
+| hv (V_th ≈ 0.68) | −0.11 V | weak | saturates, but 0.15 V of droop = **6.4×** of current |
+| lv (V_th ≈ 0.18) | +0.39 V | strong | needs \|V_ds\| ≈ V_ov; the 5-device ladder has ~0.13 V ⇒ **triode** |
+| **mixed** | — | moderate | the two devices *share* 1.14 V, so one lv partner pushes the other out of weak inversion **without needing headroom** |
+
+`gmf_b` → lv with the bridge left hv is the combination that works.
+
+### Result
+
+`022-reuse-final` — gmf_b on lv, both ladder devices at W ×0.16 / L ×2.5,
+`in_a` on lv (the common-mode lever of §4.7), caps re-fitted:
+
+| line | requirement | measured | |
+|---|---|---|---|
+| S1 phase | ≥ 330° (ideal ceiling 350.5°) | **341.42°** | PASS |
+| S1 stopband | ≤ −48 dB @ 1 kHz | **−49.55 dB** | PASS |
+| S2 cutoff | 245–255 Hz | **249.99 Hz** | PASS |
+| S3 dc gain | \|dc\| ≤ 0.2 dB | **−0.0209 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0691 dB** | PASS |
+| S4 peaking | ≤ 0.2 dB | **+0.0068 dB** | PASS |
+| S5 IRN | < 40 µVrms | **28.07 µV** | PASS |
+| S6 power | < 50 nW | **14.45 nW** | PASS |
+| S7 THD | ≤ −40 dB | **−56.46 dB** | PASS |
+| S8 | ≥ 2 papers | branch stacking + floating cap | PASS |
+
+**It is the best cell in the repo on every spec axis**, and it keeps the current
+reuse — so unlike `021-vdd2-final` it also holds S8:
+
+| | 021-lv-final | **022-reuse-final** | reference |
+|---|---|---|---|
+| IRN | 28.54 µV | **28.07 µV** | 49.98 |
+| THD @ 50 Hz | −42.39 | **−56.46** | −48.37 |
+| ph_max | 332.83° | **341.42°** | 346.74 |
+| `mono_db` | 0.0000 | 0.0068 | 0.0227 |
+| **mismatch yield** | 84 % | **95 %** | — |
+| σ(fc) | 2.73 Hz | **2.42 Hz** | 13.99 |
+| power | **6.46 nW** | 14.45 nW | 12.07 |
+| capacitance | **164.0 pF** | 366.3 pF | 98.0 |
+
+It costs 2.2× the power and 2.2× the capacitance of `021-lv-final`, both well
+inside their budgets (S6 has 35.6 nW spare; capacitance is reported, not specced).
+
+### What device type and size could NOT fix: supply rejection
+
+| VDD | 022-reuse-final fc | 021-lv-final fc |
+|---|---|---|
+| 1.50 V | 249.99 Hz | 249.85 Hz |
+| 1.45 V | 206.52 Hz | 163.68 Hz |
+| 1.40 V | 162.43 Hz | 38.22 Hz |
+| 1.35 V | 113.73 Hz | 13.88 Hz |
+
+The flavour change roughly halves the collapse (supply-current ratio 6.4 → 2.7),
+and it is still nowhere near enough. **S2 is what breaks**, and the arithmetic
+says it always will: fc within ±2 % needs the branch current within ±4 %, while a
+threshold-referenced ladder gives `dI/I = dVDD/(2·n·U_T)`. Holding ±4 % over a
+±10 % rail would need a device slope of ~1.9 V per e-fold; real MOS devices give
+0.04 V (weak) to ~0.2 V (strong).
+
+**So this is a proof, not a shortfall:** no choice of device type or size can make
+a current-reuse ladder meet a ±2 % cutoff over a drooping supply. It needs a
+supply-independent bias, which means adding components. Corner yield (1/22) has
+the same root cause.
+
+Note that supply droop and corner yield are **not** S1–S8 lines, and the frozen
+reference does not survive the ±10 % box either. `022-reuse-final` is fully
+spec-compliant; what it is not is supply-tolerant.
+
+### The in-band THD profile improves but does not close
+
+| cell | 20 Hz | 50 Hz | 100 Hz | 150 Hz | 200 Hz |
+|---|---|---|---|---|---|
+| reference | −69.58 | −48.37 | **−43.96** | −32.62 | −29.77 |
+| 021-lv-final | −60.79 | −42.39 | −20.93 | −20.17 | −21.15 |
+| **022-reuse-final** | −67.10 | **−56.46** | **−28.57** | −22.64 | −23.62 |
+
+At the S7 point it now **beats the reference by 8 dB**. Above 100 Hz it is still
+15 dB behind, for the reason in §4.8: one shared ladder current cannot serve both
+internal-node bandpass peaks. More current narrows the gap (7.6 dB at 100 Hz from
+2.2× the power) without closing it.
 
 ## 5. Yield
 
