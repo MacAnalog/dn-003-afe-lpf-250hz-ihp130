@@ -36,7 +36,13 @@ from lab import thd as T              # noqa: E402
 from lab.dut import Design, Dev       # noqa: E402
 
 SCH = HERE / "schematic"
-CELL = HERE / "design" / "022-reuse-final.json"
+CELLS = {                      # cell -> (sizing json, tb stem, its drawer)
+    "022-reuse-final": ("022-reuse-final.json", "lpf_tb_022",
+                        "draw_lpf_core_022.py"),
+    "021-lv-final":    ("021-lv-final.json",    "lpf_tb_021lv",
+                        "draw_xschem.py"),
+}
+DELIVERABLE = "022-reuse-final"
 CARD = HERE / "scorecard.json"
 KEYS = ("fc_hz", "dc_db", "ripple_db", "peak_db", "mono_db", "a1000_db",
         "ph_max_deg", "irn_uv", "p_core_nw", "c_total_pf")
@@ -64,20 +70,22 @@ def netlist(name: str) -> str:
     return (SCH / f"{name}.spice").read_text() + "\n.end\n"
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--regen", action="store_true",
-                    help="regenerate the schematics from the sizing JSON first")
-    a = ap.parse_args()
-    d = design_of(CELL)
-    if a.regen:
-        subprocess.run([sys.executable, str(REPO / "scripts" / "gen_xschem.py"),
-                        str(CELL), str(SCH), "--name", "lpf_core_022"], check=True)
+def check(cell: str, regen: bool) -> bool:
+    """Both gates for one cell. Returns True iff both pass."""
+    js, tb, drawer = CELLS[cell]
+    d = design_of(HERE / "design" / js)
+    if regen:
+        # Each drawing has its OWN drawer -- they lay out differently, so
+        # regenerating with the wrong one silently replaces a reviewed schematic
+        # with a different (still gate-passing) one.
+        subprocess.run([sys.executable, str(REPO / "scripts" / drawer)], check=True)
 
-    s_sch = M.score_plots(ng.simulate(netlist("lpf_tb_022"), "so_ac"), d)
-    s_dck = M.evaluate(d, "so_ac_ref", record=False)
-    card = json.loads(CARD.read_text())["scorecard"] if CARD.exists() else {}
+    s_sch = M.score_plots(ng.simulate(netlist(tb), f"so_{cell[:6]}"), d)
+    s_dck = M.evaluate(d, f"so_{cell[:6]}_ref", record=False)
+    card = (json.loads(CARD.read_text())["scorecard"]
+            if CARD.exists() and cell == DELIVERABLE else {})
 
+    print(f"\n=== {cell} ===")
     print(f"{'metric':12s} {'schematic':>12s} {'lab.deck':>12s} {'certified':>12s}   gates")
     ok1 = ok2 = True
     for k in KEYS:
@@ -90,22 +98,36 @@ def main() -> int:
         g2 = c_ is None or abs(a_ - c_) <= max(1e-3, abs(c_) * 5e-3)
         ok1 &= g1
         ok2 &= g2
-        cs = "     --" if c_ is None else f"{c_:12.4f}"
+        cs = "          --" if c_ is None else f"{c_:12.4f}"
         print(f"{k:12s} {a_:12.4f} {b_:12.4f} {cs}   "
               f"{'ok' if g1 else 'DIFFERS'}/{'ok' if g2 else 'DRIFTED'}")
 
-    t_sch = T._score(ng.simulate(netlist("lpf_tb_022_thd"), "so_thd"),
+    t_sch = T._score(ng.simulate(netlist(f"{tb}_thd"), f"so_{cell[:6]}_thd"),
                      50.0, 87.5e-3, 20, 512, "so")
-    t_ref = T.measure(d, tag="so_thd_ref", gate=False)
+    t_ref = T.measure(d, tag=f"so_{cell[:6]}_thdref", gate=False)
     g1t = abs(t_sch.thd_db - t_ref.thd_db) <= 0.05
     ok1 &= g1t
+    ct = card.get("thd_db")
     print(f"{'thd_db':12s} {t_sch.thd_db:12.3f} {t_ref.thd_db:12.3f} "
-          f"{card.get('thd_db', float('nan')):12.3f}   {'ok' if g1t else 'DIFFERS'}/-")
+          f"{'          --' if ct is None else f'{ct:12.3f}'}   "
+          f"{'ok' if g1t else 'DIFFERS'}/-")
+    print(f"GATE 1 drawing == deck: {'PASS' if ok1 else 'FAIL'}   "
+          f"GATE 2 vs certified card: {'PASS' if ok2 else 'FAIL' if card else 'n/a'}   "
+          f"violations: {s_sch.violations or 'none'}")
+    return ok1 and (ok2 or not card)
 
-    print(f"\nGATE 1  drawing == deck        : {'PASS' if ok1 else 'FAIL'}")
-    print(f"GATE 2  matches certified card : {'PASS' if ok2 else 'FAIL'}")
-    print(f"spec violations from the drawing: {s_sch.violations or 'none'}")
-    return 0 if (ok1 and ok2) else 1
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--regen", action="store_true",
+                    help="regenerate each schematic with its own drawer first")
+    ap.add_argument("--cell", choices=sorted(CELLS), default=None,
+                    help="check one cell (default: all)")
+    a = ap.parse_args()
+    cells = [a.cell] if a.cell else list(CELLS)
+    ok = all(check(c, a.regen) for c in cells)
+    print(f"\nALL GATES: {'PASS' if ok else 'FAIL'}  ({len(cells)} cell(s))")
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

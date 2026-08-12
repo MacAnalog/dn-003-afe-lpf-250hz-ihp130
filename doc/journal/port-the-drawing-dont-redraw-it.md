@@ -48,6 +48,14 @@ and every coordinate**; the port is only:
 a ported design — schematic, symbol, build sheet, bench skeleton — grep the
 originating checkout for it first. The failure mode is not that the generated
 artefact is wrong; it is that it is unreviewable, and that a human-placed drawing
-already existed. `scripts/gen_xschem.py` remains useful as a *fallback* for a
-cell with no prior drawing, and as the connectivity reference to check a port
-against.
+already existed.
+
+**Postscript.** The label-per-pin generator that produced the unreviewable
+version has since been **retired** (`scripts/gen_xschem.py`, deleted). Besides
+the readability problem it carried a real correctness bug: it emitted devices in
+a hand-written ladder order rather than `lab.dut.BUILDERS[topology]` order, and
+element order inside a `.subckt` moves ngspice's dc solution on a nano-amp
+ladder — measured, up to 6.3 µV on an internal gate node, enough to shift the
+cutoff by 6.7 mHz and passband ripple by 6.3e-4 dB. The drawers that replaced it
+(`scripts/draw_xschem.py`, `scripts/draw_lpf_core_022.py`) read the as-built
+netlist directly and preserve its order.

@@ -1,44 +1,5 @@
-** sch_path: /sch/lpf_tb_022.sch
-**.subckt lpf_tb_022
-vsig sig vcm dc 0 ac 1
-vcm vcm 0 0.65
-evp vinp vcm sig vcm 0.5
-evn vinn vcm sig vcm -0.5
-xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_022
-vflt vdd_top vdd 0
-vdd_meas vdd_top 0 1.5
-iref vdd_top vbn 6.624e-10
-Xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-Xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-Xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
-**** begin user architecture code
-
-.title lpf b -- ac + noise
-.lib cornerMOShv.lib mos_tt
-.lib cornerMOSlv.lib mos_tt
-.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3548 v(voutn)=1.3548
-.temp 27.0
-
-
-.control
-set filetype=binary
-set appendwrite
-op
-write sim.raw
-ac dec 50 0.1 100000
-write sim.raw
-noise v(voutp,voutn) vsig dec 50 0.1 1000
-setplot noise1
-write sim.raw
-.endc
-
-**** end user architecture code
-**.ends
-
-* expanding   symbol:  lpf_core_022.sym # of pins=7
-** sym_path: /sch/lpf_core_022.sym
 ** sch_path: /sch/lpf_core_022.sch
-.subckt lpf_core_022 vinp vinn voutp voutn vbn vbp vdd
+**.subckt lpf_core_022 vinp vinn voutp voutn vdd vbp vbn
 *.ipin vinp
 *.ipin vinn
 *.opin voutp
@@ -64,6 +25,5 @@ c19 vout_2 vout_1 5.73811e-11 m=1
 c1 voutp net4 1.31527e-10 m=1
 c10 voutn net1 1.31527e-10 m=1
 c12 voutn voutp 2.88874e-11 m=1
-.ends
-
+**.ends
 .end

@@ -135,7 +135,7 @@ already carries 2.5 nA at Vgs = 0). The measured evidence is in
 | `pdf/` | the papers + `INDEX.md` (cite by handle) |
 | `pdk/` | regenerated device-characterisation LUTs (git-ignored) |
 | `runs/` | `ledger.ndjson` — local observability, git-ignored; keeper numbers graduate into experiment READMEs |
-| `scripts/` | `lint.py`, `baseline.py`, `runs.py`, `context_pack.py`, `gen_xschem.py` (schematic generator) — the Makefile's implementation |
+| `scripts/` | `lint.py`, `baseline.py`, `runs.py`, `context_pack.py`, `draw_xschem.py` / `draw_lpf_core_022.py` (schematic drawers), `check_netlist.py` (connectivity gate) — the Makefile's implementation |
 
 No PDK bytes are vendored: model cards are referenced by bare library name and
 resolved by the simulator's `sourcepath`, and the PDK's git SHA is pinned in
