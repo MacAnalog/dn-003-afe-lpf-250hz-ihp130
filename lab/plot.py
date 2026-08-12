@@ -60,12 +60,19 @@ def bode(designs: dict[str, Design], path="bode.png", *, tag="bode",
     """Magnitude + unwrapped phase lag, with the spec boxes drawn on."""
     data = _curves(designs, tag, **kw)
     fig, (a1, a2) = plt.subplots(2, 1, figsize=(7.2, 6.4), sharex=True)
+    hi = 0.0
     for i, (name, (f, h, _, _)) in enumerate(data.items()):
         y = R.db_rel_dc(h)
         a1.semilogx(f, y, color=_COLORS[i % len(_COLORS)], lw=1.6, label=name)
-        m = y >= M.PH_FLOOR_DB
-        ph = np.unwrap(np.angle(h[m])) * 180 / np.pi
-        a2.semilogx(f[m], -(ph - ph[0]), color=_COLORS[i % len(_COLORS)], lw=1.6)
+        # Draw phase over the SAME contiguous prefix the certificate scores --
+        # not every point above the floor.  A cell that falls through the floor
+        # and recovers onto a feed-through plateau makes `np.unwrap` jump the
+        # gap, and the curve then climbs to a lag the cell does not have (338 ->
+        # 358 deg on the 021 candidate).  See `lab.raw._floor_prefix`.
+        n = R._floor_prefix(h, M.PH_FLOOR_DB)
+        ph = np.unwrap(np.angle(h[:n])) * 180 / np.pi
+        a2.semilogx(f[:n], -(ph - ph[0]), color=_COLORS[i % len(_COLORS)], lw=1.6)
+        hi = max(hi, float(np.real(f[n - 1]))) if n else hi
 
     a1.axvline(250, color="0.6", ls=":", lw=1)
     a1.axhline(-3, color="0.6", ls=":", lw=1)
@@ -78,6 +85,12 @@ def bode(designs: dict[str, Design], path="bode.png", *, tag="bode",
 
     a2.axhline(330, color="#d62728", ls="--", lw=1)
     a2.annotate("S1: ≥ 330° certificate", (0.2, 336), fontsize=8, color="#d62728")
+    if hi:
+        for ax in (a1, a2):
+            ax.axvspan(hi, ax.get_xlim()[1], color="0.85", alpha=0.55, zorder=0)
+        a2.annotate(f"below the −100 dB floor\n(not scored; phase aliases here)",
+                    (hi, 40), textcoords="offset points", xytext=(6, 0),
+                    fontsize=7.5, color="0.35", va="bottom")
     _style(a2, "frequency (Hz)", "unwrapped phase lag (deg)")
     fig.tight_layout()
     return _save(fig, path)

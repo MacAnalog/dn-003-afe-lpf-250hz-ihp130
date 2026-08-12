@@ -5,7 +5,7 @@ each experiment's `README.md`; keep this table honest the moment a verdict
 lands. Every `experiments/NNN-*` directory must appear here.
 
 Goal: **IRN(0.5–200 Hz) < 40 µVrms** from the certified reference baseline's
-**50.18 µVrms** (−20.3 %), combining techniques from **≥ 2 papers** in `pdf/`,
+**49.98 µVrms** (−20.0 %), combining techniques from **≥ 2 papers** in `pdf/`,
 while holding two true biquads, 250 Hz ±2 %, |dc| ≤ 0.2 dB, peaking ≤ 0.2 dB,
 THD ≤ −40 dB at 175 mVpp / 50 Hz, and filter-core power < 50 nW.
 
@@ -14,7 +14,7 @@ THD ≤ −40 dB at 175 mVpp / 50 Hz, and filter-core power < 50 nW.
 | `000-reference-baseline` | expert topology ported and re-sized to spec; both input followers p-type; one ideal reference current into a real n/p mirror | — | **CLOSED — certified reference**; this is the yardstick every candidate is scored against | **50.18 µV** | **98.01 pF** |
 | [`020-novel-topologies`](../experiments/020-novel-topologies/) | port the three signed-off candidate topologies: branch stacking, the gm_f merge, and the merge under a minimum-power ruling | carried forward: `gmc-compact`+`tian2023`, `ssf-33mhz` | **CLOSED — CONFIRMED. Three cells, 8/8 spec lines PASS on all three.** 020A (stacking alone) 32.83 µV / 28.95 nW / 747.8 pF / THD −43.51; **020B (+merge) 34.14 µV / 9.70 nW / 314.6 pF / THD −49.83**; 020C (min power) 34.45 µV / 8.12 nW / 260.9 pF / THD −41.42. Two implementation choices did NOT port and were re-realised on measurement: the n-type input follower (no isolated NMOS ⇒ dc gain exactly 1/n, −3.11 dB) and the rail-tied bridge gate (forced the bridge into triode at 46 mV, gm/gds 1). 020A vs 020B isolates the merge: −66 % power, −58 % capacitance and +6.3 dB THD for +1.31 µV of noise | **32.83 µV** (020A) | 260.9–747.8 pF |
 
-| [`021-publication-cell`](../experiments/021-publication-cell/) | repair the passband **shape** (monotone, maximally flat) without giving back the margins, then certify one cell on all of S1–S8 with corner + mismatch yield | `gmc-compact`+`tian2023` (branch stacking), `fvf-2nd` (floating differential cap) — each re-measured here by its own equal-shape A/B | **IN PROGRESS.** Found: the flatness box is blind to a sag-then-recover passband (`peak_db` one-sided, `ripple_db` a spread) — fixed with `mono_db` + a Butterworth-template fit; `mono_db` 0.151 → **0.0005** on gb12-175 at `mono` 0.0032 dB template rms. Flatness is **not free**: it cost G-135 5.8 dB of THD (−41.57 → −35.74, pre-fit sizing re-measured to confirm), so the delivery candidate must be chosen for S7 margin. Also established: the S1 certificate's ceiling is **350.53°**, not 360° — that is what an *ideal* 4-pole scores through the −100 dB floor | *pending* | *pending* |
+| [`021-publication-cell`](../experiments/021-publication-cell/) | repair the passband **shape** (monotone, maximally flat) without giving back the margins, then certify one cell on all of S1–S8 with corner + mismatch yield | `gmc-compact`+`tian2023` (branch stacking), `fvf-2nd` (floating differential cap) — each re-measured **here** by its own equal-shape A/B | **CLOSED — CONFIRMED. `021-final` passes all of S1–S8 at nominal**: fc 249.87, dc −0.0078, ripple 0.0557, peak +0.0000, **mono 0.0000**, @1 kHz −49.60, ph_max 333.29, **IRN 30.71 µV**, **6.01 nW**, **THD −42.22**, C 150.6 pF; mismatch all-pass **78 %** (100 samples), σ(fc) 3.32 Hz vs the reference's 13.99. S8 measured here: stacking −18.1 % IRN / −67.5 % power at **equal capacitance**; floating diff cap −45.1 % drawn farads for a 0.00002 dB response difference. **NOT corner-robust (1/22) and NO droop margin (VDD_min 1.50 V vs the reference's 1.35)** — the branch-stacked ladder is threshold-referenced, so its current moves exponentially with process and supply. Two harness defects found: `ph_max_deg` scored a **non-contiguous** band and turned a 320.7° S1 FAIL into a 368.6° PASS (fixed, ideal 4-pole still 350.53°); and the frozen reference does **not** meet S3 flatness when measured densely (ripple 0.2512) | **30.71 µV** | 150.6 pF |
 
 ---
 
@@ -96,13 +96,17 @@ Ordered by expected value per simulation, not by number.
    must be re-measured here before any technique is chosen**
    (`doc/prior-findings.md` §2). Until this exists, every candidate technique
    is aimed blind.
-2. **The technique-free control curve.** The I–C homothety (scale every device
+2. **DONE (021 §4.3).** The technique-free control curve. The I–C homothety (scale every device
    multiplier *and* every capacitor by k) predicts `IRN ∝ 1/√k` exactly, at
    invariant fc/Q/dc/THD, with power ∝ k. At 12.07 nW against a 50 nW box
    there is **k ≈ 4 of headroom**, which alone would put IRN at ~25 µV. This
    must be measured and published as the control **before** any technique is
    credited — a technique's result is its distance from this curve, not its
    distance from the baseline.
+   **Measured in 021 §4.3:** fc, `mono_db`, a1k and ph_max are
+   flat in k and IRN tracks 1/√k to within 0.2 %, so the law holds — but **THD
+   does not**, drifting 2.1 dB over 3× and closing the passing window at
+   k ≈ 1.6. Any k-scaling claim must carry its own THD measurement.
 3. **Cap/Q re-allocation control.** Silicon cost per biquad is `2·C1 + C2`, so
    the high-Q pole pair belongs on the biquad with the larger `gm_i`. Pure
    re-allocation, no circuit change. Must be run as a control for every

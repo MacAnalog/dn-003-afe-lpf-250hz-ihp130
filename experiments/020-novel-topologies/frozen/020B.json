@@ -1,26 +1,26 @@
 {
   "caps_pf": {
-    "c1_a": 7.0926,
-    "c2_a": 47.3527,
-    "c1_b": 117.3489,
-    "c2_b": 18.345
+    "c1_a": 5.362659934816446,
+    "c2_a": 13.685107448391312,
+    "c1_b": 46.268878891592784,
+    "c2_b": 16.42789769896698
   },
   "devs": {
     "in_a": {
-      "w": 4e-06,
-      "l": 4e-06,
+      "w": 8e-06,
+      "l": 8e-06,
       "ng": 1,
       "m": 1
     },
     "gmf_a": {
-      "w": 4e-06,
-      "l": 4e-06,
+      "w": 1e-06,
+      "l": 0.00015,
       "ng": 1,
       "m": 1
     },
     "bias_a_int": {
-      "w": 4.9999999999999996e-06,
-      "l": 8e-06,
+      "w": 9.999999999999999e-06,
+      "l": 1.6e-05,
       "ng": 1,
       "m": 1
     },
@@ -31,21 +31,21 @@
       "m": 1
     },
     "in_b": {
-      "w": 4e-06,
-      "l": 4e-06,
+      "w": 8e-06,
+      "l": 8e-06,
       "ng": 1,
       "m": 1
     },
     "gmf_b": {
-      "w": 1.5000000000000002e-05,
-      "l": 1.2e-05,
+      "w": 8e-06,
+      "l": 2.4e-05,
       "ng": 1,
       "m": 1
     }
   },
   "iref": 1e-09,
   "topology": "b",
-  "vicm": 0.2,
+  "vicm": 0.32,
   "vocm": 1.1,
-  "note": "020B: branch stacking + the gm_f merge -- the headline cell"
+  "note": "020B: branch stacking + the gm_f merge -- the headline cell. Min-total-capacitance re-fit: 133.4 pF (was 314.6). gmf_a moved to moderate inversion (1u/150u, gm/ID 19.4) to cut the internal-node exponential drive, ladder current 3.23 -> 1.80 nA, vicm 0.32 V to keep in_a saturated, and the four caps re-shaped for a flat passband."
 }

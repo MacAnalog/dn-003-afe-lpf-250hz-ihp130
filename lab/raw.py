@@ -285,12 +285,37 @@ def ph_max_deg(f: np.ndarray, h: np.ndarray, floor_db: float = -100.0) -> float:
 
     See doc/journal/phase-certificate-floor.md.
     """
-    y = db_rel_dc(h)
-    m = y >= floor_db
-    if not np.any(m):
-        return float("nan")
-    ph = np.unwrap(np.angle(h[m])) * 180.0 / np.pi
-    return float(-np.min(ph - ph[0]))
+    return _ph_stats(f, h, floor_db)[0]
+
+
+def _floor_prefix(h: np.ndarray, floor_db: float) -> int:
+    """Index of the FIRST fall through the floor -- the end of the scored band.
+
+    Selecting every point above the floor is not the same thing, and the
+    difference is not academic.  A real cell falls through the floor, then
+    RECOVERS onto a parasitic feed-through plateau: measured on the 021
+    candidate, |H| crosses -100 dB at 3.2 kHz, comes back at 14.5 kHz and sits
+    at -98.5 dB out to 100 kHz.  A boolean mask keeps both sides of that gap,
+    `np.unwrap` then runs straight across an 11 kHz discontinuity, and the
+    certificate reads **368.6 deg** for a cell whose true lag saturates at
+    **320.7 deg** -- i.e. it turns an S1 FAIL into an apparent PASS, by 38 deg.
+
+    The step guard does not catch it: the spurious step measured only 75 deg,
+    half the 150 deg alarm.  Contiguity has to be enforced structurally.
+    """
+    below = np.flatnonzero(db_rel_dc(h) < floor_db)
+    return int(below[0]) if below.size else len(h)
+
+
+def _ph_stats(f: np.ndarray, h: np.ndarray, floor_db: float) -> tuple:
+    n = _floor_prefix(h, floor_db)
+    if n < 2:
+        return float("nan"), float("nan"), float("nan")
+    ph = np.unwrap(np.angle(h[:n])) * 180.0 / np.pi
+    fx = np.asarray(np.real(f), float)
+    return (float(-np.min(ph - ph[0])),
+            float(np.max(np.abs(np.diff(ph)))) if n > 1 else float("nan"),
+            float(fx[n - 1]))
 
 
 def max_phase_step_deg(f: np.ndarray, h: np.ndarray, floor_db: float = -100.0) -> float:
@@ -300,12 +325,16 @@ def max_phase_step_deg(f: np.ndarray, h: np.ndarray, floor_db: float = -100.0) -
     step approaches 180 deg is one sample away from aliasing, so its certificate
     is not trustworthy however comfortably it passes.
     """
-    y = db_rel_dc(h)
-    m = y >= floor_db
-    if np.count_nonzero(m) < 2:
-        return float("nan")
-    ph = np.unwrap(np.angle(h[m])) * 180.0 / np.pi
-    return float(np.max(np.abs(np.diff(ph))))
+    return _ph_stats(f, h, floor_db)[1]
+
+
+def f_scored_hi(f: np.ndarray, h: np.ndarray, floor_db: float = -100.0) -> float:
+    """Highest frequency the phase certificate actually scored, in Hz.
+
+    Report it beside `ph_max_deg`: a certificate scored to 400 x fc is not a
+    4-pole measurement, it is a measurement that ran into a feed-through floor.
+    """
+    return _ph_stats(f, h, floor_db)[2]
 
 
 def integrate_noise(f: np.ndarray, dens: np.ndarray, f_lo: float, f_hi: float) -> float:

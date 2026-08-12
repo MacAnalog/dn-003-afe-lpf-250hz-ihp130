@@ -149,8 +149,12 @@ def score_plots(plots: list[R.Plot], design: Design | None = None,
     v["a1000_db"] = R.value_at(f, y, 1000.0)
     v["ph_max_deg"] = R.ph_max_deg(f, h, PH_FLOOR_DB)
     v["ph_step_deg"] = R.max_phase_step_deg(f, h, PH_FLOOR_DB)
-    scored = f[y >= PH_FLOOR_DB]
-    v["f_scored_hi"] = float(scored[-1]) if len(scored) else float("nan")
+    # The same contiguous prefix `ph_max_deg` uses -- NOT "every point above the
+    # floor".  A cell that falls through the floor and recovers onto a
+    # feed-through plateau would otherwise report a scored band running to the
+    # end of the sweep, which is the tell that the certificate is unwrapping
+    # across a gap.  See `lab.raw._floor_prefix`.
+    v["f_scored_hi"] = R.f_scored_hi(f, h, PH_FLOOR_DB)
 
     try:
         no = R.pick(plots, "noise")
