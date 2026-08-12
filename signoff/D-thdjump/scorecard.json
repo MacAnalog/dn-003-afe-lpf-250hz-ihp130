@@ -1,0 +1,36 @@
+{
+  "cell": "D-thdjump",
+  "from": "reuse/cr_0p1_4",
+  "why": "The lv-gm_f,b lever: THD jumps to -52.29 dB for 0.9 nW and 35 pF over C. First cell with double-digit THD margin.",
+  "vicm": 0.65,
+  "vocm": 1.3273,
+  "lv_roles": [
+    "gmf_b",
+    "in_a"
+  ],
+  "scorecard": {
+    "fc_hz": 249.8575,
+    "dc_db": -0.0125,
+    "ripple_db": 0.0532,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -50.3468,
+    "ph_max_deg": 331.5551,
+    "irn_uv": 29.336,
+    "p_core_nw": 7.3083,
+    "c_total_pf": 187.8642
+  },
+  "thd_db": -52.294,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

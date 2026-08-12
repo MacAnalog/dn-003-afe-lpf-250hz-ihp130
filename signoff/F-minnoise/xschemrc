@@ -1,0 +1,4 @@
+set XSCHEM_LIBRARY_PATH /usr/share/xschem/xschem_library
+append XSCHEM_LIBRARY_PATH :/opt/pdk/ihp-sg13g2/libs.tech/xschem
+append XSCHEM_LIBRARY_PATH :/sch
+set netlist_dir /sch

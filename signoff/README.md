@@ -104,43 +104,40 @@ VDD/2 is reachable only by deleting the bridge (see the table below), which the
 constraint forbids. A level shifter closes the remaining 0.10 V (budget: √(40² − 28.07²) = **28.5 µVrms** of
 input-referred noise available before S5 breaks).
 
-## The alternative cell — and one that is OUT OF CONSTRAINT
+## Candidate set — nine sizings, all passing
 
-The governing constraint is: **the drawn topology is fixed — the bridge and its
-current reuse stay, device type and size may change, no component may be added
-or removed.** Only two of the three cells in `design/` satisfy it.
+See **[COMPARISON.md](COMPARISON.md)** for the full table and the pick guide.
+Every candidate is the SAME topology (bridge and current reuse intact), differing
+only in device sizes, flavours and capacitor values; each lives in its own
+self-contained `signoff/<cell>/` with schematic, both testbenches, as-built decks
+and its scorecard.
 
-| | `022-reuse-final` | `021-lv-final` | ~~`021-vdd2-final`~~ |
-|---|---|---|---|
-| **topology** | **b — bridge intact** | **b — bridge intact** | **reference — BRIDGE REMOVED** |
-| **within constraint** | **yes** | **yes** | **NO — 16 devices, not 12** |
-| S8 | PASS | PASS | FAIL (1 technique) |
-| vicm | 0.65 V | 0.65 V | 0.75 V = VDD/2 |
-| IRN | **28.07 µV** | 28.54 | 34.85 |
-| THD @ 50 Hz | **−56.46** | −42.39 | −44.64 |
-| power | 14.45 nW | **6.46 nW** | 24.01 nW |
-| capacitance | 366.3 pF | **164.0 pF** | 245.0 pF |
-| mismatch yield | **95 %** | 84 % | 82 % |
-| VDD_min | 1.50 V | 1.50 V | 1.25 V |
+| cell | IRN µV | P nW | C pF | THD dB | note |
+|---|---|---|---|---|---|
+| `A-minarea` | 39.70 | **4.15** | **104.4** | −41.69 | area/power floor; 0.30 µV of S5 margin |
+| `B-balanced` | 29.38 | 6.01 | 152.9 | −41.90 | best noise per nanowatt |
+| `C-lownoise` | 28.54 | 6.46 | 164.0 | −42.39 | |
+| `D-thdjump` | 29.34 | 7.31 | 187.9 | −52.29 | first double-digit THD margin |
+| **`E-combo`** | **27.27** | **8.88** | **220.0** | **−54.88** | **best all-round — take this one** |
+| `F-minnoise` | **26.24** | 12.63 | 305.0 | −58.52 | lowest noise in the repo |
+| `G-maxthd` | 26.81 | 14.32 | 348.2 | **−70.99** | 31 dB of S7 margin |
+| `E1-prev` | 28.33 | 8.98 | 229.3 | −52.64 | single-lever reference |
+| `H-shipped` | 28.07 | 14.45 | 366.3 | −56.46 | first delivered; dominated by E-combo |
 
-`021-lv-final` is the real alternative: same topology, bridge intact, trading
-14 dB of THD and 11 points of yield for 2.2× less power and area.
+`E-combo` is **strictly better than the originally-shipped cell on all four
+axes** — noise, power, capacitance and (within 1.6 dB) THD. It exists because two
+levers compose: shortening `gm_f,a` recovers the phase the low-power sizing loses
+(320.7° → 334.6°), and moving `gm_f,b` to the lv flavour recovers the THD that
+shortening costs.
 
-**`021-vdd2-final` is superseded, not an option.** It was produced earlier in the
-campaign, before the no-added-or-removed-components constraint was set, and it
-reaches VDD/2 *by deleting the bridge* — which is also why it loses branch
-stacking and with it S8, and why it is the only cell with droop margin. It is
-retained here **as evidence for the trade, not as a deliverable**: it is the
-measurement showing that VDD/2 and supply tolerance are both obtainable, and
-that both cost the current reuse. Do not ship it without lifting the constraint
-first.
+All nine are flat low-pass responses, not merely inside the bounds: worst
+`mono_db` in the set is 0.0089 dB — the response never climbs — and peaking is at
+most +0.0090 dB.
 
-Which means the three-way conflict is measured, not asserted: **VDD/2, the
-bridge, and S8 — any two.** With the bridge in place vicm tops out at 0.65 V
-(the bridge needs 104 mV between `vout_1` and `net4` while `net4` is pinned by
-the mirror; at vicm 0.75 V every combination of follower flavour, bridge width
-and mirror width leaves it at 42–75 mV). A level shifter closes the remaining
-0.10 V.
+**Superseded and out of constraint:** `design/021-vdd2-final.json` reaches
+vicm = VDD/2 by *deleting the bridge* (16 devices, not 12). Retained as evidence
+that VDD/2 and droop margin are obtainable and that both cost the current reuse —
+not as a deliverable.
 
 ## Next step (not done here)
 

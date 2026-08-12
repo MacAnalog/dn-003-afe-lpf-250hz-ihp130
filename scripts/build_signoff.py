@@ -1,0 +1,152 @@
+"""Package every sign-off candidate into its own self-contained directory.
+
+One directory per design, each holding everything an expert needs to open it,
+run it, and judge it without reading the rest of the repo:
+
+    signoff/<cell>/
+        design.json        the sizing of record
+        asbuilt/           the certified decks: core subckt + both testbenches
+        <cell>.sch/.sym    the schematic, with an annotation block on the sheet
+        <cell>_tb.sch      op + ac + noise, `.control` in the drawing
+        <cell>_tb_thd.sch  coherent strobed transient for S7
+        *.spice            the netlists xschem produced
+        *.png              renders (visual-inspection evidence)
+        scorecard.json     what it measures, and whether each line passes
+
+The topologies are identical across candidates -- this is a re-size, so one
+drawer serves them all and each cell differs only in device sizes, flavours and
+capacitor values.
+
+    uv run python scripts/build_signoff.py            # all candidates
+    uv run python scripts/build_signoff.py <cell> ... # a subset
+"""
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
+
+from lab import config as C            # noqa: E402
+from lab import metrics as M           # noqa: E402
+from lab import ngspice as ng          # noqa: E402
+from lab import thd as T               # noqa: E402
+from lab.deck import ac_noise, tran_thd  # noqa: E402
+from lab.dut import Design, Dev, subckt  # noqa: E402
+
+SIGNOFF = REPO / "signoff"
+SRC = REPO / "experiments" / "021-publication-cell"
+
+# cell -> (source json, index in that json, one-line "why this one is here")
+CANDIDATES: dict[str, tuple[str, str, str]] = {
+    "A-minarea":  ("scale/020C-frozen_x1", "scaled.json",
+                   "Minimum area and power. The floor of the family -- but only "
+                   "0.30 uV of S5 margin, so it is a corner marker, not a shipping cell."),
+    "B-balanced": ("lvcm/lc65", "lvcm.json",
+                   "Best noise-per-nanowatt: 29.38 uV at 6.01 nW and 152.9 pF. "
+                   "The value pick if THD margin of ~2 dB is enough."),
+    "C-lownoise": ("lv065_bias/sb3", "lv065_bias.json",
+                   "Same power class, better noise (28.54 uV) for 11 pF more."),
+    "D-thdjump":  ("reuse/cr_0p1_4", "reuse.json",
+                   "The lv-gm_f,b lever: THD jumps to -52.29 dB for 0.9 nW and "
+                   "35 pF over C. First cell with double-digit THD margin."),
+    "E-combo":    ("combo/cb_0p3_0p16_4", "combo.json",
+                   "BEST on the stated priorities. Combines both levers: gm_f,a "
+                   "shortened to recover the phase the low-power sizing lost, and "
+                   "gm_f,b moved to lv to recover the THD that shortening cost. "
+                   "27.27 uV / 8.88 nW / 220.0 pF / -54.88 dB -- strictly better "
+                   "than E1-prev on ALL FOUR axes at once."),
+    "F-minnoise": ("combo/cb_0p3_0p25_4", "combo.json",
+                   "Lowest noise in the repo: 26.24 uV, still -58.52 dB THD, for "
+                   "12.63 nW and 305.0 pF."),
+    "G-maxthd":   ("combo/cb_0p1_0p16_2p5", "combo.json",
+                   "Maximum linearity: -70.99 dB THD at 26.81 uV, 14.32 nW, "
+                   "348.2 pF. 31 dB of S7 margin."),
+    "E1-prev":    ("reuse/cp_0p16_4", "reuse.json",
+                   "Superseded by E-combo (better on all four axes). Kept as the "
+                   "single-lever reference: lv gm_f,b only, no gm_f,a change."),
+    "H-shipped":  ("reuse/cp_0p16_2p5", "reuse.json",
+                   "The cell first delivered. Kept for continuity: it is dominated "
+                   "by E-combo, which is better on noise, power, capacitance AND "
+                   "within 1.6 dB on THD."),
+}
+
+KEYS = ("fc_hz", "dc_db", "ripple_db", "peak_db", "mono_db", "a1000_db",
+        "ph_max_deg", "irn_uv", "p_core_nw", "c_total_pf")
+
+
+def design_of(g: dict) -> Design:
+    return Design(topology=g["topology"],
+                  devs={r: Dev(**v) for r, v in g["devs"].items()},
+                  iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
+                  lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
+
+
+def find(tag: str, fname: str) -> dict:
+    """Pull one sizing row out of the round JSON that produced it."""
+    cell = tag.split("/", 1)[1]
+    for r in json.loads((SRC / fname).read_text()):
+        if r.get("name") == cell:
+            return r
+    raise KeyError(f"{cell} not in {fname}")
+
+
+def build(name: str) -> dict:
+    tag, fname, why = CANDIDATES[name]
+    row = find(tag, fname)
+    d = design_of(row)
+    out = SIGNOFF / name
+    (out / "asbuilt").mkdir(parents=True, exist_ok=True)
+
+    (out / "design.json").write_text(json.dumps(
+        {"name": name, "from": tag, "why": why, "design": {
+            "topology": d.topology, "iref": d.iref, "vicm": d.vicm, "vocm": d.vocm,
+            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles),
+            "caps_pf": {k: getattr(d, k) * 1e12
+                        for k in ("c1_a", "c2_a", "c1_b", "c2_b")},
+            "devs": {r: {"w": g.w, "l": g.l, "ng": g.ng, "m": g.m}
+                     for r, g in d.devs.items()}}}, indent=2))
+    # Names must be siblings of the form <stem>{,_tb_acnoise,_tb_thd}.sp --
+    # that is the contract scripts/draw_xschem.py reads them by.
+    (out / "asbuilt" / "core.sp").write_text(subckt(d) + "\n")
+    (out / "asbuilt" / "core_tb_acnoise.sp").write_text(ac_noise(d))
+    (out / "asbuilt" / "core_tb_thd.sp").write_text(tran_thd(d, 50.0, 87.5e-3))
+
+    s = M.evaluate(d, f"pkg_{name}", record=False)
+    t = T.measure(d, tag=f"pkg_{name}_thd", gate=False)
+    card = {"cell": name, "from": tag, "why": why,
+            "vicm": d.vicm, "vocm": d.vocm, "lv_roles": sorted(d.lv_roles),
+            "scorecard": {k: round(s[k], 4) for k in KEYS if k in s.values},
+            "thd_db": round(t.thd_db, 3),
+            "passes": {"S1_phase": s["ph_max_deg"] >= 330.0,
+                       "S1_stopband": s["a1000_db"] <= -48.0,
+                       "S2_cutoff": 245.0 <= s["fc_hz"] <= 255.0,
+                       "S3_dc": abs(s["dc_db"]) <= 0.2,
+                       "S3_flatness": s["ripple_db"] <= 0.2,
+                       "S4_peaking": s["peak_db"] <= 0.2,
+                       "S5_irn": s["irn_uv"] < 40.0,
+                       "S6_power": s["p_core_nw"] < 50.0,
+                       "S7_thd": t.thd_db <= -40.0}}
+    card["all_pass"] = all(card["passes"].values())
+    (out / "scorecard.json").write_text(json.dumps(card, indent=2))
+    print(f"{name:12s} IRN {s['irn_uv']:6.2f}  P {s['p_core_nw']:6.2f}  "
+          f"C {s['c_total_pf']:7.1f}  THD {t.thd_db:7.2f}  ph {s['ph_max_deg']:6.1f}  "
+          f"mono {s['mono_db']:.4f}  {'ALL PASS' if card['all_pass'] else 'FAIL'}")
+    return card
+
+
+def main() -> int:
+    want = sys.argv[1:] or list(CANDIDATES)
+    cards = [build(n) for n in want]
+    (SIGNOFF / "candidates.json").write_text(json.dumps(cards, indent=2))
+    print(f"\npackaged {len(cards)} candidates into signoff/<cell>/")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

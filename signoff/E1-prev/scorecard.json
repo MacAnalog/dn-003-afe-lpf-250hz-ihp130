@@ -1,0 +1,36 @@
+{
+  "cell": "E1-prev",
+  "from": "reuse/cp_0p16_4",
+  "why": "Superseded by E-combo (better on all four axes). Kept as the single-lever reference: lv gm_f,b only, no gm_f,a change.",
+  "vicm": 0.65,
+  "vocm": 1.3355,
+  "lv_roles": [
+    "gmf_b",
+    "in_a"
+  ],
+  "scorecard": {
+    "fc_hz": 249.862,
+    "dc_db": -0.0135,
+    "ripple_db": 0.0532,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -49.8383,
+    "ph_max_deg": 333.4701,
+    "irn_uv": 28.3298,
+    "p_core_nw": 8.9819,
+    "c_total_pf": 229.347
+  },
+  "thd_db": -52.64,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

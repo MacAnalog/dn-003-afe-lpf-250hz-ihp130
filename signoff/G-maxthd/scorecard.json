@@ -1,0 +1,35 @@
+{
+  "cell": "G-maxthd",
+  "from": "combo/cb_0p1_0p16_2p5",
+  "why": "Maximum linearity: -70.99 dB THD at 26.81 uV, 14.32 nW, 348.2 pF. 31 dB of S7 margin.",
+  "vicm": 0.32,
+  "vocm": 1.3617,
+  "lv_roles": [
+    "gmf_b"
+  ],
+  "scorecard": {
+    "fc_hz": 249.8799,
+    "dc_db": -0.0417,
+    "ripple_db": 0.0541,
+    "peak_db": 0.0029,
+    "mono_db": 0.0029,
+    "a1000_db": -48.6937,
+    "ph_max_deg": 343.5258,
+    "irn_uv": 26.807,
+    "p_core_nw": 14.3236,
+    "c_total_pf": 348.218
+  },
+  "thd_db": -70.985,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

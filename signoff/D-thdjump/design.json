@@ -1,0 +1,60 @@
+{
+  "name": "D-thdjump",
+  "from": "reuse/cr_0p1_4",
+  "why": "The lv-gm_f,b lever: THD jumps to -52.29 dB for 0.9 nW and 35 pF over C. First cell with double-digit THD margin.",
+  "design": {
+    "topology": "b",
+    "iref": 6.624e-10,
+    "vicm": 0.65,
+    "vocm": 1.3273,
+    "vmid": 0.8181,
+    "lv_roles": [
+      "gmf_b",
+      "in_a"
+    ],
+    "caps_pf": {
+      "c1_a": 8.579459202174942,
+      "c2_a": 24.304765360411096,
+      "c1_b": 67.03425892248691,
+      "c2_b": 12.332026102576387
+    },
+    "devs": {
+      "in_a": {
+        "w": 1.56e-05,
+        "l": 1.04e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "gmf_a": {
+        "w": 7.8e-06,
+        "l": 5.2e-06,
+        "ng": 1,
+        "m": 1
+      },
+      "bias_a_int": {
+        "w": 2.9250000000000006e-05,
+        "l": 3.12e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "bridge": {
+        "w": 1.6185e-07,
+        "l": 4.368000000000001e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "in_b": {
+        "w": 1.56e-05,
+        "l": 1.04e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "gmf_b": {
+        "w": 8.08275e-07,
+        "l": 6.24e-05,
+        "ng": 1,
+        "m": 1
+      }
+    }
+  }
+}

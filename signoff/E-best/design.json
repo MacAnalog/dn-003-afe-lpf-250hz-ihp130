@@ -1,0 +1,60 @@
+{
+  "name": "E-best",
+  "from": "reuse/cp_0p16_4",
+  "why": "Best overall on the stated priorities: 28.33 uV / 8.98 nW / 229.3 pF with -52.64 dB THD. 38 % less power and 37 % less capacitance than F for 0.26 uV of noise and 3.8 dB of THD.",
+  "design": {
+    "topology": "b",
+    "iref": 6.624e-10,
+    "vicm": 0.65,
+    "vocm": 1.3355,
+    "vmid": 0.8181,
+    "lv_roles": [
+      "gmf_b",
+      "in_a"
+    ],
+    "caps_pf": {
+      "c1_a": 8.531592990831422,
+      "c2_a": 32.21331159497203,
+      "c1_b": 81.79850007491714,
+      "c2_b": 16.473493101014252
+    },
+    "devs": {
+      "in_a": {
+        "w": 1.56e-05,
+        "l": 1.04e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "gmf_a": {
+        "w": 7.8e-06,
+        "l": 5.2e-06,
+        "ng": 1,
+        "m": 1
+      },
+      "bias_a_int": {
+        "w": 2.9250000000000006e-05,
+        "l": 3.12e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "bridge": {
+        "w": 2.5896000000000004e-07,
+        "l": 4.368000000000001e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "in_b": {
+        "w": 1.56e-05,
+        "l": 1.04e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "gmf_b": {
+        "w": 1.29324e-06,
+        "l": 6.24e-05,
+        "ng": 1,
+        "m": 1
+      }
+    }
+  }
+}
