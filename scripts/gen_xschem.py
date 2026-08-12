@@ -147,11 +147,15 @@ def tb_sch(d: Design, core: str, analysis: str = "acnoise") -> str:
     the differential input, a series `vflt` carrying only the core current for
     S6, and the bias reference ahead of that probe so S6 excludes it.
     """
+    from lab.deck import _bias
     libs = "\n".join(f".lib {lib} {C.CORNER_NOM}" for lib in d.libs())
-    nr = NROLES_BY_TOPOLOGY.get(d.topology, frozenset())
-    un = d.devs["bias_a_int"]
-    up = d.devs["gmf_b"] if "gmf_b" in d.devs else d.devs["in_a"]
-    nch, pch = "sg13_hv_nmos", "sg13_hv_pmos"
+    # Reuse the deck builder's OWN bias fragment rather than reimplementing it.
+    # `_bias` chooses its mirror units by a fallback rule (any device of the
+    # right flavour, in dict order) that is easy to get subtly wrong: a different
+    # p-side diode geometry loads `vdd_top` differently, shifts the dc solve in
+    # the last digits, and shows up as a ~0.001 dB ripple mismatch in the
+    # identity gate -- a real difference, just a tiny one.
+    bias = _bias(d)
     vh = min(d.vocm, C.VDD)
     vm = vh if d.vmid is None else min(d.vmid, C.VDD)
     if analysis == "acnoise":
@@ -170,10 +174,7 @@ def tb_sch(d: Design, core: str, analysis: str = "acnoise") -> str:
         libs,
         f"vdd_meas vdd_top 0 {C.VDD}",
         "vflt vdd_top vdd 0",
-        f"iref vdd_top vbn {d.iref:.6g}",
-        f"xmbn vbn vbn 0 0 {nch} w={un.w:.6g} l={un.l:.6g} ng={un.ng} m=1",
-        f"xmbp vbp vbn 0 0 {nch} w={un.w:.6g} l={un.l:.6g} ng={un.ng} m=1",
-        f"xmbpd vbp vbp vdd_top vdd_top {pch} w={up.w:.6g} l={up.l:.6g} ng={up.ng} m=1",
+        bias,
         f"vcm vcm 0 {d.vicm}",
         stim,
         "evp vinp vcm sig vcm 0.5",
