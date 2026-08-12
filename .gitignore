@@ -17,3 +17,4 @@ pdk/lut/*.npz
 pdf/*.pdf
 # xschem netlister scratch (the .spice files ARE committed as evidence)
 signoff/schematic/*.spice.bak
+signoff/**/__pycache__/
