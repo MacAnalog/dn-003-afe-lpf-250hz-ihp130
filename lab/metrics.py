@@ -29,13 +29,23 @@ SPEC: dict[str, tuple] = {
     "fc_hz":      ("S2 cutoff", "in", (245.0, 255.0)),      # 250 Hz +-2 %
     "dc_db":      ("S3 passband gain", "abs<=", 0.2),
     "peak_db":    ("S4 peaking", "<=", 0.2),
+    "ripple_db":  ("S3 passband flatness to 150 Hz", "<=", 0.2),
     "irn_uv":     ("S5 input-referred noise, 0.5-200 Hz", "<", 40.0),
     "p_core_nw":  ("S6 filter-core power", "<", 50.0),
 }
 
 # Soft/report-only columns: measured and logged, never a pass/fail.
 SOFT = ("c_total_pf", "idd_total_na", "i_core_na", "onoise_uv", "ph_step_deg",
-        "f_scored_hi")
+        "f_scored_hi", "mono_db")
+
+# S3's flatness clause is judged over dc .. FLAT_FMAX.
+FLAT_FMAX = 150.0
+
+# AC sweep density for SCORING.  10 pts/decade -- the density the originating
+# bench used -- puts the samples ~26 % apart near the corner, which is coarse
+# enough to step straight over a passband dip and to alias the phase.  Scoring
+# uses 50; a diagnostic can go denser still.
+AC_DEC = 50
 
 # The band S5 is defined over.  Band limits are load-bearing: an input-referred
 # density DIVERGES above the cutoff (the gain goes to zero), so integrating the
@@ -43,7 +53,17 @@ SOFT = ("c_total_pf", "idd_total_na", "i_core_na", "onoise_uv", "ph_step_deg",
 IRN_BAND = (0.5, 200.0)
 
 # THD spec point (see lab.thd): differential 175 mVpp at fin = 50 Hz.
-THD_AMPL = 87.5e-3          # differential amplitude => 175 mVpp
+# S7 is specified at the INPUT: 175 mVpp DIFFERENTIAL drive.  The balun makes
+# the source's own amplitude the differential input, so 175 mVpp is ampl=87.5m.
+# This is the originating campaign's definition verbatim (its `AMPL_SPEC`), kept
+# so the two campaigns' THD numbers mean the same thing.
+THD_AMPL = 87.5e-3
+# Reporting aid only, NOT the spec: these cells do not have unity large-signal
+# gain (measured -0.63 dB to +0.86 dB at the spec level), so a fixed input tests
+# different cells at different output swings.  `lab.thd.measure(target_out_vpp=
+# THD_OUT_VPP)` servoes the drive to a common OUTPUT level, which separates
+# "distorts more" from "is driven harder".
+THD_OUT_VPP = 175e-3
 THD_FIN = 50.0
 THD_LIMIT_DB = -40.0
 
@@ -102,8 +122,15 @@ def goal_met(values: dict) -> bool:
 
 # ------------------------------------------------------------- measurement --
 
-def score_plots(plots: list[R.Plot], design: Design | None = None) -> Score:
-    """Turn one ac+noise rawfile into the full scorecard."""
+def score_plots(plots: list[R.Plot], design: Design | None = None,
+                vdd: float | None = None) -> Score:
+    """Turn one ac+noise rawfile into the full scorecard.
+
+    `vdd` names the supply the rawfile was SIMULATED at, for the S6 power term
+    only (P = I_core * VDD).  It must be passed by anything that built its deck
+    with a non-nominal supply -- `lab.config.VDD` is a module constant and a
+    parallel sweep cannot vary it by mutation.  `None` = the nominal supply.
+    """
     v: dict = {}
 
     ac = R.pick(plots, "ac")
@@ -112,6 +139,13 @@ def score_plots(plots: list[R.Plot], design: Design | None = None) -> Score:
     v["dc_db"] = float(R.db(h)[0])                 # absolute, vs the 1 V drive
     v["fc_hz"] = R.f3db(f, h)
     v["peak_db"] = R.peaking_db(f, h, fmax=1e3)
+    v["ripple_db"] = R.ripple_db(f, h, FLAT_FMAX)
+    # Report-only, but reported ALWAYS: `ripple_db` and `peak_db` both read
+    # small through a sag-then-recover passband, and that shape is how a fit
+    # that scores bounds instead of shape gets away with not being maximally
+    # flat.  Scored to the corner, not to FLAT_FMAX -- the climb can sit either
+    # side of 150 Hz and it is equally wrong in both places.
+    v["mono_db"] = R.monotone_db(f, h, v["fc_hz"])
     v["a1000_db"] = R.value_at(f, y, 1000.0)
     v["ph_max_deg"] = R.ph_max_deg(f, h, PH_FLOOR_DB)
     v["ph_step_deg"] = R.max_phase_step_deg(f, h, PH_FLOOR_DB)
@@ -135,7 +169,7 @@ def score_plots(plots: list[R.Plot], design: Design | None = None) -> Score:
         i_tot = abs(float(np.real(op.get(f"i({C.SUPPLY_PROBE})"))[0]))
         v["i_core_na"] = i_core * 1e9
         v["idd_total_na"] = i_tot * 1e9
-        v["p_core_nw"] = i_core * C.VDD * 1e9
+        v["p_core_nw"] = i_core * (C.VDD if vdd is None else vdd) * 1e9
     except KeyError:
         v["i_core_na"] = v["idd_total_na"] = v["p_core_nw"] = float("nan")
 
@@ -155,19 +189,21 @@ def _noise_vec(plot: R.Plot, name: str) -> np.ndarray:
 
 
 def evaluate(design: Design, tag: str, *, corner: str = C.CORNER_NOM,
-             temp: float = C.TEMP_NOM, record: bool = True, **kw) -> Score:
+             temp: float = C.TEMP_NOM, record: bool = True,
+             vdd: float | None = None, **kw) -> Score:
     """Simulate `design` and score it.  Every call is auto-recorded in the ledger.
 
     This is the CHEAP scorecard.  Expensive runs (THD transients, corner sets,
     Monte Carlo) are gated behind `gate()` -- the sim-economy rule.
     """
-    deck = ac_noise(design, corner=corner, temp=temp, **kw)
+    deck = ac_noise(design, corner=corner, temp=temp, vdd=vdd, **kw)
     rundir = ng.run(deck, tag)
-    s = score_plots(ng.plots(rundir), design)
+    s = score_plots(ng.plots(rundir), design, vdd=vdd)
     if record:
         from .ledger import log_run
         log_run(tag, s.values, deck=deck, design=design, corner=corner,
-                temp=temp, wall=ng.wall_time(rundir), violations=s.violations)
+                temp=temp, wall=ng.wall_time(rundir), violations=s.violations,
+                extra=None if vdd is None else {"vdd": vdd})
     return s
 
 
@@ -197,13 +233,14 @@ def gate(design: Design, tag: str, *, allow: tuple[str, ...] = ("irn_uv",),
 
 _FMT = {
     "fc_hz": "{:.2f}", "dc_db": "{:+.4f}", "peak_db": "{:+.4f}",
+    "ripple_db": "{:.4f}",
     "a1000_db": "{:.2f}", "ph_max_deg": "{:.2f}", "ph_step_deg": "{:.1f}",
     "irn_uv": "{:.3f}", "onoise_uv": "{:.2f}", "p_core_nw": "{:.3f}",
     "i_core_na": "{:.3f}", "idd_total_na": "{:.2f}", "c_total_pf": "{:.2f}",
-    "f_scored_hi": "{:.0f}",
+    "f_scored_hi": "{:.0f}", "mono_db": "{:.4f}",
 }
-COLS = ("fc_hz", "dc_db", "peak_db", "a1000_db", "ph_max_deg", "irn_uv",
-        "p_core_nw", "c_total_pf")
+COLS = ("fc_hz", "dc_db", "ripple_db", "peak_db", "mono_db", "a1000_db", "ph_max_deg",
+        "irn_uv", "p_core_nw", "c_total_pf")
 
 
 def table(rows: dict[str, Score], cols: tuple[str, ...] = COLS) -> str:

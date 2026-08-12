@@ -46,9 +46,9 @@ REFERENCE_SHA = {
     "decks/reference/lpf_core.sp":
         "23ea089e854a598672a39dff17e1e94117b08d9fe7b0ded5b018ba3036a903c0",
     "decks/reference/lpf_tb.sp":
-        "ffc3a6aba96756ea9e7af511a0d94395465c74b52cb813f64c3953f8559a6bfa",
+        "407e529809f01de38e500f67ef79c96a0756dcd51015869a336806ef12f007b5",
     "decks/reference/scorecard.json":
-        "8294dda28cf7e397848838634130876b4bf33de17b6a57d0462abfe7f2c26b2f",
+        "cc870e978a6c9fd040b884ff5791820a33bf270dc6b65b0c6c066481bb8e21e9",
 }
 
 RE_VENDOR = ("a deliberate re-vendor must update REFERENCE_SHA in scripts/lint.py "

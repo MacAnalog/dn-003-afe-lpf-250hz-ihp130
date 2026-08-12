@@ -112,11 +112,17 @@ class Design:
     # keeps a candidate from being scored at the reference's operating point.
     vicm: float = 0.25
     vocm: float = 1.25
+    # Realise each `c2_*` as two grounded capacitors instead of one floating
+    # one (see `_caps`).  Same differential response, 4x the drawn farads on
+    # that element -- the control that turns `fvf-2nd`'s floating-cap technique
+    # into a measured area saving instead of an asserted one.
+    c2_grounded: bool = False
     note: str = ""
 
     def total_cap(self) -> float:
         """Total DRAWN capacitance (both sides), in farads -- the area report."""
-        return 2 * self.c1_a + self.c2_a + 2 * self.c1_b + self.c2_b
+        k2 = 4.0 if self.c2_grounded else 1.0
+        return 2 * self.c1_a + k2 * self.c2_a + 2 * self.c1_b + k2 * self.c2_b
 
     def total_gate_area(self) -> float:
         return sum(d.area() for d in self.devs.values()) * 2
@@ -138,14 +144,35 @@ class Design:
 
 
 def _caps(d: Design) -> list[str]:
+    """The six capacitors.  `c2_*` is ONE floating cap across the pair.
+
+    That is `fvf-2nd`'s area technique, and it is worth 4x on this element, not
+    2x: in a balanced pair a floating C between the two halves loads each half
+    with 2C, so the grounded realisation of the same pole needs 2C per side --
+    four drawn farads where the floating version draws one.  Set
+    `Design.c2_grounded` to emit that realisation instead; the DIFFERENTIAL
+    response is identical by construction and the drawn capacitance is not,
+    which is what makes the saving measurable rather than asserted.
+
+    The two are not identical in COMMON mode -- a floating cap loads the
+    differential mode only, a grounded pair loads both -- so the grounded arm is
+    an area control, not a drop-in alternative for a cell with no CMFB.
+    """
+    # Line ORDER is load-bearing: `decks/reference/` is sha-pinned by
+    # `make lint`, so the default (floating) branch must emit exactly the lines
+    # it always has, in the order it always has.  The grounded branch is the
+    # only thing that may add or move anything.
+    c19 = ([f"c19 vout_1 0 {2 * d.c2_a:.6g}", f"c19b vout_2 0 {2 * d.c2_a:.6g}"]
+           if d.c2_grounded else [f"c19 vout_2 vout_1 {d.c2_a:.6g}"])
+    c12 = ([f"c12 voutn 0 {2 * d.c2_b:.6g}", f"c12b voutp 0 {2 * d.c2_b:.6g}"]
+           if d.c2_grounded else [f"c12 voutn  voutp  {d.c2_b:.6g}"])
     return [
         f"c13 net2   vout_1 {d.c1_a:.6g}",
         f"c17 net3   vout_2 {d.c1_a:.6g}",
-        f"c19 vout_2 vout_1 {d.c2_a:.6g}",
+    ] + c19 + [
         f"c1  voutp  net4   {d.c1_b:.6g}",
         f"c10 voutn  net1   {d.c1_b:.6g}",
-        f"c12 voutn  voutp  {d.c2_b:.6g}",
-    ]
+    ] + c12
 
 
 def build_reference(d: Design) -> list[str]:

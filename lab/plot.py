@@ -33,11 +33,16 @@ def _style(ax, xlabel, ylabel, title=None):
     ax.tick_params(labelsize=9)
 
 
-def _curves(designs: dict[str, Design], tag: str):
-    """Simulate each design once; return {name: (f, H, fn, inz)}."""
+def _curves(designs: dict[str, Design], tag: str, **kw):
+    """Simulate each design once; return {name: (f, H, fn, inz)}.
+
+    `**kw` goes to `lab.deck.ac_noise` -- pass `dec=200` for a figure, because
+    the scoring density (50) is chosen for search throughput and can still make
+    a shallow passband feature look like three straight segments.
+    """
     out = {}
     for i, (name, d) in enumerate(designs.items()):
-        pl = ng.simulate(ac_noise(d), f"{tag}_fig{i}")
+        pl = ng.simulate(ac_noise(d, **kw), f"{tag}_fig{i}")
         ac = R.pick(pl, "ac")
         f, h = R.diff_tf(ac, C.OUT_P, C.OUT_N)
         try:
@@ -51,9 +56,9 @@ def _curves(designs: dict[str, Design], tag: str):
 
 
 def bode(designs: dict[str, Design], path="bode.png", *, tag="bode",
-         title="Magnitude and phase, differential"):
+         title="Magnitude and phase, differential", **kw):
     """Magnitude + unwrapped phase lag, with the spec boxes drawn on."""
-    data = _curves(designs, tag)
+    data = _curves(designs, tag, **kw)
     fig, (a1, a2) = plt.subplots(2, 1, figsize=(7.2, 6.4), sharex=True)
     for i, (name, (f, h, _, _)) in enumerate(data.items()):
         y = R.db_rel_dc(h)
@@ -79,9 +84,9 @@ def bode(designs: dict[str, Design], path="bode.png", *, tag="bode",
 
 
 def noise(designs: dict[str, Design], path="noise.png", *, tag="noise",
-          title="Input-referred noise density (differential)"):
+          title="Input-referred noise density (differential)", **kw):
     """Input-referred density with the S5 integration band shaded."""
-    data = _curves(designs, tag)
+    data = _curves(designs, tag, **kw)
     fig, ax = plt.subplots(figsize=(7.2, 4.2))
     lo, hi = M.IRN_BAND
     ax.axvspan(lo, hi, color="#1f77b4", alpha=0.07)
@@ -169,3 +174,34 @@ def _save(fig, path) -> Path:
     fig.savefig(p, dpi=150, facecolor="white")
     plt.close(fig)
     return p
+
+
+def passband(designs: dict, path="passband.png", *, tag="pb", fmax=300.0,
+             title="Passband detail — the flatness clause"):
+    """Zoom on the flat band, with the +-0.2 dB S3 window drawn.
+
+    This figure exists because the failure it shows is invisible everywhere
+    else: a staggered pole pair sags mid-band and recovers before the corner,
+    which a one-sided peaking check and a 10 pt/decade grid both read as 0.000.
+    Always plot it on a DENSE sweep.
+    """
+    fig, ax = plt.subplots(figsize=(7.2, 4.2))
+    ax.axhspan(-0.2, 0.2, color="#2ca02c", alpha=0.10)
+    ax.annotate("S3: flat to +-0.2 dB up to 150 Hz", (1.2, 0.22), fontsize=8,
+                color="#2ca02c")
+    ax.axvline(150, color="0.6", ls=":", lw=1)
+    for i, (name, d) in enumerate(designs.items()):
+        pl = ng.simulate(ac_noise(d, dec=200, fstart=1.0, fstop=fmax * 2),
+                         f"{tag}{i}")
+        acp = R.pick(pl, "ac")
+        f, h = R.diff_tf(acp, C.OUT_P, C.OUT_N)
+        y = R.db_rel_dc(h)
+        m = f <= fmax
+        rip = R.ripple_db(f, h, 150.0)
+        ax.semilogx(f[m], y[m], color=_COLORS[i % len(_COLORS)], lw=1.7,
+                    label=f"{name} — ripple {rip:.3f} dB")
+    ax.set_ylim(-2.0, 0.6)
+    _style(ax, "frequency (Hz)", "|H| rel. dc (dB)", title)
+    ax.legend(fontsize=8, loc="lower left")
+    fig.tight_layout()
+    return _save(fig, path)

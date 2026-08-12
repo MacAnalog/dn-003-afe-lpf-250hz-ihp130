@@ -57,10 +57,21 @@ def log_run(tag: str, values: dict, *, deck: str = "", design=None,
 
 
 def design_dict(design) -> dict:
-    """A `Design` as plain JSON -- enough to rebuild the exact netlist later."""
+    """A `Design` as plain JSON -- enough to rebuild the exact netlist later.
+
+    `vicm`/`vocm` are in here because they are NOT bench trivia: `vicm` sets the
+    input common mode, so it moves every device's operating point and therefore
+    fc, IRN and THD.  Rows written before 2026-08-11 omit them, and a design
+    rebuilt from one of those rows silently falls back to the dataclass defaults
+    (0.25 / 1.25) -- which is a different circuit from a cell sized at 0.20 /
+    1.10.  Rebuilders must therefore CHECK a reconstruction against the row's
+    own recorded metrics rather than trust it (see experiments/.../state.py).
+    """
     return {
         "topology": design.topology,
         "iref": design.iref,
+        "vicm": design.vicm,
+        "vocm": design.vocm,
         "caps_pf": {k: round(getattr(design, k) * 1e12, 6)
                     for k in ("c1_a", "c2_a", "c1_b", "c2_b")},
         "devs": {role: {"w": d.w, "l": d.l, "ng": d.ng, "m": d.m}

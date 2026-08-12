@@ -14,8 +14,8 @@ change one, change the other** — they are meant to be kept in sync mechanicall
 > papers** in `pdf/` — a single-paper result does not qualify. Everything else
 > about the filter must hold.
 
-Concretely: cut IRN(0.5–200 Hz) from the **50.18 µVrms** reference baseline
-measured in this repo to **< 40 µVrms** — a **−20.3 %** reduction — while
+Concretely: cut IRN(0.5–200 Hz) from the **49.98 µVrms** reference baseline
+measured in this repo to **< 40 µVrms** — a **−20.0 %** reduction — while
 holding order, cutoff, flatness, distortion and power inside the box below.
 Total capacitance is **reported, never specced**.
 
@@ -45,13 +45,13 @@ otherwise.
 
 | # | requirement | target | reference baseline (measured here) | checked by |
 |---|---|---|---|---|
-| S1 | filter order / shape | 4th-order low-pass, **two true biquads** (total phase shift → 360°) | **346.43°** max unwrapped lag; **−48.43 dB** at 1 kHz | `lab.metrics.SPEC["ph_max_deg"] >= 330.0` **and** `SPEC["a1000_db"] <= -48.0` |
-| S2 | cutoff | 250 Hz ± 2 % ⇒ **245.0 – 255.0 Hz** | **250.00 Hz** | `SPEC["fc_hz"] in (245.0, 255.0)` |
-| S3 | passband gain | 0 dB, **\|dc\| ≤ 0.2 dB**, flat ≤ 150 Hz | **−0.0047 dB** | `SPEC["dc_db"] abs<= 0.2` |
-| S4 | peaking | none, **≤ 0.2 dB** numerically | **0.023 dB** | `SPEC["peak_db"] <= 0.2` |
-| S5 | **IRN, 0.5–200 Hz** | **< 40 µVrms** | **50.18 µVrms** ← the number to beat | `SPEC["irn_uv"] < 40.0`; `lab.metrics.goal_met` |
+| S1 | filter order / shape | 4th-order low-pass, **two true biquads** (total phase shift → 360°) | **346.74°** max unwrapped lag (ideal 4-pole ceiling **350.53°**); **−48.43 dB** at 1 kHz | `lab.metrics.SPEC["ph_max_deg"] >= 330.0` **and** `SPEC["a1000_db"] <= -48.0` |
+| S2 | cutoff | 250 Hz ± 2 % ⇒ **245.0 – 255.0 Hz** | **250.37 Hz** | `SPEC["fc_hz"] in (245.0, 255.0)` |
+| S3 | passband gain | 0 dB, **\|dc\| ≤ 0.2 dB**, flat ≤ 150 Hz | **−0.0047 dB** dc; **ripple 0.2512 dB — FAILS** the flatness clause on a dense sweep (see note) | `SPEC["dc_db"] abs<= 0.2` |
+| S4 | peaking | none, **≤ 0.2 dB** numerically | **0.0227 dB** | `SPEC["peak_db"] <= 0.2` |
+| S5 | **IRN, 0.5–200 Hz** | **< 40 µVrms** | **49.98 µVrms** ← the number to beat | `SPEC["irn_uv"] < 40.0`; `lab.metrics.goal_met` |
 | S6 | **filter-core power** (core only — **excludes** the bias reference) | **< 50 nW** (= 33.3 nA of core current at 1.5 V) | **12.07 nW** (8.04 nA) — 4.1× headroom | `SPEC["p_core_nw"] < 50.0`, from the `vflt` series probe |
-| S7 | THD @ 175 mVpp differential, **fin = 50 Hz** | **≤ −40 dB**, harmonics 2–10; higher fins are an informative profile only | **not yet measured** — see the gap note below | `lab.metrics.THD_LIMIT_DB` + `lab.deck.tran_thd`; **no scoring helper exists yet** |
+| S7 | THD @ 175 mVpp differential, **fin = 50 Hz** | **≤ −40 dB**, harmonics 2–10; higher fins are an informative profile only | **−48.37 dB** (HD3-dominated; HD2/HD4 sit at the ≈ −148 dB numerical floor, as a balanced differential cell should) | `lab.thd.measure` → `lab.metrics.THD_LIMIT_DB`; coherent strobed transient + DFT (`lab.deck.tran_thd`) |
 | S8 | technique provenance | **≥ 2 papers** from `pdf/` combined | — | the experiment README's `**Paper` row |
 
 **Two lines are NOT spec lines and must stay that way:**
@@ -66,20 +66,22 @@ otherwise.
 
 **Soft box is empty.** `lab.metrics.SOFT` names report-only columns
 (`c_total_pf`, `idd_total_na`, `i_core_na`, `onoise_uv`, `ph_step_deg`,
-`f_scored_hi`); none of them is a pass/fail.
+`f_scored_hi`, `mono_db`); none of them is a pass/fail.
 
 ### Reference-baseline detail (all measured here, `runs/ledger.ndjson` tag `ref_fit`)
 
 | quantity | value |
 |---|---|
-| fc | 250.00 Hz |
+| fc | 250.37 Hz |
 | passband gain (dc, absolute, at 0.1 Hz) | −0.0047 dB |
-| peaking | 0.023 dB |
+| peaking | 0.0227 dB |
+| ripple to 150 Hz (S3 flatness) | **0.2512 dB — over the 0.2 dB bound** |
+| `mono_db` (worst rise of \|H\| below fc) | 0.0227 dB — essentially monotone |
 | \|H\| at 1 kHz | −48.43 dB (4th-order Butterworth arithmetic: −48.16 dB) |
-| ph_max (S1 certificate) | 346.43° |
+| ph_max (S1 certificate) | 346.74° |
 | ph_step (resolvability, report-only) | 46.94° |
 | highest scored frequency (−100 dB floor) | 3162.3 Hz |
-| IRN 0.5–200 Hz | **50.18 µVrms** |
+| IRN 0.5–200 Hz | **49.98 µVrms** |
 | output noise 0.1 Hz–1 kHz | 73.11 µVrms |
 | core current / power | 8.04 nA / **12.07 nW @ 1.5 V** |
 | total testbench supply | 10.05 nA |
@@ -100,16 +102,29 @@ The conversion is explicit in code — `p_core_nw = i_core * config.VDD * 1e9`
 (`lab.metrics.score_plots`). Never re-introduce the shortcut "current in nA is
 numerically power in nW"; that identity holds only at a 1 V rail.
 
-### S7 gap (open, not a pass)
+### S7 (closed — measured here)
 
-`lab.deck.tran_thd` builds the coherent strobed transient and
-`lab.metrics` carries the constants (`THD_AMPL = 87.5e-3`, `THD_FIN = 50.0`,
-`THD_LIMIT_DB = -40.0`), but **no analysis/scoring helper is written yet**, so
-the reference baseline has **no measured THD number**. S7 is therefore an
-un-discharged obligation on the reference *and* on every candidate. Do not
-report S7 as passing on the strength of the originating campaign's numbers —
-those were measured on another technology at another supply and are not carried
-forward.
+`lab.thd.measure` scores the coherent strobed transient (`lab.deck.tran_thd`)
+against the constants in `lab.metrics` (`THD_AMPL = 87.5e-3`, `THD_FIN = 50.0`,
+`THD_LIMIT_DB = -40.0`). The reference baseline measures **−48.37 dB**,
+HD3-dominated, with HD2/HD4 at the ≈ −148 dB numerical floor — which is the
+balance check as much as the distortion number: a differential cell whose even
+harmonics climb off the floor has an asymmetry or a bug, not a linearity result.
+Nothing here is carried forward from the originating campaign.
+
+### S3's flatness clause: the reference does not meet it
+
+Stated plainly because the reference is the yardstick and it must not be
+described as "on spec except for noise". Re-certified on a 50 pts/decade sweep,
+the reference measures **`ripple_db` = 0.2512 dB** against the 0.2 dB bound. It
+passed at 10 pts/decade only because the samples straddled the feature — the
+same resolution problem that hid passband sags on every candidate.
+
+It is a shallow one-sided droop, not a bump: `mono_db` = 0.0227 dB says the
+response essentially never climbs, which is why it looks right by eye. The
+reference stays the yardstick and stays frozen; a candidate that meets the
+flatness clause is *better than the reference on that line*, and should say so
+rather than quietly inheriting the reference's pass.
 
 ---
 
@@ -117,11 +132,11 @@ forward.
 
 | # | held verbatim (technology-independent) | re-anchored here, and why |
 |---|---|---|
-| S1 | "two true biquads, 4th-order LP" is pure transfer-function shape. The companion `a1000 ≤ −48 dB` is **arithmetic, not silicon**: a 4-pole maximally flat response at 4× the cutoff is exactly 4⁻⁴ = **−48.16 dB** (`lab.shape.A1000_BUTTER_DB`). The **330°** threshold is also held. | Only the *baseline* moved: the reference measures **346.43°**, clearing the box by 16.43°. The **−100 dB magnitude floor** was re-validated on this repo's own response — the scored band ends at **3162.3 Hz**, and the worst unwrap-corrected step inside it is **46.94°**, a third of the 150° guard. |
+| S1 | "two true biquads, 4th-order LP" is pure transfer-function shape. The companion `a1000 ≤ −48 dB` is **arithmetic, not silicon**: a 4-pole maximally flat response at 4× the cutoff is exactly 4⁻⁴ = **−48.16 dB** (`lab.shape.A1000_BUTTER_DB`). The **330°** threshold is also held. | Only the *baseline* moved: the reference measures **346.43°**, clearing the box by 16.43°. The **−100 dB magnitude floor** was re-validated on this repo's own response — the scored band ends at **3162.3 Hz**, and the worst unwrap-corrected step inside it is **46.94°**, a third of the 150° guard. **The floor also caps the achievable score, and 360° is not it:** pushed through `lab.raw.ph_max_deg` on the scoring grid, a *mathematically ideal* 4-pole Butterworth returns **350.53°**, because |H| has already fallen through −100 dB (at 15.9 × fc) while the phase is still ~9° short of its asymptote. Unfloored, the same response returns 359.57°. So the ceiling for a true 4-pole cell is ~350°, the reference sits 4° under it, and a cell scoring **above** ~351° is not "more fourth-order" — it is carrying parasitic lag that the 4-pole model does not contain. |
 | S2 | 250 Hz and ±2 % ⇒ 245.0–255.0 Hz. **Held verbatim.** | Nothing in the number. The *sizing* that hits it (gm and C) is entirely technology-dependent and was re-synthesized — see `doc/design-reference.md`. |
 | S3 | 0 dB, \|dc\| ≤ 0.2 dB. Structural: shunt feedback pins H(0) = 1 independently of process. Flatness judged two-sided only **≤ 150 Hz** — do not police ripple *through* the corner. | The **structure** changed: with no isolated NMOS in SG13G2, an n-input follower's dc gain is exactly 1/n and blows this line by 10×. Both stages are p-type here. The measured −0.0047 dB is this repo's reference, not a carried-forward number. See `doc/design-reference.md` §"Body effect". |
 | S4 | peaking ≤ 0.2 dB. **Held verbatim.** | Nothing. Implementation note: `lab.raw.peaking_db` scores one-sided (`max(0, …)`) over f ≤ 1 kHz. |
-| S5 | The **40 µVrms goal** and the **0.5–200 Hz band** are held verbatim — an ECG-AFE-level requirement, not a device requirement. The band-limiting rationale is technology-independent (density diverges above fc because gain → 0). | **The baseline is re-measured: 50.18 µVrms.** The relative ask is therefore **−20.3 %**. Noise-power apportionment (bias share, flicker share) is process-dependent and has **not** been re-measured here — do not quote the originating campaign's percentages as facts about this design. |
+| S5 | The **40 µVrms goal** and the **0.5–200 Hz band** are held verbatim — an ECG-AFE-level requirement, not a device requirement. The band-limiting rationale is technology-independent (density diverges above fc because gain → 0). | **The baseline is re-measured: 49.98 µVrms** (re-certified 2026-08-12 at 50 pts/decade; 50.18 on the old 10 pts/decade grid — the −0.20 µV is the sweep density, not the circuit). The relative ask is therefore **−20.0 %**. Noise-power apportionment (bias share, flicker share) is process-dependent and has **not** been re-measured here — do not quote the originating campaign's percentages as facts about this design. |
 | S6 | Structure held: **filter core only**, measured by a 0 V series source in the DUT's supply pin, bias/reference excluded and report-only. | **Re-ruled to `< 50 nW` at 1.5 V** (= 33.3 nA core) because the spec is stated in watts. The nA→nW shortcut was removed from the code. |
 | S7 | All four numbers held: **−40 dB**, **175 mVpp differential**, **50 Hz**, harmonics **2–10**. Held too: "higher fins are an informative profile only", and the balun convention (`ampl` = half of Vpp_diff, because the balun gains are ±0.5). | 175 mVpp against a 1.5 V rail is 11.7 % of the supply, so the swing is *relatively* easier than at a lower rail — but the slew-bound characterisation is **unmeasured here** and must be re-run, not inherited. |
 | S8 | ≥ 2 papers from `pdf/`, and the corpus itself (all 10 PDFs are process-agnostic academic work). **Held verbatim.** | Nothing. Settle up front, per experiment, whether a pure cap/Q re-allocation counts as a "technique" — it does not; it is the **control** that must be subtracted before crediting anything. |
@@ -131,7 +146,7 @@ forward.
 ## Notes on the metric definitions (do not re-derive)
 
 These are the definitions the numbers above mean. Re-implementing them
-differently silently changes what "50.18 µVrms" or "346.43°" is.
+differently silently changes what "49.98 µVrms" or "346.74°" is.
 
 ### IRN — input-referred noise, 0.5–200 Hz
 

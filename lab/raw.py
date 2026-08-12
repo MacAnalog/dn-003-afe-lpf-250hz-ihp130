@@ -228,6 +228,51 @@ def peaking_db(f: np.ndarray, h: np.ndarray, fmax: float = 1e3) -> float:
     return float(max(0.0, np.max(y[m])))
 
 
+def ripple_db(f: np.ndarray, h: np.ndarray, fmax: float = 150.0) -> float:
+    """S3's flatness clause: worst |H(f) - H(dc)| over the flat band, EITHER sign.
+
+    This exists because `peaking_db` only looks for gain ABOVE dc, and the
+    failure mode this topology actually has is a passband DIP: the two biquads'
+    poles stagger, the magnitude sags mid-band and recovers before the corner.
+    A one-sided peaking check reads 0.000 dB straight through it.
+
+    Resolution matters as much as sign.  At 10 points/decade the samples near
+    the corner sit ~26 % apart, which is coarse enough to step over a dip
+    entirely -- a 1.46 dB sag measured at 200 pts/decade was invisible on the
+    sparse grid.  Score this on a dense sweep (see `lab.metrics.AC_DEC`).
+    """
+    y = db_rel_dc(h)
+    m = f <= fmax
+    if not np.any(m):
+        return float("nan")
+    return float(np.max(np.abs(y[m])))
+
+
+def monotone_db(f: np.ndarray, h: np.ndarray, fmax: float) -> float:
+    """Worst RISE of |H| with frequency below `fmax`, in dB.  0 => monotone.
+
+    The third flatness number, and the one the other two cannot see.  `peaking_db`
+    is one sided (gain above dc) and `ripple_db` is a peak-to-peak spread, so a
+    response that sags 0.09 dB at 80 Hz and climbs 0.09 dB back at 130 Hz scores
+    0.000 on the first and a comfortably-passing 0.084 on the second -- while
+    visibly not being a maximally-flat low-pass.  A true 4-pole Butterworth is
+    monotone by construction, so any non-zero value here is shape error, however
+    well it hides inside the S3 and S4 bounds.
+
+    Reference points measured in this repo: the frozen reference scores 0.023 dB;
+    optimiser-fitted cells scored 0.15-0.36 dB before they were re-fitted against
+    the template, and 0.000-0.001 dB after.
+    """
+    y = db_rel_dc(h)
+    f = np.asarray(np.real(f), float)
+    m = f <= fmax
+    if np.count_nonzero(m) < 2:
+        return float("nan")
+    yy = y[m]
+    # how far the trace ever climbs back above its own running minimum
+    return float(max(0.0, np.max(yy - np.minimum.accumulate(yy))))
+
+
 def ph_max_deg(f: np.ndarray, h: np.ndarray, floor_db: float = -100.0) -> float:
     """The biquad-order certificate: max unwrapped phase LAG, in degrees.
 

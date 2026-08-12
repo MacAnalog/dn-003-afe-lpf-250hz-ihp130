@@ -59,18 +59,33 @@ def _bias(d: Design) -> str:
 
     un = _unit(("bias_a_int", "bias_a_out", "bias_b_int"), True)
     up = _unit(("bias_a_out", "bias_b_out", "bias_a_int"), False)
+    # alpha = 0 -> a plain dc source, so the deck text (and its hash) is
+    # byte-identical to every run made before the knob existed.
+    if C.BIAS_ALPHA:
+        src = (f"bref vdd_top vbn i = {d.iref:.6g}"
+               f"*pow((temper+273.15)/{C.BIAS_TNOM_K:g},{C.BIAS_ALPHA:g})")
+    else:
+        src = f"iref vdd_top vbn {d.iref:.6g}"
     return "\n".join([
-        f"iref vdd_top vbn {d.iref:.6g}",
+        src,
         f"xmbn vbn vbn 0 0 {NCH} w={un.w:.6g} l={un.l:.6g} ng={un.ng} m=1",
         f"xmbp vbp vbn 0 0 {NCH} w={un.w:.6g} l={un.l:.6g} ng={un.ng} m=1",
         f"xmbpd vbp vbp vdd_top vdd_top {PCH} w={up.w:.6g} l={up.l:.6g} ng={up.ng} m=1",
     ])
 
 
-def _core(d: Design, ic: bool = True) -> str:
-    """Supply probes, the DUT instance, and the dc-solution hints."""
+def _core(d: Design, ic: bool = True, vdd: float | None = None) -> str:
+    """Supply probes, the DUT instance, and the dc-solution hints.
+
+    `vdd` overrides `lab.config.VDD` for THIS deck only.  It is a parameter and
+    not a module global on purpose: a supply sweep runs in a thread pool
+    (`lab.parallel.batch`), and mutating `C.VDD` per point is a race that
+    silently mixes one point's netlist with another point's measurement.
+    `vdd=None` reproduces the nominal deck byte-for-byte.
+    """
+    v = C.VDD if vdd is None else vdd
     lines = [
-        f"vdd_meas vdd_top 0 {C.VDD}",
+        f"vdd_meas vdd_top 0 {v}",
         "vflt vdd_top vdd 0",
         f"xdut vinp vinn voutp voutn vbn vbp vdd lpf_core",
     ]
@@ -82,7 +97,12 @@ def _core(d: Design, ic: bool = True) -> str:
         # Internal DUT nodes must be qualified with the instance name; ngspice
         # silently warns "Nodeset on non-existent node" and carries on, so an
         # unqualified hint is a no-op that looks like it worked.
-        vh = d.vocm
+        # The hint is clamped to the supply: on a drooped rail an output-CM
+        # hint ABOVE vdd points the solver at a node voltage the circuit cannot
+        # reach, which turns a legitimate "degrades gracefully" point into a
+        # spurious non-convergence.  At the nominal supply the clamp is inert
+        # (vocm 1.25 < VDD 1.5), so nominal decks are unchanged.
+        vh = min(d.vocm, v)
         lines.append(f".nodeset v(xdut.vout_1)={vh} v(xdut.vout_2)={vh} "
                      f"v(voutp)={vh} v(voutn)={vh}")
     return "\n".join(lines)
@@ -127,8 +147,8 @@ def _stim_sine(fin: float, ampl: float, vicm: float) -> str:
 # ------------------------------------------------------------------ decks ---
 
 def ac_noise(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
-             fstart: float = 0.1, fstop: float = 1e5, dec: int = 10,
-             nstop: float = 1e3) -> str:
+             fstart: float = 0.1, fstop: float = 1e5, dec: int = C.AC_DEC,
+             nstop: float = 1e3, vdd: float | None = None) -> str:
     """The cheap scorecard deck: op + ac + noise in one run, one rawfile.
 
     `dec = 10` matches the originating bench's sweep density so the phase
@@ -138,7 +158,7 @@ def ac_noise(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
     return f""".title lpf {d.topology} -- ac + noise
 {_libs(corner)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=vdd)}
 {_bias(d)}
 {_stim_ac(d.vicm)}
 .temp {temp}
@@ -158,7 +178,7 @@ write sim.raw
 
 
 def op_only(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
-            probes: list[str] | None = None) -> str:
+            probes: list[str] | None = None, vdd: float | None = None) -> str:
     """Operating point with per-device parameters printed -- the sizing tool.
 
     `probes` are ngspice device-parameter expressions; `lab.metrics.op_table`
@@ -169,7 +189,7 @@ def op_only(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
     return f""".title lpf {d.topology} -- operating point
 {_libs(corner)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=vdd)}
 {_bias(d)}
 {_stim_ac(d.vicm)}
 .temp {temp}
@@ -185,7 +205,7 @@ write sim.raw
 
 def tran_thd(d: Design, fin: float, ampl: float, *, cycles: int = 20,
              settle: int = 8, ppc: int = 512, corner: str = C.CORNER_NOM,
-             temp: float = C.TEMP_NOM) -> str:
+             temp: float = C.TEMP_NOM, vdd: float | None = None) -> str:
     """Coherent strobed transient for THD.
 
     The transient is STROBED at an exact integer number of points per input
@@ -201,7 +221,7 @@ def tran_thd(d: Design, fin: float, ampl: float, *, cycles: int = 20,
     return f""".title lpf {d.topology} -- thd fin={fin:g} ampl={ampl:g}
 {_libs(corner)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=vdd)}
 {_bias(d)}
 {_stim_sine(fin, ampl, d.vicm)}
 .temp {temp}

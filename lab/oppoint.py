@@ -80,8 +80,13 @@ class DevOp:
 
 
 def probe(d: Design, tag: str, *, corner: str = C.CORNER_NOM,
-          temp: float = C.TEMP_NOM) -> tuple[dict, dict]:
-    """Simulate the dc operating point; return ({role: DevOp}, {net: volts})."""
+          temp: float = C.TEMP_NOM, vdd: float | None = None) -> tuple[dict, dict]:
+    """Simulate the dc operating point; return ({role: DevOp}, {net: volts}).
+
+    `vdd` overrides the nominal supply for this deck only (see `lab.deck._core`)
+    -- it is what makes a supply-droop sweep able to attribute a failure to the
+    device that left saturation.  `None` = `lab.config.VDD`.
+    """
     roles = INSTANCES[d.topology]
     saves, prints = [], []
     for role, insts in roles.items():
@@ -102,7 +107,7 @@ def probe(d: Design, tag: str, *, corner: str = C.CORNER_NOM,
     deck = f""".title lpf {d.topology} -- operating point probe
 {_libs(corner)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=vdd)}
 {_bias(d)}
 {_stim_ac(d.vicm)}
 .temp {temp}
@@ -143,8 +148,10 @@ write sim.raw
     return ops, volts
 
 
-def table(ops: dict, volts: dict, d: Design | None = None) -> str:
+def table(ops: dict, volts: dict, d: Design | None = None,
+          vdd: float | None = None) -> str:
     """Markdown build/bias sheet -- the table that goes in a scorecard."""
+    v_supply = C.VDD if vdd is None else vdd
     rows = ["| role | inst | type | ID (nA) | gm (nS) | gm/ID | gm/gds | "
             "\\|Vds\\| (mV) | region |",
             "|---|---|---|---|---|---|---|---|---|"]
@@ -157,11 +164,11 @@ def table(ops: dict, volts: dict, d: Design | None = None) -> str:
         f"{n.split('.')[-1]} {volts.get(f'v({n})', float('nan'))*1e3:.0f}"
         for n in ("voutp", "xdut.net4", "xdut.vout_1", "xdut.net2")
         if f"v({n})" in volts)
-    rows.append(f"\nDC ladder (mV): VDD {C.VDD*1e3:.0f} → {lad} → 0")
+    rows.append(f"\nDC ladder (mV): VDD {v_supply*1e3:.0f} → {lad} → 0")
     if "i(vflt)" in volts:
         i = abs(volts["i(vflt)"])
-        rows.append(f"Core current **{i*1e9:.3f} nA** → **{i*C.VDD*1e9:.3f} nW** "
-                    f"@ {C.VDD} V")
+        rows.append(f"Core current **{i*1e9:.3f} nA** → **{i*v_supply*1e9:.3f} nW** "
+                    f"@ {v_supply} V")
     if d is not None:
         rows.append(f"iref {d.iref*1e9:.3g} nA · vicm {d.vicm} V · "
                     f"C_total {d.total_cap()*1e12:.2f} pF")

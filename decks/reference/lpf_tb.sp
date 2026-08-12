@@ -43,9 +43,9 @@ set filetype=binary
 set appendwrite
 op
 write sim.raw
-ac dec 10 0.1 100000
+ac dec 50 0.1 100000
 write sim.raw
-noise v(voutp,voutn) vsig dec 10 0.1 1000
+noise v(voutp,voutn) vsig dec 50 0.1 1000
 setplot noise1
 write sim.raw
 .endc
