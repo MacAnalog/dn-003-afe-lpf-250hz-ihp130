@@ -1,0 +1,34 @@
+{
+  "tag": "reference",
+  "certified": "2026-08-11",
+  "what": "The expert topology ported to IHP SG13G2 and re-sized to spec. This is the yardstick every candidate is scored against; `scripts/baseline.py --check` re-runs the frozen deck and fails if any number below moves.",
+  "deck": "decks/reference/lpf_tb.sp",
+  "deck_sha256": "ffc3a6aba96756ea9e7af511a0d94395465c74b52cb813f64c3953f8559a6bfa",
+  "design": "decks/reference/design.json",
+  "build_sheet": "decks/reference/build-sheet.md",
+  "topology": "reference",
+  "corner": "mos_tt",
+  "temp_c": 27.0,
+  "vdd": 1.5,
+  "lane": "docker (spicexplorer-spice-base:local, ngspice 45 + OSDI)",
+  "devices": "16 transistors + 6 capacitors",
+  "bias": "one ideal reference current into a real n/p mirror; every bias device is an integer multiple of that unit (per side: 2 units at each biquad output => 8 nA total)",
+  "caps_pf": {"c1_a": 29.468, "c2_a": 6.221, "c1_b": 11.453, "c2_b": 9.946},
+  "scorecard": {
+    "fc_hz": 250.00,
+    "dc_db": -0.0047,
+    "peak_db": 0.023,
+    "a1000_db": -48.43,
+    "ph_max_deg": 346.43,
+    "irn_uv": 50.18,
+    "i_core_na": 8.04,
+    "p_core_nw": 12.07,
+    "c_total_pf": 98.01
+  },
+  "notes": [
+    "|H| at 1 kHz is -48.43 dB against -48.16 dB of 4th-order Butterworth arithmetic.",
+    "IRN 0.5-200 Hz = 50.18 uVrms is THE NUMBER TO BEAT: the challenge is < 40 uVrms.",
+    "Total drawn capacitance is REPORTED, never specced.",
+    "Every number here was measured in THIS repo on the frozen deck above -- nothing is carried forward from the originating campaign."
+  ]
+}
