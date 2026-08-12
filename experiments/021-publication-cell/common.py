@@ -134,6 +134,7 @@ def full(design: Design, name: str, *, thd: bool = True) -> dict:
            # `topology` is not decoration: it selects the BUILDER, so a row
            # without it cannot be rebuilt into the same netlist at all.
            "topology": design.topology,
+           "lv_roles": sorted(design.lv_roles), "vmid": design.vmid,
            "iref": design.iref, "vicm": design.vicm, "vocm": design.vocm}
     if thd:
         add_thd(design, row)

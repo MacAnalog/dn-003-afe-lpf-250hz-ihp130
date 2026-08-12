@@ -1,6 +1,6 @@
 # 021 — the publication cell: a flat, monotone 4-pole that holds every line
 
-**Status: CLOSED 2026-08-12 — `021-final` certified on all of S1–S8 at the nominal corner, with 78 % mismatch yield. NOT corner-robust and NOT droop-tolerant; see §5.**
+**Status: CLOSED 2026-08-12 — TWO certified cells.** `021-final` (branch-stacked, vicm 0.20 V): all of S1–S8, 30.71 µV, 6.01 nW, 78 % mismatch yield, but **no supply-droop margin**. `021-vdd2-final` (unstacked, lv followers, **vicm = VDD/2**): all of S1–S8, 34.85 µV, 24.01 nW, **82 % yield, VDD_min 1.25 V**, 6/22 corners. See §4.7 for why the common mode forced the second cell, and §5 for the yield.
 
 | | |
 |---|---|
@@ -233,6 +233,163 @@ the fit pulled the survivor straight back to the same allocation
 this topology — the two stages have different gm ratios, so the template has
 essentially one solution, and the correlation was a proxy for the device sizing
 that produced it.
+
+## 4.7 A second certified cell: input common mode at VDD/2
+
+The cell of §4.1 runs at vicm = 0.20 V, which is a real integration burden — a
+preceding stage has to deliver it. Getting to VDD/2 turned out to need two
+changes, neither of them a topology change, and it produced a **second**
+certified cell with a different and mostly better robustness profile.
+
+### Why sizing alone cannot do it
+
+The all-p cascade shifts the common mode up one |V_SG| per stage, so
+vocm ≈ vicm + 2·|V_SG|, and |V_SG| is threshold-set. Sweeping vicm on the §4.1
+cell with sizing held fixed:
+
+| vicm | v(outp) | fc | dc dB | IRN | out of saturation |
+|---|---|---|---|---|---|
+| 0.20 | 1.159 | 249.87 | −0.008 | 30.71 | — |
+| 0.30 | 1.259 | 249.77 | −0.007 | 30.71 | — |
+| 0.40 | 1.359 | 246.68 | −0.143 | 30.82 | bridge |
+| 0.50 | 1.439 | 195.23 | −7.56 | 39.92 | bridge, gmf_b |
+| 0.75 | 1.451 | 170.66 | **−39.43** | 254.61 | bias_a_int, bridge, gmf_b |
+
+Widening helps only logarithmically — |V_SG| falls n·U_T per e-fold, ≈ **92 mV
+per decade** of width. Pushed to the ~30× needed for vicm = 0.5, it *works* on
+dc but destroys the filter: drawn capacitance fell 150.6 → **104.0 pF** at the
+same 250 Hz cutoff, i.e. ~47 pF of the pole-setting capacitance became
+**transistor gate** — voltage-dependent, non-linear. THD collapsed −42.2 →
+**−30.3 dB** and the response stopped being 4-pole (ph_max 438.9°, far past the
+350.5° ideal ceiling). Width is not a common-mode knob past a point; it is a
+linearity sink.
+
+### The lever that does work: device flavour
+
+`sg13_lv_pmos` attacks V_th directly instead of the log term. Measured at this
+cell's own geometry (W 15.6 / L 10.4 µm) and its own branch currents:
+
+| flavour | \|Vgs\| @ 0.662 nA | \|Vgs\| @ 2.005 nA |
+|---|---|---|
+| `sg13_hv_pmos` | 0.4574 V | 0.5015 V |
+| `sg13_lv_pmos` | **0.1682 V** | **0.2028 V** |
+
+289 and 299 mV less, and the cascade shifts twice: **588 mV of common-mode
+headroom**. `sg13_lv_nmos` stays closed — it carries 1.6–5.1 nA at Vgs = 0,
+more than this filter's whole branch current.
+
+Two things had to be got right. Only the **followers** may move: `gmf_b` and
+`bridge` set the branch current through V_SG(gmf_b) + V_SG(bridge) = VDD, and a
+lower-threshold pair re-solves that sum at **408–570 nA** instead of 2 nA. And
+flicker costs 9 % per device (13.01 → 14.20 µVrms gate-referred at equal
+geometry and current) — but lv also gives gm/ID = 32 against 25, so at equal
+current it buys more gm, more capacitance at the same fc, and **less** noise
+overall. Measured on the stacked cell: IRN 30.71 → 29.38 µV.
+
+### Where the stacked topology stops: 0.65 V
+
+With `in_a` on lv, the branch-stacked cell certifies at **vicm = 0.65 V** on all
+nine lines (fc 249.85, mono 0.0000, a1k −49.89, ph 332.23, IRN 29.38 µV,
+6.01 nW, THD −41.90). It will not go further: the **bridge** needs 104 mV
+between vout_1 and net4 while net4 is pinned by the mirror, and at vicm = 0.75
+every combination of follower flavour, bridge width and mirror width leaves it
+at 42–75 mV.
+
+### The VDD/2 cell — `021-vdd2-final`
+
+Dropping the bridge — i.e. using the repo's **other existing topology**, the
+unstacked reference structure — removes that constraint entirely: at vicm = 0.75
+every device is saturated with **365 mV** of |Vds| against a 104 mV floor. With
+both followers on lv, uniform ×2 scaling for noise, and the bias devices grown
+×36 in area (see below), it certifies on all nine lines:
+
+| line | requirement | measured | |
+|---|---|---|---|
+| S1 phase | ≥ 330° | **341.83°** | PASS |
+| S1 stopband | ≤ −48 dB @ 1 kHz | **−49.15 dB** | PASS |
+| S2 cutoff | 245–255 Hz | **249.90 Hz** | PASS |
+| S3 dc gain | \|dc\| ≤ 0.2 dB | **−0.0038 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0556 dB** | PASS |
+| S4 peaking | ≤ 0.2 dB | **+0.0071 dB** | PASS |
+| S5 IRN | < 40 µVrms | **34.85 µV** | PASS |
+| S6 power | < 50 nW | **24.01 nW** | PASS |
+| S7 THD | ≤ −40 dB | **−44.64 dB** | PASS |
+
+**vicm = 0.75 V = VDD/2**, vocm = 1.138 V, `mono_db` 0.0071, C 245.0 pF.
+
+### Mismatch is a bias-device problem, and bias area is free
+
+Unstacked, the cell starts at only **12 %** mismatch yield (σ(fc) 8.89 Hz)
+against the stacked cell's 78 %: eight independent bias devices each inject
+current mismatch where the stacked cell shares one branch, and in weak inversion
+σ(I)/I = σ(V_th)/(n·U_T) ≈ σ(V_th)/40 mV, so a few mV of threshold mismatch is a
+>10 % current spread.
+
+Scaling **all** device areas fixes it but spends phase (ph 343.9 → 322.5° at
+×5.76, failing S1) because the cost is signal-path gate capacitance. Scaling
+**only the bias devices** — whose gates sit on the quiet vbn/vbp rails — costs
+nothing:
+
+| bias gate area | ph_max | IRN µV | THD | **MC all-pass** | σ(fc) |
+|---|---|---|---|---|---|
+| ×1 | 343.9 | 36.55 | −44.86 | 12 % | 8.89 Hz |
+| ×4 | 343.4 | 35.22 | −44.88 | 50 % | 4.47 Hz |
+| ×9 | 343.0 | 34.97 | −44.76 | 72 % | 3.24 Hz |
+| ×16 | 342.6 | 34.91 | −44.70 | 78 % | 3.04 Hz |
+| **×36** | **341.8** | **34.85** | **−44.64** | **82 %** | **2.61 Hz** |
+| ×81 | 340.7 | 34.83 | −44.62 | 87 % | 2.40 Hz |
+
+Phase moves 3.2° across a 81× area range — i.e. not at all, as predicted. σ(fc)
+tracks 1/√area. ×36 is chosen because ×81 buys 5 more points of yield for 2.2×
+the bias area (103 680 µm², already 42 % of the capacitor area).
+
+### The two cells, side by side
+
+| | **021-final** (stacked) | **021-vdd2-final** (unstacked) |
+|---|---|---|
+| topology | `b` — branch-stacked + gm_f merge | `reference` — independent branches |
+| **vicm** | 0.20 V | **0.75 V = VDD/2** |
+| IRN | **30.71 µV** | 34.85 µV |
+| core power | **6.01 nW** | 24.01 nW |
+| capacitance | **150.6 pF** | 245.0 pF |
+| THD | −42.22 dB | **−44.64 dB** |
+| ph_max | 333.29° | **341.83°** |
+| **mismatch yield** | 78 % | **82 %** |
+| σ(fc) | 3.32 Hz | **2.61 Hz** |
+| **VDD_min** | 1.50 V — **no margin** | **1.25 V — 0.25 V margin** |
+| corners clean | 1/22 | **6/22** |
+
+The stacked cell wins power (4×) and area (1.6×). The unstacked cell wins
+everything else, and it is the one that is actually *usable*: VDD/2 input common
+mode, a supply that can droop 17 % before a line breaks, and the better yield.
+Both spend well under the S6 budget, so the power difference buys real
+robustness rather than costing a spec line.
+
+### The one line `021-vdd2-final` does NOT hold: S8
+
+Stated plainly, because it is easy to miss under nine green rows. Dropping the
+bridge **is** dropping branch stacking, and branch stacking was one of the two
+techniques carrying S8. What is left in the unstacked cell is the floating
+differential capacitor (`fvf-2nd`) alone — **one** paper, where the challenge
+requires ≥ 2 combined. Cap/Q re-allocation cannot make up the number: the spec
+rules it the control. The lv follower flavour is a PDK choice, not a technique
+from the corpus.
+
+So the position is:
+
+| | S1–S7 | S8 | vicm | droop |
+|---|---|---|---|---|
+| `021-final` (stacked) | PASS | **PASS** (2 techniques) | 0.20 V | none |
+| `021-vdd2-final` (unstacked) | PASS | **FAIL** (1 technique) | **VDD/2** | **0.25 V** |
+
+Neither cell is complete on its own, and that is the honest state of the round.
+The unstacked cell has 365 mV of spare |Vds| per device — far more headroom than
+the stacked one ever had — which is exactly what a second *device-level*
+technique would need. The obvious candidate from the corpus is `gmc-4p6nw`'s
+self-cascode composite on the bias devices (its noise claim is refuted and
+carried forward as such, but its **HD3** claim is untested here). That is a
+change to the bias devices, not to the signal topology, and it is the next
+round's first job.
 
 ## 5. Yield
 

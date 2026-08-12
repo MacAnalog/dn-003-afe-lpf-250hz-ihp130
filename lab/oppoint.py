@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from . import config as C
 from . import ngspice as ng
 from .deck import _bias, _core, _libs, _stim_ac
-from .dut import INSTANCES, Design, model_of, subckt
+from .dut import INSTANCES, Design, subckt
 
 # What we pull per device.  `vdsat` is PSP's saturation voltage; the region call
 # below compares |Vds| against it plus a weak-inversion floor.
@@ -91,7 +91,7 @@ def probe(d: Design, tag: str, *, corner: str = C.CORNER_NOM,
     saves, prints = [], []
     for role, insts in roles.items():
         inst = insts[0]                       # P side is representative
-        base = f"@n.xdut.x{inst}.n{model_of(d.topology, role)}"
+        base = f"@n.xdut.x{inst}.n{d.model(role)}"
         for p in PARAMS:
             saves.append(f"{base}[{p}]")
             prints.append(f'print {base}[{p}]')
@@ -105,7 +105,7 @@ def probe(d: Design, tag: str, *, corner: str = C.CORNER_NOM,
     prints += [f"print i({C.CORE_PROBE}) i({C.SUPPLY_PROBE})"]
 
     deck = f""".title lpf {d.topology} -- operating point probe
-{_libs(corner)}
+{_libs(corner, d)}
 {subckt(d)}
 {_core(d, vdd=vdd)}
 {_bias(d)}
@@ -142,9 +142,9 @@ write sim.raw
     ops = {}
     for role, insts in roles.items():
         inst = insts[0]
-        base = f"@n.xdut.x{inst}.n{model_of(d.topology, role)}"
+        base = f"@n.xdut.x{inst}.n{d.model(role)}"
         vals = {p: raw[f"{base}[{p}]"] for p in PARAMS if f"{base}[{p}]" in raw}
-        ops[role] = DevOp(role, inst, model_of(d.topology, role), vals)
+        ops[role] = DevOp(role, inst, d.model(role), vals)
     return ops, volts
 
 

@@ -27,8 +27,17 @@ from .dut import NCH, PCH, Design, subckt
 
 # --------------------------------------------------------------- fragments --
 
-def _libs(corner: str = C.CORNER_NOM) -> str:
-    return f".lib {C.MOS_LIB_HV} {corner}"
+def _libs(corner: str = C.CORNER_NOM, d: Design | None = None) -> str:
+    """The corner-library lines this deck needs.
+
+    `d=None` (or an all-hv design) emits exactly the single hv line it always
+    has -- `decks/reference/lpf_tb.sp` is sha-pinned, so this branch must stay
+    byte-identical.  A design with lv roles additionally loads the lv corner
+    file; both use the SAME section name, which is what keeps a corner sweep
+    meaningful across a mixed-flavour cell.
+    """
+    libs = d.libs() if d is not None else (C.MOS_LIB_HV,)
+    return "\n".join(f".lib {lib} {corner}" for lib in libs)
 
 
 def _bias(d: Design) -> str:
@@ -103,7 +112,12 @@ def _core(d: Design, ic: bool = True, vdd: float | None = None) -> str:
         # spurious non-convergence.  At the nominal supply the clamp is inert
         # (vocm 1.25 < VDD 1.5), so nominal decks are unchanged.
         vh = min(d.vocm, v)
-        lines.append(f".nodeset v(xdut.vout_1)={vh} v(xdut.vout_2)={vh} "
+        # vout_1/vout_2 are the INTER-STAGE nodes, one |V_SG| below the output.
+        # `vmid=None` keeps the historical single-value hint byte-for-byte (the
+        # reference deck is sha-pinned); a design that carries a measured vmid
+        # gets a hint that is actually near its own solution.
+        vm = vh if d.vmid is None else min(d.vmid, v)
+        lines.append(f".nodeset v(xdut.vout_1)={vm} v(xdut.vout_2)={vm} "
                      f"v(voutp)={vh} v(voutn)={vh}")
     return "\n".join(lines)
 
@@ -156,7 +170,7 @@ def ac_noise(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
     a diagnostic (see `lab.metrics.ph_max_hires`).
     """
     return f""".title lpf {d.topology} -- ac + noise
-{_libs(corner)}
+{_libs(corner, d)}
 {subckt(d)}
 {_core(d, vdd=vdd)}
 {_bias(d)}
@@ -187,7 +201,7 @@ def op_only(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
     """
     pr = "\n".join(f"print {p}" for p in (probes or []))
     return f""".title lpf {d.topology} -- operating point
-{_libs(corner)}
+{_libs(corner, d)}
 {subckt(d)}
 {_core(d, vdd=vdd)}
 {_bias(d)}
@@ -214,18 +228,33 @@ def tran_thd(d: Design, fin: float, ampl: float, *, cycles: int = 20,
     first `settle` cycles are simulated and discarded.
 
     `ampl` is the DIFFERENTIAL amplitude: 175 mVpp differential => ampl=87.5m.
+
+    On `abstol = 1e-13` (was 1e-15).  A cell containing `sg13_lv_pmos` will not
+    solve its transient operating point at 1e-15 -- dynamic gmin, true gmin and
+    source stepping all fail and it reports "Transient op failed, timestep too
+    small", which reads like stiffness and is really an unreachable current
+    tolerance.  1e-13 A is still four decades below this filter's ~2 nA branch
+    current, and it was adopted only after checking it does not move the ANSWER
+    on the cells already measured at 1e-15:
+
+        021-final   -42.220 -> -42.216 dB   (HD3 -42.56 both)
+        reference   -48.375 -> -48.374 dB   (HD3 -48.38 both)
+
+    i.e. 0.004 dB and 0.000 dB, with the even-harmonic numerical floor moving
+    -140 -> -138 dB, still ~96 dB below the fundamental.  Every THD number
+    measured before this change therefore remains comparable.
     """
     tper = 1.0 / fin
     tstop = (settle + cycles) * tper
     tstep = tper / ppc
     return f""".title lpf {d.topology} -- thd fin={fin:g} ampl={ampl:g}
-{_libs(corner)}
+{_libs(corner, d)}
 {subckt(d)}
 {_core(d, vdd=vdd)}
 {_bias(d)}
 {_stim_sine(fin, ampl, d.vicm)}
 .temp {temp}
-.options reltol=1e-5 abstol=1e-15 vntol=1e-9 chgtol=1e-16 method=gear maxord=2
+.options reltol=1e-5 abstol=1e-13 vntol=1e-9 chgtol=1e-16 method=gear maxord=2
 .control
 set filetype=binary
 op
@@ -240,7 +269,7 @@ def vdd_sweep(d: Design, lo: float, hi: float, step: float,
               *, corner: str = C.CORNER_NOM) -> str:
     """Supply-droop characterisation (report-only; the datasheet's VDD_min)."""
     return f""".title lpf {d.topology} -- vdd sweep
-{_libs(corner)}
+{_libs(corner, d)}
 {subckt(d)}
 {_core(d, ic=False)}
 {_bias(d)}

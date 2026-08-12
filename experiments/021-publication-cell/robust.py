@@ -42,6 +42,11 @@ def design_from(d: dict) -> Design:
     return Design(topology=d["topology"],
                   devs={r: Dev(**g) for r, g in d["devs"].items()},
                   iref=d["iref"], vicm=d["vicm"], vocm=d["vocm"],
+                  # lv_roles selects the device FLAVOUR and vmid is the
+                  # inter-stage dc hint; a rebuild that drops either is a
+                  # different circuit or a non-converging one, not a detail.
+                  lv_roles=frozenset(d.get("lv_roles") or ()),
+                  vmid=d.get("vmid"),
                   **{k: v * 1e-12 for k, v in d["caps_pf"].items()})
 
 

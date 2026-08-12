@@ -52,6 +52,33 @@ from dataclasses import dataclass, field, replace
 NCH = "sg13_hv_nmos"
 PCH = "sg13_hv_pmos"
 
+# The lv **p**-channel device is a live option; the lv n-channel device is not.
+#
+# Why it matters: the all-p follower cascade shifts the common mode UP by one
+# |V_SG| per stage, and |V_SG| is threshold-set.  Measured in this repo at the
+# 021 cell's own geometry (W 15.6 um / L 10.4 um) and its own branch currents:
+#
+#     sg13_hv_pmos   0.4574 V @ 0.662 nA   0.5015 V @ 2.005 nA
+#     sg13_lv_pmos   0.1682 V @ 0.662 nA   0.2028 V @ 2.005 nA
+#
+# i.e. 289 and 299 mV less shift, and the cascade shifts twice -- **588 mV of
+# common-mode headroom**, which is the difference between an input CM stuck at
+# 0.20 V and one at VDD/2.  Width cannot do this: |V_SG| falls only n*U_T per
+# e-fold (~92 mV/decade), and the ~30x width needed converts ~47 pF of linear
+# MIM capacitance into non-linear GATE capacitance, which cost 12 dB of THD when
+# it was tried (experiments/021-publication-cell).
+#
+# The costs are real and must be re-measured per design, not assumed: gate-
+# referred flicker is ~9 % worse (13.01 -> 14.20 uVrms over 0.5-200 Hz at equal
+# geometry and current), and gm/gds is lower (~3690-5080 vs ~3710-8700 at these
+# lengths), which is what pins H(0) = 1 against the 0.2 dB S3 box.
+#
+# `sg13_lv_nmos` stays closed: it carries 1.6-5.1 nA at Vgs = 0, i.e. more than
+# this filter's whole branch current, so there is no gate voltage that biases
+# it.  See doc/pdk-notes.md 2.2 and 2.4.
+PCH_LV = "sg13_lv_pmos"
+LV_MODELS = frozenset({PCH_LV})
+
 # Which design ROLES are n-channel.  Every signal-path follower is p-type (see
 # `build_reference`); the n-channel devices are the shunt-feedback
 # transconductors and the internal-node bias sinks, whose sources sit at gnd and
@@ -117,7 +144,40 @@ class Design:
     # that element -- the control that turns `fvf-2nd`'s floating-cap technique
     # into a measured area saving instead of an asserted one.
     c2_grounded: bool = False
+    # Roles built from the lv (thin-oxide) p-channel device instead of hv.  This
+    # is the common-mode knob: an lv p-follower needs ~290 mV less |V_SG| than
+    # the hv one at the same current, and the cascade shifts twice, so moving
+    # the four p-type signal roles to lv is worth ~588 mV of input common mode
+    # (measured -- see the PCH_LV note).  Empty = the all-hv design, which emits
+    # exactly the netlist it always has.
+    lv_roles: frozenset = frozenset()
+    # dc hint for the INTER-STAGE node (vout_1/vout_2), which sits one |V_SG|
+    # above vicm and is NOT at vocm.  `deck._core` hints all four output-side
+    # nodes at `vocm` when this is None, which is what it has always done and
+    # what the sha-pinned reference deck contains; on the reference the error is
+    # ~0.5 V and the operating point absorbs it, but on a cell whose stage
+    # voltages are spread further apart the same hint aims the solver at a node
+    # voltage the circuit cannot reach and the THD deck fails as
+    # "Transient op failed, timestep too small" -- a convergence failure that
+    # reads like stiffness and is really a bad initial guess.  Set it from a
+    # MEASURED op probe, never from arithmetic.
+    vmid: float | None = None
     note: str = ""
+
+    def model(self, role: str) -> str:
+        """The compact model this role instantiates, honouring `lv_roles`."""
+        return model_of(self.topology, role, self.lv_roles)
+
+    def libs(self) -> tuple[str, ...]:
+        """Corner libraries this design needs, in load order.
+
+        A mixed-flavour design needs BOTH, because the lv and hv models live in
+        separate corner files and a netlist that instantiates `sg13_lv_pmos`
+        without `cornerMOSlv.lib` fails with `Unknown model type`, not with a
+        wrong answer.
+        """
+        from . import config as C
+        return (C.MOS_LIB_HV, C.MOS_LIB_LV) if self.lv_roles else (C.MOS_LIB_HV,)
 
     def total_cap(self) -> float:
         """Total DRAWN capacitance (both sides), in farads -- the area report."""
@@ -205,25 +265,26 @@ def build_reference(d: Design) -> list[str]:
     (lab.config.VICM).  See doc/journal/all-p-followers.md.
     """
     D = d.devs
+    M = d.model
     L = []
     # --- biquad A : p-input follower, n-type shunt feedback
-    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", PCH),
-          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", PCH)]
-    L += [D["bias_a_int"].card("m3", "net2", "vbn", "0", "0", NCH),
-          D["bias_a_int"].card("m13", "net3", "vbn", "0", "0", NCH)]
-    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", NCH),
-          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", NCH)]
-    L += [D["bias_a_out"].card("m9", "vout_1", "vbp", "vdd", "vdd", PCH),
-          D["bias_a_out"].card("m10", "vout_2", "vbp", "vdd", "vdd", PCH)]
+    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", M("in_a")),
+          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", M("in_a"))]
+    L += [D["bias_a_int"].card("m3", "net2", "vbn", "0", "0", M("bias_a_int")),
+          D["bias_a_int"].card("m13", "net3", "vbn", "0", "0", M("bias_a_int"))]
+    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", M("gmf_a")),
+          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", M("gmf_a"))]
+    L += [D["bias_a_out"].card("m9", "vout_1", "vbp", "vdd", "vdd", M("bias_a_out")),
+          D["bias_a_out"].card("m10", "vout_2", "vbp", "vdd", "vdd", M("bias_a_out"))]
     # --- biquad B : p-input follower, n-type shunt feedback
-    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", PCH),
-          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", PCH)]
-    L += [D["bias_b_int"].card("m11", "net4", "vbn", "0", "0", NCH),
-          D["bias_b_int"].card("m12", "net1", "vbn", "0", "0", NCH)]
-    L += [D["gmf_b"].card("m6", "voutp", "net4", "0", "0", NCH),
-          D["gmf_b"].card("m7", "voutn", "net1", "0", "0", NCH)]
-    L += [D["bias_b_out"].card("m14", "voutp", "vbp", "vdd", "vdd", PCH),
-          D["bias_b_out"].card("m15", "voutn", "vbp", "vdd", "vdd", PCH)]
+    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", M("in_b")),
+          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", M("in_b"))]
+    L += [D["bias_b_int"].card("m11", "net4", "vbn", "0", "0", M("bias_b_int")),
+          D["bias_b_int"].card("m12", "net1", "vbn", "0", "0", M("bias_b_int"))]
+    L += [D["gmf_b"].card("m6", "voutp", "net4", "0", "0", M("gmf_b")),
+          D["gmf_b"].card("m7", "voutn", "net1", "0", "0", M("gmf_b"))]
+    L += [D["bias_b_out"].card("m14", "voutp", "vbp", "vdd", "vdd", M("bias_b_out")),
+          D["bias_b_out"].card("m15", "voutn", "vbp", "vdd", "vdd", M("bias_b_out"))]
     return L + _caps(d)
 
 
@@ -255,23 +316,24 @@ def build_a(d: Design) -> list[str]:
     identified as the required next step for this family.
     """
     D = d.devs
+    M = d.model
     L = []
-    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", PCH),
-          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", PCH)]
-    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", NCH),
-          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", NCH)]
-    L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", NCH),
-          D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", NCH)]
-    L += [D["bridge"].card("mst", "vout_1", "vbn", "net4", "net4", PCH),
-          D["bridge"].card("mstn", "vout_2", "vbn", "net1", "net1", PCH)]
-    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", PCH),
-          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", PCH)]
+    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", M("in_a")),
+          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", M("in_a"))]
+    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", M("gmf_a")),
+          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", M("gmf_a"))]
+    L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", M("bias_a_int")),
+          D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", M("bias_a_int"))]
+    L += [D["bridge"].card("mst", "vout_1", "vbn", "net4", "net4", M("bridge")),
+          D["bridge"].card("mstn", "vout_2", "vbn", "net1", "net1", M("bridge"))]
+    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", M("in_b")),
+          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", M("in_b"))]
     # separate shunt feedback ...
-    L += [D["gmf_b"].card("m6", "voutp", "net4", "vdd", "vdd", PCH),
-          D["gmf_b"].card("m7", "voutn", "net1", "vdd", "vdd", PCH)]
+    L += [D["gmf_b"].card("m6", "voutp", "net4", "vdd", "vdd", M("gmf_b")),
+          D["gmf_b"].card("m7", "voutn", "net1", "vdd", "vdd", M("gmf_b"))]
     # ... and a dedicated bias source (this pair is what 020B's merge deletes)
-    L += [D["bias_b_out"].card("m14", "voutp", "vbp", "vdd", "vdd", PCH),
-          D["bias_b_out"].card("m15", "voutn", "vbp", "vdd", "vdd", PCH)]
+    L += [D["bias_b_out"].card("m14", "voutp", "vbp", "vdd", "vdd", M("bias_b_out")),
+          D["bias_b_out"].card("m15", "voutn", "vbp", "vdd", "vdd", M("bias_b_out"))]
     return L + _caps(d)
 
 
@@ -318,20 +380,21 @@ def build_b(d: Design) -> list[str]:
     an exact 0 dB passband are compatible ONLY in the merged form.
     """
     D = d.devs
+    M = d.model
     L = []
-    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", PCH),
-          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", PCH)]
-    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", NCH),
-          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", NCH)]
-    L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", NCH),
-          D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", NCH)]
-    L += [D["bridge"].card("mst", "vout_1", "vbn", "net4", "net4", PCH),
-          D["bridge"].card("mstn", "vout_2", "vbn", "net1", "net1", PCH)]
-    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", PCH),
-          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", PCH)]
+    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", M("in_a")),
+          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", M("in_a"))]
+    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", M("gmf_a")),
+          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", M("gmf_a"))]
+    L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", M("bias_a_int")),
+          D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", M("bias_a_int"))]
+    L += [D["bridge"].card("mst", "vout_1", "vbn", "net4", "net4", M("bridge")),
+          D["bridge"].card("mstn", "vout_2", "vbn", "net1", "net1", M("bridge"))]
+    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", M("in_b")),
+          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", M("in_b"))]
     # THE MERGE: gate = the internal node, not the bias rail.
-    L += [D["gmf_b"].card("m14", "voutp", "net4", "vdd", "vdd", PCH),
-          D["gmf_b"].card("m15", "voutn", "net1", "vdd", "vdd", PCH)]
+    L += [D["gmf_b"].card("m14", "voutp", "net4", "vdd", "vdd", M("gmf_b")),
+          D["gmf_b"].card("m15", "voutn", "net1", "vdd", "vdd", M("gmf_b"))]
     return L + _caps(d)
 
 
@@ -417,5 +480,20 @@ INSTANCES["c"] = INSTANCES["b"]
 LADDER_NETS = ("voutp", "net4", "vout_1", "net2")
 
 
-def model_of(topology: str, role: str) -> str:
-    return NCH if role in NROLES_BY_TOPOLOGY.get(topology, NROLES) else PCH
+def model_of(topology: str, role: str, lv_roles: frozenset = frozenset()) -> str:
+    """The compact model a role instantiates.
+
+    `lv_roles` names roles built from the lv (thin-oxide) flavour.  Only
+    p-channel roles may appear in it -- `sg13_lv_nmos` cannot be biased at this
+    filter's branch current at all (see the PCH_LV note above), so an n-role
+    request is a design error and is refused rather than silently ignored.
+    """
+    n = role in NROLES_BY_TOPOLOGY.get(topology, NROLES)
+    if role in lv_roles:
+        if n:
+            raise ValueError(
+                f"role {role!r} is n-channel in topology {topology!r}; there is "
+                "no usable lv n-channel device in this PDK (it carries "
+                "1.6-5.1 nA at Vgs = 0, more than the whole branch current)")
+        return PCH_LV
+    return NCH if n else PCH

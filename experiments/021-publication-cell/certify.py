@@ -43,6 +43,11 @@ def design_from(d: dict) -> Design:
     return Design(topology=d["topology"],
                   devs={r: Dev(**g) for r, g in d["devs"].items()},
                   iref=d["iref"], vicm=d["vicm"], vocm=d["vocm"],
+                  # lv_roles selects the device FLAVOUR and vmid is the
+                  # inter-stage dc hint; a rebuild that drops either is a
+                  # different circuit or a non-converging one, not a detail.
+                  lv_roles=frozenset(d.get("lv_roles") or ()),
+                  vmid=d.get("vmid"),
                   **{k: v * 1e-12 for k, v in d["caps_pf"].items()})
 
 
@@ -59,7 +64,8 @@ def certify(d: Design, name: str) -> dict:
            **{k: s[k] for k in M.COLS if k in s.values},
            "violations": list(s.violations),
            "design": {"topology": d.topology, "iref": d.iref, "vicm": d.vicm,
-                      "vocm": d.vocm,
+                      "vocm": d.vocm, "vmid": d.vmid,
+                      "lv_roles": sorted(d.lv_roles),
                       "caps_pf": {k: getattr(d, k) * 1e12
                                   for k in ("c1_a", "c2_a", "c1_b", "c2_b")},
                       "devs": {r: {"w": g.w, "l": g.l, "ng": g.ng, "m": g.m}
