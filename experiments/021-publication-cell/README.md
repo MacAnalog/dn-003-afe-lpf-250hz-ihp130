@@ -1,6 +1,6 @@
 # 021 — the publication cell: a flat, monotone 4-pole that holds every line
 
-**Status: CLOSED 2026-08-12 — TWO certified cells.** `021-final` (branch-stacked, vicm 0.20 V): all of S1–S8, 30.71 µV, 6.01 nW, 78 % mismatch yield, but **no supply-droop margin**. `021-vdd2-final` (unstacked, lv followers, **vicm = VDD/2**): all of S1–S8, 34.85 µV, 24.01 nW, **82 % yield, VDD_min 1.25 V**, 6/22 corners. See §4.7 for why the common mode forced the second cell, and §5 for the yield.
+**Status: CLOSED 2026-08-12 — TWO deliverable cells, and the choice between them is real.** `021-lv-final` (branch-stacked + lv follower, **vicm 0.65 V**): all of S1–S8 including S8, **28.54 µV**, 6.46 nW, 164.0 pF, **84 % mismatch yield** — but **no supply-droop margin**. `021-vdd2-final` (unstacked, lv followers, **vicm = VDD/2 = 0.75 V**): S1–S7, 34.85 µV, 24.01 nW, 245.0 pF, 82 % yield, **VDD_min 1.25 V**, 6/22 corners — but **one technique short of S8**. See §4.7. `021-final` (all-hv, vicm 0.20 V) is superseded and kept as the control.
 
 | | |
 |---|---|
@@ -343,21 +343,48 @@ Phase moves 3.2° across a 81× area range — i.e. not at all, as predicted. σ
 tracks 1/√area. ×36 is chosen because ×81 buys 5 more points of yield for 2.2×
 the bias area (103 680 µm², already 42 % of the capacitor area).
 
-### The two cells, side by side
+### The bias-area lever applies to the stacked cell too — and it is the winner
 
-| | **021-final** (stacked) | **021-vdd2-final** (unstacked) |
-|---|---|---|
-| topology | `b` — branch-stacked + gm_f merge | `reference` — independent branches |
-| **vicm** | 0.20 V | **0.75 V = VDD/2** |
-| IRN | **30.71 µV** | 34.85 µV |
-| core power | **6.01 nW** | 24.01 nW |
-| capacitance | **150.6 pF** | 245.0 pF |
-| THD | −42.22 dB | **−44.64 dB** |
-| ph_max | 333.29° | **341.83°** |
-| **mismatch yield** | 78 % | **82 %** |
-| σ(fc) | 3.32 Hz | **2.61 Hz** |
-| **VDD_min** | 1.50 V — **no margin** | **1.25 V — 0.25 V margin** |
-| corners clean | 1/22 | **6/22** |
+Applying the same treatment to the **stacked** cell at vicm = 0.65 V (which,
+unlike the unstacked one, keeps branch stacking and therefore keeps S8) gives
+`021-lv-final`. Its single bias role makes the lever weaker, and its 2.2° of
+phase margin makes it easy to overshoot:
+
+| bias gate area | ph_max | IRN µV | THD | MC all-pass | limiting line |
+|---|---|---|---|---|---|
+| ×1 | 332.2 | 29.38 | −41.90 | 68 % | ph_max 79 % |
+| **×9** | **332.8** | **28.54** | **−42.39** | **84 %** | ph_max 87 % |
+| ×36 | 330.8 | 28.50 | −44.80 | 50 % | **ph_max 54 %** |
+
+×36 lifts σ(fc) further but drives ph_max to 330.8° — 0.8° of margin — and the
+mismatch yield collapses on that line alone. ×9 is the peak.
+
+### The three certified cells, side by side
+
+| | 021-final (stacked, hv) | **021-lv-final** (stacked, lv) | 021-vdd2-final (unstacked) |
+|---|---|---|---|
+| topology | `b` — stacked + merge | `b` — stacked + merge | `reference` |
+| **S8** | PASS | **PASS** | **FAIL** (1 technique) |
+| **vicm** | 0.20 V | **0.65 V** | **0.75 V = VDD/2** |
+| IRN | 30.71 µV | **28.54 µV** | 34.85 µV |
+| core power | **6.01 nW** | 6.46 nW | 24.01 nW |
+| capacitance | **150.6 pF** | 164.0 pF | 245.0 pF |
+| THD | −42.22 dB | −42.39 dB | **−44.64 dB** |
+| ph_max | 333.29° | 332.83° | **341.83°** |
+| `mono_db` | 0.0000 | **0.0000** | 0.0071 |
+| **mismatch yield** | 78 % | **84 %** | 82 % |
+| σ(fc) | 3.32 Hz | **2.73 Hz** | 2.61 Hz |
+| **VDD_min** | 1.50 V — none | 1.50 V — none | **1.25 V — 0.25 V** |
+| corners clean | 1/22 | 1/22 | **6/22** |
+
+**`021-lv-final` supersedes `021-final` outright** — better common mode, noise,
+THD and yield for +7 % power and +9 % capacitance. `021-final` is kept only as
+the all-hv control.
+
+The remaining choice is a real one and the repo does not resolve it: the stacked
+cell is better on every *spec* axis and holds S8, but has no supply margin at
+all; the unstacked cell is the only one that survives a drooping rail and the
+only one at VDD/2, and it is a technique short of S8.
 
 The stacked cell wins power (4×) and area (1.6×). The unstacked cell wins
 everything else, and it is the one that is actually *usable*: VDD/2 input common
