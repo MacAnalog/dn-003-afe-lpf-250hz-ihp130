@@ -106,7 +106,11 @@ input-referred noise available before S5 breaks).
 
 ## Candidate set — nine sizings, all passing
 
-See **[COMPARISON.md](COMPARISON.md)** for the full table and the pick guide.
+See **[COMPARISON.md](COMPARISON.md)** for the full table, the Pareto plots and
+the pick guide. Each cell's own `README.md` carries its passband, Bode and
+noise plots.
+
+![pareto](pareto.png)
 Every candidate is the SAME topology (bridge and current reuse intact), differing
 only in device sizes, flavours and capacitor values; each lives in its own
 self-contained `signoff/<cell>/` with schematic, both testbenches, as-built decks

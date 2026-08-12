@@ -11,17 +11,46 @@ second** — subject to the response still being a flat low-pass.
 
 | cell | IRN µV | P nW | C pF | THD dB | ph° | fc Hz | ripple | peak | `mono_db` | vicm |
 |---|---|---|---|---|---|---|---|---|---|---|
-| [`A-minarea`](A-minarea/) | **39.70** | **4.15** | **104.4** | -41.69 | 339.8 | 249.86 | 0.0545 | +0.0000 | 0.0000 | 0.2 |
-| [`B-balanced`](B-balanced/) | **29.38** | **6.01** | **152.9** | -41.90 | 332.2 | 249.85 | 0.0545 | +0.0000 | 0.0000 | 0.65 |
-| [`C-lownoise`](C-lownoise/) | **28.54** | **6.46** | **164.0** | -42.39 | 332.8 | 249.85 | 0.0538 | +0.0000 | 0.0000 | 0.65 |
-| [`D-thdjump`](D-thdjump/) | **29.34** | **7.31** | **187.9** | -52.29 | 331.6 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
-| [`E-combo`](E-combo/) | **27.27** | **8.88** | **220.0** | -54.88 | 334.6 | 249.87 | 0.0544 | +0.0016 | 0.0016 | 0.32 |
-| [`F-minnoise`](F-minnoise/) | **26.24** | **12.63** | **305.0** | -58.52 | 336.4 | 249.96 | 0.0556 | +0.0089 | 0.0089 | 0.32 |
-| [`G-maxthd`](G-maxthd/) | **26.81** | **14.32** | **348.2** | -70.98 | 343.5 | 249.88 | 0.0541 | +0.0029 | 0.0029 | 0.32 |
-| [`E1-prev`](E1-prev/) | **28.33** | **8.98** | **229.3** | -52.64 | 333.5 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
-| [`H-shipped`](H-shipped/) | **28.07** | **14.45** | **366.3** | -56.46 | 341.4 | 249.99 | 0.0691 | +0.0068 | 0.0068 | 0.65 |
+| [**`A-minarea`](A-minarea/) | **39.70** | **4.15** | **104.4** | -41.69 | 339.8 | 249.86 | 0.0545 | +0.0000 | 0.0000 | 0.2 |
+| [**`B-balanced`](B-balanced/) | **29.38** | **6.01** | **152.9** | -41.90 | 332.2 | 249.85 | 0.0545 | +0.0000 | 0.0000 | 0.65 |
+| [**`C-lownoise`](C-lownoise/) | **28.54** | **6.46** | **164.0** | -42.39 | 332.8 | 249.85 | 0.0538 | +0.0000 | 0.0000 | 0.65 |
+| [**`D-thdjump`](D-thdjump/) | **29.34** | **7.31** | **187.9** | -52.29 | 331.6 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
+| [**`E-combo`](E-combo/) | **27.27** | **8.88** | **220.0** | -54.88 | 334.6 | 249.87 | 0.0544 | +0.0016 | 0.0016 | 0.32 |
+| [**`F-minnoise`](F-minnoise/) | **26.24** | **12.63** | **305.0** | -58.52 | 336.4 | 249.96 | 0.0556 | +0.0089 | 0.0089 | 0.32 |
+| [**`G-maxthd`](G-maxthd/) | **26.81** | **14.32** | **348.2** | -70.98 | 343.5 | 249.88 | 0.0541 | +0.0029 | 0.0029 | 0.32 |
+| [**`E1-prev`](E1-prev/) | **28.33** | **8.98** | **229.3** | -52.64 | 333.5 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
+| [**`H-shipped`](H-shipped/) | **28.07** | **14.45** | **366.3** | -56.46 | 341.4 | 249.99 | 0.0691 | +0.0068 | 0.0068 | 0.65 |
 
 *spec:* IRN < 40 · P < 50 nW · C reported only · THD ≤ −40 · ph ≥ 330 (ideal-4-pole ceiling **350.5**) · fc 245–255 · ripple ≤ 0.2 · peak ≤ 0.2.
+
+## Plots
+
+### The trade, as Pareto fronts
+
+Green = non-dominated on that axis pair, grey × = dominated by another candidate,
+red star = `E-combo`, dashed line = the spec bound. A cell can sit on the front
+for one pair and off it for another — which is the information a layout pick
+turns on.
+
+![pareto](pareto.png)
+
+### The three panels a pick is usually made on
+
+![tradeoff](tradeoff.png)
+
+### Every candidate's passband, on one axis
+
+The flatness claim, checkable by eye: no candidate has a bump, and all nine sit
+well inside the ±0.2 dB window.
+
+![all passband](all_passband.png)
+
+### Every candidate's input-referred noise
+
+![all noise](all_noise.png)
+
+Per-cell plots (passband, Bode, noise density) are in each design's own
+directory, embedded in its `README.md`.
 
 ## Flat-response check
 
