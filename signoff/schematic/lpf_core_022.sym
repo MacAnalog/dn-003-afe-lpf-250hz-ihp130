@@ -1,0 +1,28 @@
+v {xschem version=3.4.4 file_version=1.2}
+G {}
+K {type=subcircuit
+format="@name @pinlist @symname"
+template="name=x1"
+}
+V {}
+S {}
+E {}
+L 4 -60 -110 60 -110 {}
+L 4 60 -110 60 130 {}
+L 4 -60 130 60 130 {}
+L 4 -60 -110 -60 130 {}
+B 5 -62.5 -92.5 -57.5 -87.5 {name=vinp dir=inout}
+T {vinp} -55 -96 0 0 0.2 0.2 {}
+B 5 -62.5 -62.5 -57.5 -57.5 {name=vinn dir=inout}
+T {vinn} -55 -66 0 0 0.2 0.2 {}
+B 5 -62.5 -32.5 -57.5 -27.5 {name=voutp dir=inout}
+T {voutp} -55 -36 0 0 0.2 0.2 {}
+B 5 -62.5 -2.5 -57.5 2.5 {name=voutn dir=inout}
+T {voutn} -55 -6 0 0 0.2 0.2 {}
+B 5 -62.5 27.5 -57.5 32.5 {name=vbn dir=inout}
+T {vbn} -55 24 0 0 0.2 0.2 {}
+B 5 -62.5 57.5 -57.5 62.5 {name=vbp dir=inout}
+T {vbp} -55 54 0 0 0.2 0.2 {}
+B 5 -62.5 87.5 -57.5 92.5 {name=vdd dir=inout}
+T {vdd} -55 84 0 0 0.2 0.2 {}
+T {lpf_core_022} -40 -105 0 0 0.3 0.3 {}

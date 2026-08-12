@@ -15,3 +15,5 @@ pdk/lut/*.npz
 .DS_Store
 
 pdf/*.pdf
+# xschem netlister scratch (the .spice files ARE committed as evidence)
+signoff/schematic/*.spice.bak
