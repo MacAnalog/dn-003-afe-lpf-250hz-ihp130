@@ -392,6 +392,33 @@ mode, a supply that can droop 17 % before a line breaks, and the better yield.
 Both spend well under the S6 budget, so the power difference buys real
 robustness rather than costing a spec line.
 
+
+### 4.8 The THD profile changes the recommendation
+
+S7 is a single point (fin = 50 Hz) and the spec calls higher fins "an informative
+profile only". Measured at the spec amplitude across the passband, that profile
+is where the two cells actually separate:
+
+| cell | 20 Hz | **50 Hz (S7)** | 100 Hz | 150 Hz | 200 Hz |
+|---|---|---|---|---|---|
+| reference (certified) | −69.58 | −48.37 | **−43.96** | −32.62 | −29.77 |
+| `021-lv-final` (stacked) | −60.79 | −42.39 | **−20.93** | −20.17 | −21.15 |
+| `021-vdd2-final` (unstacked) | −65.36 | −44.64 | **−40.06** | −29.23 | −28.07 |
+
+Two facts, deliberately kept apart. **Degradation toward the corner is a family
+property**, not a candidate defect — the certified reference does it too, because
+a follower biquad's internal node is a bandpass tap whose swing peaks near fc,
+and that excursion is the follower's Vgs modulation. But **the branch-stacked
+cell is 23 dB worse than the reference at 100 Hz**, and that is a defect of
+stacking: both followers share one dc branch, so a single ladder current has to
+serve both internal-node peaks. The unstacked cell tracks the reference to within
+2–4 dB across the whole band.
+
+Both cells pass S7 as specified. On the band, only one of them behaves like the
+yardstick. **This is why `021-vdd2-final` is the recommended cell** despite being
+a technique short of S8 — the S8 gap is closable (§4.7); a 23 dB in-band
+linearity gap is structural.
+
 ### The one line `021-vdd2-final` does NOT hold: S8
 
 Stated plainly, because it is easy to miss under nine green rows. Dropping the
