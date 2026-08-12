@@ -6,14 +6,16 @@
     "ripple_db": 0.05429432993574401,
     "peak_db": 1.4764342793842367e-05,
     "a1000_db": -48.99209598816709,
-    "ph_max_deg": 368.56159715202017,
+    "ph_max_deg": 320.6642358301704,
     "irn_uv": 28.054835302716633,
     "p_core_nw": 5.389592206813383,
     "c_total_pf": 135.1302766212787,
     "rms": 0.003188953319395209,
     "worst": 0.015029133542920015,
     "mono": 1.4783809985759871e-05,
-    "violations": [],
+    "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 320.7 < 330"
+    ],
     "caps_pf": {
       "c1_a": 5.343258577974158,
       "c2_a": 13.52369760136603,
@@ -137,7 +139,9 @@
       "vocm": 1.1,
       "topology": "b"
     },
-    "topology": "b"
+    "topology": "b",
+    "ph_max_deg_pre_fix": 368.56159715202017,
+    "note": "ph_max re-scored 2026-08-12 with the contiguous-prefix fix in lab.raw.ph_max_deg; the original value unwrapped across a feed-through gap. See doc/journal/flatness-needs-a-shape-metric.md and the 021 README section 4.4."
   },
   {
     "name": "020C-frozen",
@@ -146,7 +150,7 @@
     "ripple_db": 0.05446915342622952,
     "peak_db": 1.5729399799930058e-05,
     "a1000_db": -49.03811207013259,
-    "ph_max_deg": 359.79864044143284,
+    "ph_max_deg": 339.7721487012132,
     "irn_uv": 39.695082043057084,
     "p_core_nw": 4.145607052456357,
     "c_total_pf": 104.41391538927272,
@@ -277,7 +281,9 @@
       "vocm": 1.1,
       "topology": "b"
     },
-    "topology": "b"
+    "topology": "b",
+    "ph_max_deg_pre_fix": 359.79864044143284,
+    "note": "ph_max re-scored 2026-08-12 with the contiguous-prefix fix in lab.raw.ph_max_deg; the original value unwrapped across a feed-through gap. See doc/journal/flatness-needs-a-shape-metric.md and the 021 README section 4.4."
   },
   {
     "name": "020B-cert",
@@ -286,7 +292,7 @@
     "ripple_db": 0.05522534221817113,
     "peak_db": 0.0,
     "a1000_db": -48.29913652739888,
-    "ph_max_deg": 346.1287575253044,
+    "ph_max_deg": 346.12875752530306,
     "irn_uv": 33.95288048039013,
     "p_core_nw": 9.691281330412616,
     "c_total_pf": 241.63363874443252,

@@ -26,8 +26,8 @@ on phase, where growing only the bias devices does not).
 
 | cell | fc | mono | @1k | ph | IRN µV | P nW | C pF | THD | MC | verdict |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `020B-frozen` | 249.85 | 0.0000 | -48.99 | 368.6 | 28.05 | 5.39 | 135.1 | -44.78 | — | **PASS** |
-| `020C-frozen` | 249.86 | 0.0000 | -49.04 | 359.8 | 39.70 | 4.15 | 104.4 | -41.69 | — | **PASS** |
+| `020B-frozen` | 249.85 | 0.0000 | -48.99 | 320.7 | 28.05 | 5.39 | 135.1 | -44.78 | — | fail(1) |
+| `020C-frozen` | 249.86 | 0.0000 | -49.04 | 339.8 | 39.70 | 4.15 | 104.4 | -41.69 | — | **PASS** |
 | `020B-cert` | 249.85 | 0.0000 | -48.30 | 346.1 | 33.95 | 9.69 | 241.6 | -40.24 | — | **PASS** |
 
 ## `scale` — Uniform I–C scaling of 020C (devices + iref + caps × k)
@@ -105,4 +105,4 @@ on phase, where growing only the bias devices does not).
 
 ---
 
-**37 sizing points across 11 rounds; 25 met all nine lines.**
+**37 sizing points across 11 rounds; 24 met all nine lines.**
