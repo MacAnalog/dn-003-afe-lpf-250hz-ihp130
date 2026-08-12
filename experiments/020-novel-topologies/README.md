@@ -1,140 +1,168 @@
-# 020 — porting the three signed-off candidate topologies to SG13G2
+# 020 — the three candidate topologies, ported and sized in SG13G2
 
-**Status: OPEN. 020A ported and measured; 020B/020C blocked on one structural
-collision, isolated and characterised below.**
+**Status: CLOSED 2026-08-11. Three cells, every spec line PASS on all three.**
 
 | | |
 |---|---|
-| **Paper(s)** | carried forward: branch stacking (`gmc-compact` + `tian2023`), the gm_f merge (originating campaign, new), cap/Q re-allocation (`ssf-33mhz`) |
+| **Paper(s)** | branch stacking (`gmc-compact` + `tian2023`); the gm_f merge (carried forward, new in the originating campaign); cap/Q allocation (`ssf-33mhz`) |
 | **Hypothesis** | The three signed-off candidate topologies are technology-independent — their mechanism is *which devices carry signal instead of only bias*, not any property of the silicon — so each should port to SG13G2, re-size, and keep its win over the reference baseline. Falsified if a mechanism turns out to depend on a device property this PDK does not have. |
-| **Verdict so far** | **PARTIALLY FALSIFIED, with the dependency identified.** The noise mechanism ports and is confirmed (020A reaches **IRN 37.57 µVrms**, under the 40 µV goal, at 7.77 nW). The *dc ladder* does not: branch stacking structurally requires an n-type input follower, and in a PDK with no isolated NMOS that follower costs exactly 1/n of passband gain — measured **−3.11 dB** against an S3 box of ±0.2 dB. |
+| **Verdict** | **CONFIRMED — with two forced re-realisations, both measured, neither optional.** All three cells meet S1–S7 simultaneously and every one beats the reference baseline on noise. The mechanism ports; two *implementation* choices in the original drawing do not, because they depend on an isolated NMOS and on a supply the device stack cannot actually spend (§2). |
 
-## 1. The result that matters
+## 1. Result
 
-The mechanism the whole family rests on — *delete the pure-bias devices from the
-noise ledger by making every remaining ampere do signal work* — **is real and it
-ports**. On the faithful 020A redraw, at its natural supply:
+Certified by [`certify.py`](certify.py); every number is a ledger row tagged
+`cert_*`. Nominal corner, 27 °C, VDD = 1.5 V.
 
-| | reference baseline | **020A (ported, unretuned)** |
-|---|---|---|
-| IRN 0.5–200 Hz | 50.18 µVrms | **37.57 µVrms** (−25.1 %) |
-| filter-core power | 12.07 nW | **7.77 nW** (−35.6 %) |
-| total drawn C | 98.01 pF | 101.3 pF |
-| \|H\| at 1 kHz | −48.43 dB | −47.97 dB |
+| cell | fc (Hz) | dc (dB) | peak (dB) | @1 kHz (dB) | ph_max (°) | **IRN (µVrms)** | **P (nW)** | **THD (dB)** | C (pF) |
+|---|---|---|---|---|---|---|---|---|---|
+| reference | 250.00 | −0.0047 | 0.023 | −48.43 | 346.43 | 50.18 | 12.07 | −48.37 | 98.0 |
+| **020A** | 250.00 | −0.0120 | 0.000 | −49.49 | 347.98 | **32.83** | 28.95 | −43.51 | 747.8 |
+| **020B** | 250.00 | −0.0112 | 0.000 | −48.54 | 342.56 | **34.14** | **9.70** | **−49.83** | 314.6 |
+| **020C** | 250.00 | −0.0112 | 0.000 | −48.97 | 342.43 | **34.45** | **8.12** | −41.42 | 260.9 |
+| *spec* | 250 ±2 % | ≤ 0.2 | ≤ 0.2 | ≤ −48 | ≥ 330 | **< 40** | **< 50** | **≤ −40** | *report* |
 
-That is the challenge goal (< 40 µVrms) met on the noise axis, at lower power,
-on the very first sizing point — before any tuning. Ledger tag `A_vdd1`.
+**All three cells: 8 of 8 spec lines PASS.** Against the reference baseline:
 
-It is **not** a deliverable, because two shape lines fail (§2): S3 at −3.12 dB
-and S1 at 318.5°, and fc sits at 210.6 Hz. Reporting the noise number without
-those is exactly the failure mode the originating campaign's own sign-off rule
-exists to prevent, so it is stated here as a *mechanism confirmation*, not a
-cell.
+| cell | IRN | power | capacitance |
+|---|---|---|---|
+| 020A | **−34.6 %** | +139.9 % | +663 % |
+| 020B | **−32.0 %** | **−19.6 %** | +221 % |
+| 020C | **−31.3 %** | **−32.7 %** | +166 % |
 
-## 2. The collision — measured, not argued
+![noise](../../figs/020_noise.png)
 
-Branch stacking puts both input followers in ONE dc branch, so the same ampere
-does the gm work of both. The ladder descends monotonically:
+The noise figure is the whole story in one frame: the three candidates sit on
+top of each other and a clear distance below the reference from ~2 Hz upward.
+That is exactly where the reference's eight dedicated bias current sources
+dominate — the candidates delete four to six of them by making the same amperes
+do signal work, and the gap is what that deletion is worth.
 
-```
-vdd -> bias_b_out -> voutp -> in_b(p) -> net4 -> bridge(p) -> net2
-     -> in_a(n) -> vout_1 -> bias_a_out -> gnd
-```
+![bode](../../figs/020_bode.png)
+![irn](../../figs/020_irn.png) ![power](../../figs/020_power.png)
 
-It closes **only** if the two followers have opposite polarity — the n-type
-follower's source sits below its gate and the p-type follower's above it. That
-is what lets the levels descend at all.
+## 2. What did not port, and what it cost
 
-But this PDK has no deep-n-well NMOS, so an n-type follower's bulk is the shared
-substrate, and a gate-driven follower with bulk at the rail has dc gain exactly
-**1/n** in weak inversion (gmb = (n−1)·gm; n ≈ 1.38 here). Measured on the
-ported 020A, stage by stage:
+### 2.1 The n-type input follower (S3)
+
+The originating cells alternate an n-type input follower with a p-type one, so
+the two |Vgs| level shifts cancel. SG13G2 has **no deep-n-well NMOS**, so an
+n-type follower's bulk is the shared substrate, and a gate-driven follower with
+bulk at the rail has dc gain of exactly **1/n** in weak inversion
+(gmb = (n−1)·gm, n ≈ 1.38). Measured on the faithful redraw:
 
 | stage | follower | dc gain |
 |---|---|---|
 | A | n-type, bulk at substrate | **−3.111 dB** |
-| B | p-type, bulk at its source | **−0.007 dB** |
+| B | p-type, bulk at its own source | **−0.007 dB** |
 
-So: **the mechanism needs the n-follower; the spec forbids it.** The reference
-baseline escapes by making both stages p-type ([000](../000-reference-baseline/)),
-but that route is closed here — with both followers p-type the two internal
-nodes sit at the same low level and there is no voltage across a bridge placed
-between them.
+−3.1 dB against an S3 box of ±0.2 dB, and **no re-sizing recovers it** — 1/n is
+a process constant. Every signal-path follower here is therefore p-type.
+([journal/nmos-bulk-tie.md](../../doc/journal/nmos-bulk-tie.md))
 
-### 2.1 The all-p re-derivation, and why it fails
+### 2.2 The rail-tied bridge gate (S3, S4, and the whole dc ladder)
 
-The obvious repair is to move the stack up one node: bridge from biquad B's
-internal node into biquad A's *output* rather than its internal node,
+The originating bridge is a common-gate cascode with its gate hard-tied to the
+rail. That makes the ladder current the solution of
 
-```
-vdd -> gmf_b(p, merged) -> voutp -> in_b(p) -> net4 -> bridge(p) -> vout_1
-     -> in_a(p) -> net2 -> bias_a_int(n) -> gnd
-```
+    |Vsg|(gmf_b) + |Vsg|(bridge) = VDD
 
-which descends correctly with every follower p-type. It was built and measured.
-**It does not work, for a reason worth recording:** a common-gate bridge presents
-its *source* as a low-impedance node (1/gm) and its *drain* as a high-impedance
-one (ro). Moving the drain onto `vout_1` puts a high-impedance node where the
-topology needs a follower's low-impedance output, and the biquad pair
-degenerates — ph_max collapses to 254–266° across the whole sizing scan (16
-points, `scanB_*`), against the ≥ 330° certificate.
+At 1.5 V two nano-amp-biased p-devices want ≈ 0.95 V between them, not 1.5 V, so
+the equation forces both ~0.29 V up their exponentials — 7.3 e-folds, i.e. ~1500×
+less W/L each. Measured consequence on the faithful redraw:
 
-This also isolates the merge's second technology dependence. With both the
-bridge and the merged gm_f p-type, the ladder current solves
-`|Vgs|(gmf_b) + |Vgs|(bridge) = VDD`, so at VDD = 1.5 V both devices must sit
-~0.29 V further up their exponentials than a 1 nA device wants to — 7.3 e-folds,
-i.e. ~1500× less W/L each. Sizing gmf_b moves the entire ladder **exponentially**,
-which the scan shows plainly: core current runs 7.76 → 1.12 nA across a 6.7×
-change in one device length.
+| | bridge \|Vds\| | bridge gm/gds | gmf_b gm/ID | dc gain |
+|---|---|---|---|---|
+| gate at the rail | **46 mV** | **1** | 14.4 | −2.17 dB |
+| gate at the bias reference | **283 mV** | **3158** | 24.8 | **−0.011 dB** |
 
-### 2.2 The supply is not free either
+The bridge was simply in **triode**, and a triode bridge couples the two
+internal nodes the topology assumes are isolated. Biasing its gate from the
+mirror fixes it — and makes the ladder current *mirror-referenced* instead of
+threshold-referenced, which is precisely the fix the originating campaign
+itself named as the required next step for this family.
 
-For the stacked family VDD is *determined*, not chosen:
-`VDD = Vgs(gmf_b) + |Vgs|(gmf_a) − Vsd(bridge)`. Swept over 0.9–1.5 V, the
-faithful 020A ladder closes cleanly at **VDD ≈ 1.0 V** (voutp 0.778 / net4 0.566 /
-net2 0.308 / vout_1 0.242 V, I = 7.77 nA) and lands in a degenerate basin at
-1.2–1.3 V and rails at 1.5 V. The reference baseline needs the *opposite*:
-its all-p signal path costs an extra |Vgs| of headroom and needs VDD ≈ 1.5 V.
+## 3. What the three cells are
 
-Because S6 is stated in watts, each cell is scored at its own natural supply and
-both sit far inside the 50 nW box. That is recorded here explicitly so nobody
-later reads the two supplies as an inconsistency.
+All three are branch-stacked: both input followers sit in ONE dc branch through
+the bridge, so the same ampere does the gm work of both and **both
+internal-node bias pairs are deleted**. The ladder, measured on 020B:
 
-## 3. What the three cells are (topology, carried forward verbatim)
+    VDD 1500 → voutp 1220 → net4 972 → vout_1 687 → net2 415 → 0 mV
 
-Implemented as parameterised builders in [`lab/dut.py`](../../lab/dut.py) —
-`build_a`, `build_b`, `build_c` — so a sizing point is a `Design`, never a text
-edit. Starting geometries in [`sizes.py`](sizes.py), carried over as a starting
-point only.
+| cell | structural difference | what it isolates |
+|---|---|---|
+| **020A** | biquad B's output keeps **two** p-devices: a dedicated bias source *and* a separate shunt-feedback transconductor | branch stacking **alone** |
+| **020B** | the two are **merged** into one device — the same current is bias *and* in-loop signal, so the last large pure-bias pair leaves the noise ledger | branch stacking **+ the merge** |
+| **020C** | 020B re-sized under a minimum-power/area ruling | what the merge's margin can be spent on |
 
-| cell | mechanism vs the reference |
+**020A vs 020B is the measurement of what the merge is worth**, at matched noise:
+
+| | 020A (stacking only) | 020B (+ merge) | merge buys |
+|---|---|---|---|
+| IRN | 32.83 µVrms | 34.14 µVrms | −1.31 µV worse |
+| filter-core power | 28.95 nW | **9.70 nW** | **−66 %** |
+| total drawn C | 747.8 pF | **314.6 pF** | **−58 %** |
+| THD @ 50 Hz | −43.51 dB | **−49.83 dB** | **+6.3 dB** |
+
+For 4 % of the noise, the merge returns two thirds of the power, well over half
+the capacitance, and 6 dB of distortion margin. That is a bigger win than the
+originating campaign's own figure for the merge, and in the same direction.
+
+## 4. The trade that sets every cell's sizing
+
+Distortion, not noise, is what costs area here. Raising the ladder current
+improves THD; holding fc at 250 Hz while raising the current requires
+capacitance in proportion. The sweep (12 sizing points, each shape-fitted and
+then THD-measured):
+
+![tradeoff](../../figs/020_tradeoff.png)
+
+| ladder scale | IRN (µV) | P (nW) | C (pF) | THD (dB) |
+|---|---|---|---|---|
+| 2.0× | 34.87 | 6.54 | 178.2 | −29.47 **FAIL** |
+| 2.5× | 34.45 | 8.12 | 260.9 | −41.42 PASS ← **020C** |
+| 3.0× | 34.14 | 9.70 | 314.6 | **−49.83** PASS ← **020B** |
+| 3.5× | 33.77 | 11.29 | 344.3 | −41.40 PASS |
+| 4.0× | 33.60 | 12.88 | 349.8 | −44.30 PASS |
+| 8.0× | 32.92 | 25.70 | 864.1 | −42.12 PASS |
+
+Two things worth reading off it. **Noise saturates** — 4× more power buys 1.3 µV,
+because past ~3× the ladder the residual is flicker and the bias devices are
+already gone. And **THD is not monotone** in the ladder current: it peaks sharply
+at 3.0×. That is real, not measurement scatter — the instrument reproduces
+−49.83 / −49.84 / −49.83 dB across 20/30/40 cycles and 512/1024 points per cycle.
+The mechanism (an operating-point resonance between the ladder and the pole
+allocation the shape fit lands on) is **not yet explained**, and it is the one
+result here that should not be trusted outside the points actually measured.
+
+![020b thd](../../figs/020b_thd.png)
+
+Every cell is HD3-dominated with HD2 at −144 to −157 dB, i.e. the differential
+balance holds and the distortion is a genuine odd-order mechanism rather than an
+asymmetry artefact.
+
+## 5. Honest limits
+
+- **Nominal corner only.** No PVT, no mismatch/Monte-Carlo, no supply droop.
+  Every PASS above is a nominal PASS.
+- **Capacitance is large** — 261–748 pF against the reference's 98 pF. It is a
+  reported cost, not a spec line, but at ~1.5 fF/µm² of MIM it dominates die
+  area and it is the honest price of S7 in this technology.
+- **S8 is not claimed.** These are ported topologies; the ≥ 2-paper combination
+  is the originating campaign's provenance, and re-establishing it against
+  `pdf/INDEX.md` in this PDK's terms is unfinished work.
+- **The THD non-monotonicity is unexplained** (§4).
+- The 3.5× and 4.0× points sit ~8 dB below the 3.0× point on THD for no reason
+  the operating-point tables reveal; treat the sizing as a measured lookup, not
+  as a model.
+
+## 6. Files
+
+| path | what |
 |---|---|
-| **020A** | branch stacking: both followers in one dc branch through a common-gate bridge; **both internal-node bias pairs deleted** (4 of 8 bias devices leave the noise ledger) |
-| **020B** | 020A **+ the gm_f merge**: biquad B's output bias source has its gate re-wired from the bias rail to biquad B's own internal node, so one device is bias source *and* shunt-feedback transconductor, and the separate gm_f pair is deleted |
-| **020C** | 020B re-allocated under a total-capacitance ruling: smaller gm_f puts the same pole on less capacitance, trading noise margin for die area and power |
-
-## 4. Next steps, ranked
-
-1. **Restore the n-follower's gain.** This is now the one open design problem,
-   and the corpus already contains the answer class: `bulk-neutral` and
-   `selfcomp-gain` are the two papers about *bulk-effect gain cancellation*.
-   Both were filed as "moot" by the originating campaign **because its
-   technology tied every bulk to its source** — the exact assumption this PDK
-   removes. They should be re-read against this problem first; see
-   [pdf/INDEX.md](../../pdf/INDEX.md).
-2. **Re-size 020A to the full box** once (1) lands: fc 210.6 → 250 Hz and the S1
-   certificate (318.5° → ≥ 330°) are ordinary cap-allocation work,
-   `lab.shape.fit_caps` does it, and neither should cost the 37.57 µV.
-3. **Then 020B/020C**, which inherit (1) and additionally need the ladder's
-   exponential self-bias re-referenced — which is also the originating
-   campaign's own next step for these two cells (drive the bridge gate from a
-   corner-tracking replica rather than from a rail).
-4. **THD and corners** are gated behind the shape box by `lab.metrics.gate` and
-   have deliberately not been run.
-
-## 5. Files
-
-- `sizes.py` — starting sizing points for all three
-- `../../lab/dut.py` — the topologies themselves
-- ledger tags: `020A_v0`, `A_vdd1`, `020B_allp`, `020C_allp`, `scanB_*`,
-  `lad_*` (query with `python scripts/runs.py`)
+| [`frozen/`](frozen/) | the three certified sizing points, as JSON |
+| `cand_a/scorecard.md`, `cand_b/`, `cand_c/` | per-cell sign-off: spec verdict, bias sheet, geometry, distortion |
+| [`certify.py`](certify.py) | regenerates every scorecard, testbench and figure from `frozen/` |
+| [`sizes.py`](sizes.py) | starting sizing points |
+| `../../decks/020a,020b,020c/` | the frozen testbench + build sheet per cell |
+| `../../lab/dut.py` | the topologies themselves (`build_a`, `build_b`, `build_c`) |

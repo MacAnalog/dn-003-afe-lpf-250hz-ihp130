@@ -201,46 +201,48 @@ def build_reference(d: Design) -> list[str]:
 
 
 def build_a(d: Design) -> list[str]:
-    """020A -- BRANCH-STACKED followers (the round's robust cell).
+    """020A -- BRANCH-STACKED followers, shunt feedback NOT merged.
 
-    Structural delta vs the reference: both input followers are put in ONE dc
-    branch through a p-type BRIDGE (gate hard-tied to gnd, i.e. a common-gate
-    cascode), so BOTH internal-node bias pairs are DELETED -- their current now
-    arrives through the bridge from biquad B's branch.  The series ladder is
+    Both input followers share ONE dc branch through a p-type BRIDGE, so both
+    internal-node bias pairs are deleted.  The series ladder is
 
-        vdd -> bias_b_out -> voutp -> in_b -> net4 -> bridge -> net2
-             -> in_a -> vout_1 -> bias_a_out -> gnd
+        vdd -> {gmf_b + bias_b_out} -> voutp -> in_b -> net4 -> bridge
+             -> vout_1 -> in_a -> net2 -> bias_a_int -> gnd
 
-    so the SAME ampere does the gm work of both followers.  Four of the
-    reference's eight bias devices leave the noise ledger; the bridge replaces
-    them at a fraction of the cost because a cascode contributes far less noise
-    than a current source.
+    and the SAME ampere does the gm work of both followers.  What distinguishes
+    this cell from 020B is that biquad B's output node keeps **two** p-devices:
+    a dedicated bias source (gate on the bias rail) and a separate shunt-feedback
+    transconductor (gate on the internal node).  020B merges them into one.
+    So 020A is the branch-stacking mechanism ALONE, and the difference between
+    the two cells isolates exactly what the merge buys.
 
-    The ladder only closes if the two followers have OPPOSITE polarity: the
-    n-type follower's source sits below its gate and the p-type follower's above
-    it, which is what lets the dc levels descend monotonically from vdd to gnd.
-    That is why this family cannot use the reference's all-p arrangement, and
-    why its n-type follower pays the body-effect penalty this PDK forces (see
-    the module docstring and doc/journal/nmos-bulk-tie.md).
-
-    Because the bridge's gate is at gnd, V_SG(bridge) = V(net4), and net4 is
-    also gmf_b's gate voltage -- so gmf_b's geometry SETS the whole ladder
-    current.  Freeze it once found.
+    Realisation note.  The originating drawing alternated an n-type follower
+    under a p-type one and tied the bridge's gate to the rail.  Neither survives
+    here: an n-type follower has no source-tied bulk in this PDK and loses 1/n
+    of dc gain, and a rail-tied bridge forces
+    ``|Vsg|(gmf_b) + |Vsg|(bridge) = VDD``, which at 1.5 V drives both devices
+    out of weak inversion and the bridge into triode (measured: 46 mV across it,
+    gm/gds = 1).  Biasing the bridge's gate from the mirror instead frees that
+    constraint AND makes the ladder current mirror-referenced rather than
+    threshold-referenced -- which is the fix the originating campaign itself
+    identified as the required next step for this family.
     """
     D = d.devs
     L = []
-    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "0", NCH),
-          D["in_a"].card("m5", "net3", "vinn", "vout_2", "0", NCH)]
-    L += [D["gmf_a"].card("m4", "vout_1", "net2", "vdd", "vdd", PCH),
-          D["gmf_a"].card("m8", "vout_2", "net3", "vdd", "vdd", PCH)]
-    L += [D["bias_a_out"].card("m9", "vout_1", "vbn", "0", "0", NCH),
-          D["bias_a_out"].card("m10", "vout_2", "vbn", "0", "0", NCH)]
-    L += [D["bridge"].card("mst", "net2", "0", "net4", "net4", PCH),
-          D["bridge"].card("mstn", "net3", "0", "net1", "net1", PCH)]
+    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", PCH),
+          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", PCH)]
+    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", NCH),
+          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", NCH)]
+    L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", NCH),
+          D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", NCH)]
+    L += [D["bridge"].card("mst", "vout_1", "vbn", "net4", "net4", PCH),
+          D["bridge"].card("mstn", "vout_2", "vbn", "net1", "net1", PCH)]
     L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", PCH),
           D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", PCH)]
-    L += [D["gmf_b"].card("m6", "voutp", "net4", "0", "0", NCH),
-          D["gmf_b"].card("m7", "voutn", "net1", "0", "0", NCH)]
+    # separate shunt feedback ...
+    L += [D["gmf_b"].card("m6", "voutp", "net4", "vdd", "vdd", PCH),
+          D["gmf_b"].card("m7", "voutn", "net1", "vdd", "vdd", PCH)]
+    # ... and a dedicated bias source (this pair is what 020B's merge deletes)
     L += [D["bias_b_out"].card("m14", "voutp", "vbp", "vdd", "vdd", PCH),
           D["bias_b_out"].card("m15", "voutn", "vbp", "vdd", "vdd", PCH)]
     return L + _caps(d)
@@ -296,8 +298,8 @@ def build_b(d: Design) -> list[str]:
           D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", NCH)]
     L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", NCH),
           D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", NCH)]
-    L += [D["bridge"].card("mst", "vout_1", "0", "net4", "net4", PCH),
-          D["bridge"].card("mstn", "vout_2", "0", "net1", "net1", PCH)]
+    L += [D["bridge"].card("mst", "vout_1", "vbn", "net4", "net4", PCH),
+          D["bridge"].card("mstn", "vout_2", "vbn", "net1", "net1", PCH)]
     L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", PCH),
           D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", PCH)]
     # THE MERGE: gate = the internal node, not the bias rail.
@@ -322,7 +324,7 @@ def build_c(d: Design) -> list[str]:
 # ladder, so its biquad A follower is n-type.
 NROLES_BY_TOPOLOGY = {
     "reference": NROLES,
-    "a": frozenset({"in_a", "bias_a_out", "gmf_b"}),
+    "a": frozenset({"gmf_a", "bias_a_int"}),
     "b": frozenset({"gmf_a", "bias_a_int"}),
     "c": frozenset({"gmf_a", "bias_a_int"}),
 }
@@ -358,3 +360,35 @@ def device_table(d: Design) -> str:
                 f"(c1_a {d.c1_a*1e12:.3f} / c2_a {d.c2_a*1e12:.3f} / "
                 f"c1_b {d.c1_b*1e12:.3f} / c2_b {d.c2_b*1e12:.3f} pF)")
     return "\n".join(rows)
+
+
+# Role -> the instance names that implement it, per topology (P side, N side).
+# Kept next to the builders so an operating-point probe can address a device by
+# its DESIGN ROLE instead of by a netlist name nobody remembers.
+INSTANCES = {
+    "reference": {
+        "in_a": ("m2", "m5"), "bias_a_int": ("m3", "m13"),
+        "gmf_a": ("m4", "m8"), "bias_a_out": ("m9", "m10"),
+        "in_b": ("m0", "m1"), "bias_b_int": ("m11", "m12"),
+        "gmf_b": ("m6", "m7"), "bias_b_out": ("m14", "m15"),
+    },
+    "a": {
+        "in_a": ("m2", "m5"), "gmf_a": ("m4", "m8"),
+        "bias_a_int": ("m9", "m10"), "bridge": ("mst", "mstn"),
+        "in_b": ("m0", "m1"), "gmf_b": ("m6", "m7"),
+        "bias_b_out": ("m14", "m15"),
+    },
+    "b": {
+        "in_a": ("m2", "m5"), "gmf_a": ("m4", "m8"),
+        "bias_a_int": ("m9", "m10"), "bridge": ("mst", "mstn"),
+        "in_b": ("m0", "m1"), "gmf_b": ("m14", "m15"),
+    },
+}
+INSTANCES["c"] = INSTANCES["b"]
+
+# Internal nets worth reporting in an operating-point table, in ladder order.
+LADDER_NETS = ("voutp", "net4", "vout_1", "net2")
+
+
+def model_of(topology: str, role: str) -> str:
+    return NCH if role in NROLES_BY_TOPOLOGY.get(topology, NROLES) else PCH
