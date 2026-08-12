@@ -1,0 +1,200 @@
+lpf_core_021lv -- schematic of record, build + identity evidence
+================================================================
+
+Cell      : lpf_core_021lv  (the low-power alternative; 021-lv-final)
+Drawn by  : scripts/draw_xschem.py  (build | check | sim)
+Sizing    : signoff/asbuilt/021-lv-final.sp          (sizes, models, nets)
+Bench     : signoff/asbuilt/021-lv-final_tb_acnoise.sp, ..._tb_thd.sp
+            (copied VERBATIM into the testbench code blocks)
+Scorecard : signoff/design/021-lv-final.json
+
+    uv run python scripts/draw_xschem.py build signoff/asbuilt/021-lv-final.sp \
+        signoff/schematic --name lpf_core_021lv
+    uv run python scripts/draw_xschem.py check ...        # gate 1
+    uv run python scripts/draw_xschem.py sim   ... --design signoff/design/021-lv-final.json
+
+
+WHAT WAS DRAWN
+--------------
+The layout is carried forward from the originating campaign's hand-placed
+drawing of this topology -- its coordinate frame, its two-stage left/right
+arrangement (biquad A left, biquad B right, each with its own mirrored P/N
+halves), its routed wires, its rails, its feedback lanes and its port
+placement.  The generic symbols and the IHP `sg13g2_pr` symbols carry identical
+pin geometry (p: D 20,+30  G -20,0  S 20,-30  B 20,0; n: D and S swapped), so
+every ported wire endpoint stayed valid; each IHP instance additionally carries
+`spiceprefix=X` because the models are `.subckt` wrappers.
+
+BIQUAD A HAD TO BE RE-DRAWN, not just re-symboled.  This cell is the OPPOSITE
+POLARITY to the prior drawing's biquad A, so six of the twelve devices are
+wired differently:
+
+    role          prior drawing                     lpf_core_021lv
+    in_a          n-type,  D net2 G vin S vout_1    p-type (thin oxide), same nets
+    gmf_a         p-type,  D vout_1 G net2 S vdd    n-type, D vout_1 G net2 S 0
+    bias_a_int    n-type,  D vout_1 G vbn  S 0      n-type, D net2   G vbn  S 0
+    bridge        p-type,  D net2   G 0    S net4   p-type, D vout_1 G vbn  S net4
+    in_b, gmf_b   p-type                            identical
+    all 6 caps    identical
+
+Consequently biquad A's two internal rails swap places vertically (vout_1 now
+ABOVE net2, because a p-follower's source pin is its top one), gm_f_a becomes a
+device hanging from vout_1 down to ground rather than up to the supply, and the
+bridge's drain label and gate label change.  Everything else -- both halves of
+biquad B, the differential caps, the rails, the ports, the SSF feedback lanes --
+ports coordinate-for-coordinate.  Three placements were nudged (c13/c17,
+c1/c10, xm4/xm8) purely so the IHP symbols' longer `@model` / `@value` strings
+do not print on top of each other; no connection changed.
+
+Devices 12 (2 x sg13_lv_pmos, 6 x sg13_hv_pmos, 4 x sg13_hv_nmos) + 6 ideal
+capacitors.  vbp is brought out as a port and touches no device inside the cell,
+exactly as the certified netlist has it.  Symbol pin order is
+vinp vinn voutp voutn vbn vbp vdd -- the order lab.deck instantiates.
+
+
+GATE 1 -- drawing == as-built netlist
+-------------------------------------
+Canonical compare of the xschem-emitted netlist against
+signoff/asbuilt/021-lv-final.sp: same instance set, same model per instance,
+w/l/ng/m and capacitance within 0.1 %, connectivity equal under a net bijection
+checked in BOTH directions with the interface nets pinned to identity.
+
+instances: 12 mos + 6 caps, sets equal: True
+net bijection (13 nets, injective both ways: True):
+           0 -> 0          [interface, identity]
+        net1 -> net1
+        net2 -> net2
+        net3 -> net3
+        net4 -> net4
+         vbn -> vbn        [interface, identity]
+         vdd -> vdd        [interface, identity]
+        vinn -> vinn       [interface, identity]
+        vinp -> vinp       [interface, identity]
+      vout_1 -> vout_1
+      vout_2 -> vout_2
+       voutn -> voutn      [interface, identity]
+       voutp -> voutp      [interface, identity]
+
+GATE 1  drawing == as-built netlist : PASS
+
+
+GATE 2 -- the drawing reproduces the certified scorecard
+--------------------------------------------------------
+The drawing's own netlist, simulated through the repo's certification path
+(lab.metrics.score_plots on the ac+noise deck, lab.thd on the strobed
+transient), against signoff/design/021-lv-final.json.
+
+metric              drawing      certified        delta   verdict
+fc_hz             249.85485      249.85485    +0.00e+00   ok
+dc_db              -0.01335       -0.01335    +0.00e+00   ok
+ripple_db           0.05376        0.05376    +0.00e+00   ok
+peak_db             0.00000        0.00000    +0.00e+00   ok
+mono_db             0.00000        0.00000    +0.00e+00   ok
+a1000_db          -49.78168      -49.78168    +0.00e+00   ok
+ph_max_deg        332.83216      332.83216    +0.00e+00   ok
+irn_uv             28.54103       28.54103    +0.00e+00   ok
+p_core_nw           6.45695        6.45695    +0.00e+00   ok
+c_total_pf        164.00155      164.00155    +0.00e+00   ok
+thd_db            -42.39341      -42.39341    +0.00e+00   ok
+spec violations measured from the drawing: none
+
+GATE 2  drawing reproduces the certified scorecard : PASS
+
+Every field agrees to the last printed digit -- delta is exactly zero, not
+"within tolerance".
+
+
+ROOT CAUSE OF THE ripple_db DISCREPANCY (schematic 0.0531 vs deck 0.0538 dB)
+----------------------------------------------------------------------------
+It was the ORDER of the device lines inside the `.subckt`, and nothing else.
+
+The machine-generated schematic listed its devices in drawn-ladder order
+(m14 m0 mst m2 m9 m4 | m15 m1 mstn m5 m10 m8); lab.dut.subckt lists them in
+role-pair order (m2 m5 m4 m8 m9 m10 mst mstn m0 m1 m14 m15).  xschem netlists
+instances in FILE order, so the two decks differed only by that permutation.
+
+Measured, all four variants through the identical certification path:
+
+    variant                     fc_hz      ripple_db       a1000_db      p_core_nw
+    deck (lab.deck)      249.85485209     0.05375893   -49.78168219     6.45695218
+    deck + reorder       249.84818714     0.05313362   -49.78351262     6.45696295
+    deck + cap m=1       249.85485209     0.05375893   -49.78168219     6.45695218
+    xschem (old order)   249.84818714     0.05313362   -49.78351262     6.45696295
+
+  * `deck + reorder` reproduces the old schematic EXACTLY -- so the permutation
+    is sufficient to explain the whole difference.
+  * `deck + cap m=1` is bit-identical to the deck -- the `m=1` xschem adds to
+    every capacitor is NOT the cause.
+  * The top-level element order also differs (xschem emits `xdut` first, the
+    deck emits it third, and `.nodeset` sits in a different place) and is
+    demonstrably harmless: taking the xschem netlist and permuting ONLY its
+    subckt device lines into deck order reproduces the deck to +0.00e+00 on
+    every field.  There is no `.temp` / `.options` / `.nodeset` difference.
+
+MECHANISM.  ngspice's default dc tolerances (reltol 1e-3, vntol 1e-6 V) are
+loose next to a ~2 nA subthreshold ladder.  Element order changes the order the
+Jacobian is loaded and therefore the Newton trajectory; the solver stops at a
+different point of the same basin.  Re-running the same deck twice is
+bit-identical (max |dv| = 0.0), so this is deterministic, not run-to-run noise.
+Operating-point delta, deck vs reordered deck:
+
+    node                        deck        reordered      delta V
+    v(xdut.net2) / net3      0.380452275   0.380445932    -6.34e-06
+    v(vbn)                   0.354633744   0.354633603    -1.41e-07
+    v(xdut.vout_1) / vout_2  0.818084182   0.818084045    -1.37e-07
+    v(voutp) / voutn         1.322435098   1.322435028    -7.00e-08
+
+6.3 uV on net2/net3 is SIX TIMES ngspice's default vntol, and net2 is the gate
+of gm_f_a.  At gm/ID ~ 25 /V that is ~1.6e-4 of that branch's current, i.e.
+~1.6e-4 on gm_f_a, which moves biquad A's pole -- so the visible metrics are
+exactly the shape ones (fc -6.7 mHz, ripple_db -6.3e-4 dB, |H|@1k -1.8e-3 dB)
+while dc, phase, noise and power still agree to ~1e-5.  It is a small but REAL
+numerical difference between two different decks, not a metric artifact and not
+a tolerance to widen: `ripple_db` reads the response at the last sweep point
+below 150 Hz (144.54 Hz on the dec=50 grid), and the two responses genuinely
+differ there by 6.3e-4 dB.
+
+Tightening tolerances is NOT the fix and must not be attempted: with
+reltol=1e-6 / abstol=1e-14 / vntol=1e-9 this cell converges into a different,
+wrong basin entirely (fc 0.147 Hz, dc -23.1 dB, IRN 16 Vrms) on both decks.
+
+FIX, applied here: emit the `C {...}` instance lines in the order the certified
+netlist lists them.  File order is independent of the drawn coordinates, so
+readability costs nothing.  With that, gate 2 is exact on all 11 fields.
+
+PROPOSED (not applied -- procedural tier, needs human review):
+scripts/gen_xschem.py has the same latent bug; its `core_sch` walks a hand-
+written P-then-N ladder list.  It should emit in `lab.dut.BUILDERS[topology]`
+order instead.  The delivered 022 cell hid the bug (its worst delta was 1.9e-5)
+because its operating point is less order-sensitive, not because it is immune.
+
+
+RENDERS (the mandatory visual gate)
+-----------------------------------
+    signoff/schematic/lpf_core_021lv.png       2600 x 1403
+    signoff/schematic/lpf_tb_021lv.png         1800 x 1500
+    signoff/schematic/lpf_tb_021lv_thd.png     1800 x 1500
+
+Produced headless.  The base image has no X server, and xschem refuses a PNG
+export without one ("can not do a png export if no X11 present"), so the render
+runs in a one-line derived image:
+
+    FROM spicexplorer-spice-base:local
+    RUN apt-get update -qq && apt-get install -y -qq xvfb
+
+    docker run --rm -v "$PWD/signoff/schematic:/sch" -w /sch \
+        spicexplorer-spice-xvfb:local sh -lc \
+        'xvfb-run -a -s "-screen 0 2600x1500x24" xschem \
+             --tcl "set initial_geometry {2600x1500}" -q --rcfile /sch/xschemrc \
+             --plotfile /sch/lpf_core_021lv.png --png /sch/lpf_core_021lv.sch'
+
+Inspected and iterated on: two rounds of placement nudges removed the
+`sg13_hv_nmos`/`sg13_hv_nmos` and `sg13_hv_pmos`/`5.18878e-11` text collisions,
+and the testbench code blocks were moved below the cell because xschem's
+zoom-to-fit sizes the view from symbol boxes and not from the text inside them,
+which was clipping the `.nodeset` line off-canvas.
+
+KNOWN COSMETIC RESIDUE: the `net2` / `net3` / `net4` / `net1` net labels print
+partly over the vertical wire they name (the label symbol draws its text to the
+upper left of its pin).  This is the prior drawing's own idiom and is legible;
+fixing it would mean moving the taps.

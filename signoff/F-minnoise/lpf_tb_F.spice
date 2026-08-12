@@ -1,0 +1,68 @@
+** sch_path: /sch/lpf_tb_F.sch
+**.subckt lpf_tb_F
+xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_F
+**** begin user architecture code
+
+.lib cornerMOShv.lib mos_tt
+.lib cornerMOSlv.lib mos_tt
+vdd_meas vdd_top 0 1.5
+vflt vdd_top vdd 0
+.nodeset v(xdut.vout_1)=0.8095 v(xdut.vout_2)=0.8095 v(voutp)=1.3564 v(voutn)=1.3564
+iref vdd_top vbn 1e-09
+xmbn vbn vbn 0 0 sg13_hv_nmos w=1e-05 l=1.6e-05 ng=1 m=1
+xmbp vbp vbn 0 0 sg13_hv_nmos w=1e-05 l=1.6e-05 ng=1 m=1
+xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
+vcm vcm 0 0.32
+vsig sig vcm dc 0 ac 1
+evp vinp vcm sig vcm 0.5
+evn vinn vcm sig vcm -0.5
+.temp 27.0
+
+
+.control
+set filetype=binary
+set appendwrite
+op
+write sim.raw
+ac dec 50 0.1 100000
+write sim.raw
+noise v(voutp,voutn) vsig dec 50 0.1 1000
+setplot noise1
+write sim.raw
+.endc
+
+**** end user architecture code
+**.ends
+
+* expanding   symbol:  lpf_core_F.sym # of pins=7
+** sym_path: /sch/lpf_core_F.sym
+** sch_path: /sch/lpf_core_F.sch
+.subckt lpf_core_F vinp vinn voutp voutn vbn vbp vdd
+*.ipin vinp
+*.ipin vinn
+*.opin voutp
+*.opin voutn
+*.ipin vdd
+*.ipin vbn
+*.ipin vbp
+Xm2 net2 vinp vout_1 vout_1 sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
+Xm5 net3 vinn vout_2 vout_2 sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
+Xm4 vout_1 net2 0 0 sg13_hv_nmos w=1e-06 l=4.5e-05 ng=1 m=1
+Xm8 vout_2 net3 0 0 sg13_hv_nmos w=1e-06 l=4.5e-05 ng=1 m=1
+Xm9 net2 vbn 0 0 sg13_hv_nmos w=1e-05 l=1.6e-05 ng=1 m=1
+Xm10 net3 vbn 0 0 sg13_hv_nmos w=1e-05 l=1.6e-05 ng=1 m=1
+Xmst vout_1 vbn net4 net4 sg13_hv_pmos w=7.5e-07 l=3.36e-05 ng=1 m=1
+Xmstn vout_2 vbn net1 net1 sg13_hv_pmos w=7.5e-07 l=3.36e-05 ng=1 m=1
+Xm0 net4 vout_1 voutp voutp sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
+Xm1 net1 vout_2 voutn voutn sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
+Xm14 voutp net4 vdd vdd sg13_lv_pmos w=2e-06 l=9.6e-05 ng=1 m=1
+Xm15 voutn net1 vdd vdd sg13_lv_pmos w=2e-06 l=9.6e-05 ng=1 m=1
+c13 net2 vout_1 8.5027e-12 m=1
+c17 net3 vout_2 8.5027e-12 m=1
+c19 vout_2 vout_1 3.5035e-11 m=1
+c1 voutp net4 1.13625e-10 m=1
+c10 voutn net1 1.13625e-10 m=1
+c12 voutn voutp 2.5732e-11 m=1
+.ends
+
+.end

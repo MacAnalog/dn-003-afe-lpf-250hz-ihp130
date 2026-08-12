@@ -1,0 +1,318 @@
+[
+  {
+    "cell": "A-minarea",
+    "from": "scale/020C-frozen_x1",
+    "why": "Minimum area and power. The floor of the family -- but only 0.30 uV of S5 margin, so it is a corner marker, not a shipping cell.",
+    "vicm": 0.2,
+    "vocm": 1.1,
+    "lv_roles": [],
+    "scorecard": {
+      "fc_hz": 249.8563,
+      "dc_db": -0.0088,
+      "ripple_db": 0.0545,
+      "peak_db": 0.0,
+      "mono_db": 0.0,
+      "a1000_db": -49.0381,
+      "ph_max_deg": 339.7721,
+      "irn_uv": 39.6951,
+      "p_core_nw": 4.1456,
+      "c_total_pf": 104.4139
+    },
+    "thd_db": -41.685,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "B-balanced",
+    "from": "lvcm/lc65",
+    "why": "Best noise-per-nanowatt: 29.38 uV at 6.01 nW and 152.9 pF. The value pick if THD margin of ~2 dB is enough.",
+    "vicm": 0.65,
+    "vocm": 1.3195,
+    "lv_roles": [
+      "in_a"
+    ],
+    "scorecard": {
+      "fc_hz": 249.8536,
+      "dc_db": -0.0121,
+      "ripple_db": 0.0545,
+      "peak_db": 0.0,
+      "mono_db": 0.0,
+      "a1000_db": -49.8902,
+      "ph_max_deg": 332.2288,
+      "irn_uv": 29.3822,
+      "p_core_nw": 6.0064,
+      "c_total_pf": 152.8547
+    },
+    "thd_db": -41.899,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "C-lownoise",
+    "from": "lv065_bias/sb3",
+    "why": "Same power class, better noise (28.54 uV) for 11 pF more.",
+    "vicm": 0.65,
+    "vocm": 1.3224,
+    "lv_roles": [
+      "in_a"
+    ],
+    "scorecard": {
+      "fc_hz": 249.8549,
+      "dc_db": -0.0133,
+      "ripple_db": 0.0538,
+      "peak_db": 0.0,
+      "mono_db": 0.0,
+      "a1000_db": -49.7817,
+      "ph_max_deg": 332.8322,
+      "irn_uv": 28.541,
+      "p_core_nw": 6.457,
+      "c_total_pf": 164.0015
+    },
+    "thd_db": -42.393,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "D-thdjump",
+    "from": "reuse/cr_0p1_4",
+    "why": "The lv-gm_f,b lever: THD jumps to -52.29 dB for 0.9 nW and 35 pF over C. First cell with double-digit THD margin.",
+    "vicm": 0.65,
+    "vocm": 1.3273,
+    "lv_roles": [
+      "gmf_b",
+      "in_a"
+    ],
+    "scorecard": {
+      "fc_hz": 249.8575,
+      "dc_db": -0.0125,
+      "ripple_db": 0.0532,
+      "peak_db": 0.0,
+      "mono_db": 0.0,
+      "a1000_db": -50.3468,
+      "ph_max_deg": 331.5551,
+      "irn_uv": 29.336,
+      "p_core_nw": 7.3083,
+      "c_total_pf": 187.8642
+    },
+    "thd_db": -52.294,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "E-combo",
+    "from": "combo/cb_0p3_0p16_4",
+    "why": "BEST on the stated priorities. Combines both levers: gm_f,a shortened to recover the phase the low-power sizing lost, and gm_f,b moved to lv to recover the THD that shortening cost. 27.27 uV / 8.88 nW / 220.0 pF / -54.88 dB -- strictly better than E1-prev on ALL FOUR axes at once.",
+    "vicm": 0.32,
+    "vocm": 1.3421,
+    "lv_roles": [
+      "gmf_b"
+    ],
+    "scorecard": {
+      "fc_hz": 249.8741,
+      "dc_db": -0.0207,
+      "ripple_db": 0.0544,
+      "peak_db": 0.0016,
+      "mono_db": 0.0016,
+      "a1000_db": -48.9177,
+      "ph_max_deg": 334.628,
+      "irn_uv": 27.2683,
+      "p_core_nw": 8.881,
+      "c_total_pf": 220.018
+    },
+    "thd_db": -54.878,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "F-minnoise",
+    "from": "combo/cb_0p3_0p25_4",
+    "why": "Lowest noise in the repo: 26.24 uV, still -58.52 dB THD, for 12.63 nW and 305.0 pF.",
+    "vicm": 0.32,
+    "vocm": 1.3564,
+    "lv_roles": [
+      "gmf_b"
+    ],
+    "scorecard": {
+      "fc_hz": 249.9552,
+      "dc_db": -0.0327,
+      "ripple_db": 0.0556,
+      "peak_db": 0.0089,
+      "mono_db": 0.0089,
+      "a1000_db": -48.9895,
+      "ph_max_deg": 336.4103,
+      "irn_uv": 26.2433,
+      "p_core_nw": 12.6281,
+      "c_total_pf": 305.0232
+    },
+    "thd_db": -58.515,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "G-maxthd",
+    "from": "combo/cb_0p1_0p16_2p5",
+    "why": "Maximum linearity: -70.99 dB THD at 26.81 uV, 14.32 nW, 348.2 pF. 31 dB of S7 margin.",
+    "vicm": 0.32,
+    "vocm": 1.3617,
+    "lv_roles": [
+      "gmf_b"
+    ],
+    "scorecard": {
+      "fc_hz": 249.8799,
+      "dc_db": -0.0417,
+      "ripple_db": 0.0541,
+      "peak_db": 0.0029,
+      "mono_db": 0.0029,
+      "a1000_db": -48.6937,
+      "ph_max_deg": 343.5258,
+      "irn_uv": 26.807,
+      "p_core_nw": 14.3236,
+      "c_total_pf": 348.218
+    },
+    "thd_db": -70.985,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "E1-prev",
+    "from": "reuse/cp_0p16_4",
+    "why": "Superseded by E-combo (better on all four axes). Kept as the single-lever reference: lv gm_f,b only, no gm_f,a change.",
+    "vicm": 0.65,
+    "vocm": 1.3355,
+    "lv_roles": [
+      "gmf_b",
+      "in_a"
+    ],
+    "scorecard": {
+      "fc_hz": 249.862,
+      "dc_db": -0.0135,
+      "ripple_db": 0.0532,
+      "peak_db": 0.0,
+      "mono_db": 0.0,
+      "a1000_db": -49.8383,
+      "ph_max_deg": 333.4701,
+      "irn_uv": 28.3298,
+      "p_core_nw": 8.9819,
+      "c_total_pf": 229.347
+    },
+    "thd_db": -52.64,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  },
+  {
+    "cell": "H-shipped",
+    "from": "reuse/cp_0p16_2p5",
+    "why": "The cell first delivered. Kept for continuity: it is dominated by E-combo, which is better on noise, power, capacitance AND within 1.6 dB on THD.",
+    "vicm": 0.65,
+    "vocm": 1.3548,
+    "lv_roles": [
+      "gmf_b",
+      "in_a"
+    ],
+    "scorecard": {
+      "fc_hz": 249.9948,
+      "dc_db": -0.0209,
+      "ripple_db": 0.0691,
+      "peak_db": 0.0068,
+      "mono_db": 0.0068,
+      "a1000_db": -49.5535,
+      "ph_max_deg": 341.4214,
+      "irn_uv": 28.0665,
+      "p_core_nw": 14.451,
+      "c_total_pf": 366.2622
+    },
+    "thd_db": -56.463,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  }
+]

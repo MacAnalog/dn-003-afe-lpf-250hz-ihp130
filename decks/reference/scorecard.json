@@ -1,0 +1,40 @@
+{
+  "tag": "reference",
+  "certified": "2026-08-12",
+  "recertified_from": "2026-08-11 (AC_DEC 10 -> 50; same design.json, same sizing, only the sweep density changed)",
+  "what": "The expert topology ported to IHP SG13G2 and re-sized to spec. This is the yardstick every candidate is scored against; `scripts/baseline.py --check` re-runs the frozen deck and fails if any number below moves.",
+  "deck": "decks/reference/lpf_tb.sp",
+  "deck_sha256": "407e529809f01de38e500f67ef79c96a0756dcd51015869a336806ef12f007b5",
+  "design": "decks/reference/design.json",
+  "build_sheet": "decks/reference/build-sheet.md",
+  "topology": "reference",
+  "corner": "mos_tt",
+  "temp_c": 27.0,
+  "vdd": 1.5,
+  "lane": "docker (spicexplorer-spice-base:local, ngspice 45 + OSDI)",
+  "devices": "16 transistors + 6 capacitors",
+  "bias": "one ideal reference current into a real n/p mirror; every bias device is an integer multiple of that unit (per side: 2 units at each biquad output => 8 nA total)",
+  "caps_pf": {"c1_a": 29.468, "c2_a": 6.221, "c1_b": 11.453, "c2_b": 9.946},
+  "scorecard": {
+    "fc_hz": 250.37,
+    "dc_db": -0.0047,
+    "ripple_db": 0.2512,
+    "peak_db": 0.0227,
+    "mono_db": 0.0227,
+    "a1000_db": -48.43,
+    "ph_max_deg": 346.74,
+    "irn_uv": 49.98,
+    "i_core_na": 8.04,
+    "p_core_nw": 12.07,
+    "c_total_pf": 98.01
+  },
+  "notes": [
+    "|H| at 1 kHz is -48.43 dB against -48.16 dB of 4th-order Butterworth arithmetic.",
+    "IRN 0.5-200 Hz = 49.98 uVrms is THE NUMBER TO BEAT: the challenge is < 40 uVrms. (Certified 50.18 on the old 10 pts/decade grid; the -0.20 uV is the density change, not a design change.)",
+    "RE-CERTIFIED 2026-08-12 at AC_DEC = 50. Same design.json, same sizing, same lane -- only the sweep density moved, because 10 pts/decade steps over passband features. Every delta was within tolerance except fc (+0.37 Hz) and ph_max (+0.31 deg), both of which are the denser grid resolving the curve rather than the circuit moving.",
+    "HONEST FAILURE, surfaced by the denser grid: the reference's own S3 flatness clause does NOT hold. ripple_db = 0.2512 dB against a 0.2 dB bound, over dc..150 Hz. At 10 pts/decade the samples straddled the feature and it read as passing. The reference remains the yardstick -- it is not a solution, and it was already expected to fail S5 -- but it must NOT be described as 'on spec on every line except noise'. It is on spec on every line except noise AND passband flatness.",
+    "mono_db = 0.0227 dB: the reference is essentially monotone, which is why it looks right by eye despite the ripple number. Its flatness failure is a shallow one-sided droop, not a bump.",
+    "Total drawn capacitance is REPORTED, never specced.",
+    "Every number here was measured in THIS repo on the frozen deck above -- nothing is carried forward from the originating campaign."
+  ]
+}

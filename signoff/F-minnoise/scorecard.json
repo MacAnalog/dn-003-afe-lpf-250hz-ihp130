@@ -1,0 +1,35 @@
+{
+  "cell": "F-minnoise",
+  "from": "combo/cb_0p3_0p25_4",
+  "why": "Lowest noise in the repo: 26.24 uV, still -58.52 dB THD, for 12.63 nW and 305.0 pF.",
+  "vicm": 0.32,
+  "vocm": 1.3564,
+  "lv_roles": [
+    "gmf_b"
+  ],
+  "scorecard": {
+    "fc_hz": 249.9552,
+    "dc_db": -0.0327,
+    "ripple_db": 0.0556,
+    "peak_db": 0.0089,
+    "mono_db": 0.0089,
+    "a1000_db": -48.9895,
+    "ph_max_deg": 336.4103,
+    "irn_uv": 26.2433,
+    "p_core_nw": 12.6281,
+    "c_total_pf": 305.0232
+  },
+  "thd_db": -58.515,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

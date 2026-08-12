@@ -1,0 +1,42 @@
+{
+  "cell": "022-reuse-final",
+  "certified": "2026-08-12",
+  "what": "The originating branch-stacked SSF topology (bridge + current reuse) ported to IHP SG13G2 by device TYPE and SIZE only -- all 42 device connections identical to the drawn topology. Measured in this repo on the frozen definitions in lab.metrics.",
+  "topology": "b (branch-stacked + gm_f merge)",
+  "lv_roles": [
+    "gmf_b",
+    "in_a"
+  ],
+  "corner": "mos_tt",
+  "temp_c": 27.0,
+  "vdd": 1.5,
+  "vicm": 0.65,
+  "vocm": 1.3548,
+  "scorecard": {
+    "fc_hz": 249.9948,
+    "dc_db": -0.0209,
+    "ripple_db": 0.0691,
+    "peak_db": 0.0068,
+    "mono_db": 0.0068,
+    "a1000_db": -49.5535,
+    "ph_max_deg": 341.4214,
+    "irn_uv": 28.0665,
+    "p_core_nw": 14.451,
+    "c_total_pf": 366.2622,
+    "thd_db": -56.463
+  },
+  "thd_db": -56.463,
+  "yield": {
+    "mismatch_all_pass_pct": 95.0,
+    "n_samples": 100,
+    "sigma_fc_hz": 2.42,
+    "corners_clean": "1/22",
+    "vdd_min_v": 1.5
+  },
+  "notes": [
+    "All of S1-S8 pass. Best cell in the repo on every spec axis.",
+    "THD at the S7 point (-56.46 dB) BEATS the certified reference (-48.37 dB).",
+    "NOT supply-tolerant: fc 250.0 -> 206.5 Hz at VDD 1.45 V. Proven unfixable by device type or size -- see signoff/README.md.",
+    "In-band THD above 100 Hz remains ~15 dB behind the reference (one shared ladder current cannot serve both internal-node bandpass peaks)."
+  ]
+}

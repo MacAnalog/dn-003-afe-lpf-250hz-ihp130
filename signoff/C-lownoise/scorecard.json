@@ -1,0 +1,35 @@
+{
+  "cell": "C-lownoise",
+  "from": "lv065_bias/sb3",
+  "why": "Same power class, better noise (28.54 uV) for 11 pF more.",
+  "vicm": 0.65,
+  "vocm": 1.3224,
+  "lv_roles": [
+    "in_a"
+  ],
+  "scorecard": {
+    "fc_hz": 249.8549,
+    "dc_db": -0.0133,
+    "ripple_db": 0.0538,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -49.7817,
+    "ph_max_deg": 332.8322,
+    "irn_uv": 28.541,
+    "p_core_nw": 6.457,
+    "c_total_pf": 164.0015
+  },
+  "thd_db": -42.393,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

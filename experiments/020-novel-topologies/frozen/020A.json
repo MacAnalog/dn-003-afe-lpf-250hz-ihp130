@@ -1,0 +1,57 @@
+{
+  "topology": "a",
+  "iref": 1.25e-10,
+  "vicm": 0.2,
+  "vocm": 1.1,
+  "caps_pf": {
+    "c1_a": 3.512282886340021,
+    "c2_a": 11.700622371231786,
+    "c1_b": 25.790533338993285,
+    "c2_b": 11.740020906019243
+  },
+  "devs": {
+    "in_a": {
+      "w": 8e-06,
+      "l": 8e-06,
+      "ng": 1,
+      "m": 1
+    },
+    "gmf_a": {
+      "w": 8e-06,
+      "l": 8e-06,
+      "ng": 1,
+      "m": 1
+    },
+    "bias_a_int": {
+      "w": 9.999999999999999e-06,
+      "l": 1.6e-05,
+      "ng": 1,
+      "m": 4
+    },
+    "in_b": {
+      "w": 8e-06,
+      "l": 8e-06,
+      "ng": 1,
+      "m": 1
+    },
+    "bias_b_out": {
+      "w": 2.9999999999999997e-05,
+      "l": 2.4e-05,
+      "ng": 1,
+      "m": 1
+    },
+    "bridge": {
+      "w": 4.207135171990859e-07,
+      "l": 8.4e-06,
+      "ng": 1,
+      "m": 1
+    },
+    "gmf_b": {
+      "w": 1.0517837929977147e-06,
+      "l": 1.2e-05,
+      "ng": 1,
+      "m": 1
+    }
+  },
+  "note": "020A: branch stacking alone. Capacitance-minimised re-fit. iref 0.125 nA with bias_a_int m=4 (stage-A branch 0.50 nA) and bias_b_out m=1 (0.125 nA), so gm_f of both biquads carries almost the whole ladder current (I_lad 1.18 nA) -- that is what buys S7. Bridge/gmf_b widths set I_lad; their gate area is kept small because their Cgg is what caps the S1 phase certificate. 82.05 pF total (was 747.8)."
+}

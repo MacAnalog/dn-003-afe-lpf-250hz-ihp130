@@ -1,0 +1,35 @@
+{
+  "cell": "B-balanced",
+  "from": "lvcm/lc65",
+  "why": "Best noise-per-nanowatt: 29.38 uV at 6.01 nW and 152.9 pF. The value pick if THD margin of ~2 dB is enough.",
+  "vicm": 0.65,
+  "vocm": 1.3195,
+  "lv_roles": [
+    "in_a"
+  ],
+  "scorecard": {
+    "fc_hz": 249.8536,
+    "dc_db": -0.0121,
+    "ripple_db": 0.0545,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -49.8902,
+    "ph_max_deg": 332.2288,
+    "irn_uv": 29.3822,
+    "p_core_nw": 6.0064,
+    "c_total_pf": 152.8547
+  },
+  "thd_db": -41.899,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

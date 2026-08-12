@@ -1,0 +1,33 @@
+{
+  "cell": "A-minarea",
+  "from": "scale/020C-frozen_x1",
+  "why": "Minimum area and power. The floor of the family -- but only 0.30 uV of S5 margin, so it is a corner marker, not a shipping cell.",
+  "vicm": 0.2,
+  "vocm": 1.1,
+  "lv_roles": [],
+  "scorecard": {
+    "fc_hz": 249.8563,
+    "dc_db": -0.0088,
+    "ripple_db": 0.0545,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -49.0381,
+    "ph_max_deg": 339.7721,
+    "irn_uv": 39.6951,
+    "p_core_nw": 4.1456,
+    "c_total_pf": 104.4139
+  },
+  "thd_db": -41.685,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

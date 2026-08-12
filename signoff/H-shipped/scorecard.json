@@ -1,0 +1,36 @@
+{
+  "cell": "H-shipped",
+  "from": "reuse/cp_0p16_2p5",
+  "why": "The cell first delivered. Kept for continuity: it is dominated by E-combo, which is better on noise, power, capacitance AND within 1.6 dB on THD.",
+  "vicm": 0.65,
+  "vocm": 1.3548,
+  "lv_roles": [
+    "gmf_b",
+    "in_a"
+  ],
+  "scorecard": {
+    "fc_hz": 249.9948,
+    "dc_db": -0.0209,
+    "ripple_db": 0.0691,
+    "peak_db": 0.0068,
+    "mono_db": 0.0068,
+    "a1000_db": -49.5535,
+    "ph_max_deg": 341.4214,
+    "irn_uv": 28.0665,
+    "p_core_nw": 14.451,
+    "c_total_pf": 366.2622
+  },
+  "thd_db": -56.463,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

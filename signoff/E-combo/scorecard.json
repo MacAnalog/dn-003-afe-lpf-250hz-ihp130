@@ -1,0 +1,35 @@
+{
+  "cell": "E-combo",
+  "from": "combo/cb_0p3_0p16_4",
+  "why": "BEST on the stated priorities. Combines both levers: gm_f,a shortened to recover the phase the low-power sizing lost, and gm_f,b moved to lv to recover the THD that shortening cost. 27.27 uV / 8.88 nW / 220.0 pF / -54.88 dB -- strictly better than E1-prev on ALL FOUR axes at once.",
+  "vicm": 0.32,
+  "vocm": 1.3421,
+  "lv_roles": [
+    "gmf_b"
+  ],
+  "scorecard": {
+    "fc_hz": 249.8741,
+    "dc_db": -0.0207,
+    "ripple_db": 0.0544,
+    "peak_db": 0.0016,
+    "mono_db": 0.0016,
+    "a1000_db": -48.9177,
+    "ph_max_deg": 334.628,
+    "irn_uv": 27.2683,
+    "p_core_nw": 8.881,
+    "c_total_pf": 220.018
+  },
+  "thd_db": -54.878,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}
