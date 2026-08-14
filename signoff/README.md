@@ -59,6 +59,15 @@ the reference itself misses.
 | `scorecard.json` | the certified numbers `verify.py` checks against |
 | `verify.py` | the one command that re-derives everything |
 | `results/` | figures |
+| `<cell>/op_lpf_core_*.md` | measured operating point per device — ID, gm/ID, gm/gds, **Vds, Vdsat**, saturation margin; the same numbers are stamped on each core schematic (`scripts/annotate_op.py`) |
+| `<cell>/mc.md` | mismatch Monte-Carlo, n = 100: all-pass yield + sigmas for fc, dc gain and **group delay**; one runnable seeded sample lives in `asbuilt/core_tb_mc.sp` |
+| `<cell>/pvt.md` | PVT screen: ss/ff/sf/fs (+ tt) × −40/27/125 °C × 1.35/1.5/1.65 V |
+| `<cell>/asbuilt/core_tb_gd.sp` | runnable group-delay bench, τ(f) computed in-deck; drawn as `lpf_tb_*_gd.sch` |
+
+Schematic renders (`*.png` beside each `.sch`) are produced by
+`scripts/render_sch.py`; core sheets carry the op annotation. The
+**robustness & dynamics summary table** for all nine cells is in
+[COMPARISON.md](COMPARISON.md).
 
 ## The two identity gates
 

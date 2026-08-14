@@ -156,6 +156,17 @@ def score_plots(plots: list[R.Plot], design: Design | None = None,
     # across a gap.  See `lab.raw._floor_prefix`.
     v["f_scored_hi"] = R.f_scored_hi(f, h, PH_FLOOR_DB)
 
+    # Group delay -- report-only soft columns (nothing in S1-S8 scores them,
+    # same contract as `mono_db`).  tau(f) = -dphi/domega over the certificate's
+    # own contiguous band; a 4th-order low-pass peaks near fc.
+    fg, gd = R.group_delay_s(f, h, PH_FLOOR_DB)
+    if fg.size:
+        v["gd_dc_ms"] = float(gd[0]) * 1e3
+        band = fg <= max(v["fc_hz"] * 1.2, 1.0)
+        v["gd_max_ms"] = float(np.max(gd[band])) * 1e3 if band.any() else float("nan")
+        v["gd_fc_ms"] = float(np.interp(v["fc_hz"], fg, gd)) * 1e3 \
+            if fg[-1] >= v["fc_hz"] else float("nan")
+
     try:
         no = R.pick(plots, "noise")
         fn = np.real(no.x).astype(float)
@@ -242,6 +253,7 @@ _FMT = {
     "irn_uv": "{:.3f}", "onoise_uv": "{:.2f}", "p_core_nw": "{:.3f}",
     "i_core_na": "{:.3f}", "idd_total_na": "{:.2f}", "c_total_pf": "{:.2f}",
     "f_scored_hi": "{:.0f}", "mono_db": "{:.4f}",
+    "gd_dc_ms": "{:.4f}", "gd_max_ms": "{:.4f}", "gd_fc_ms": "{:.4f}",
 }
 COLS = ("fc_hz", "dc_db", "ripple_db", "peak_db", "mono_db", "a1000_db", "ph_max_deg",
         "irn_uv", "p_core_nw", "c_total_pf")

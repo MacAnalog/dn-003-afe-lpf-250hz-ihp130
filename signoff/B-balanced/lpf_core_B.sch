@@ -163,3 +163,40 @@ T {SSF loop: net4 -> gate of xm14} 560 -500 0 0 0.25 0.25 {}
 T {SSF loop: net1 -> gate of xm15} 1560 -500 0 1 0.25 0.25 {}
 T {bridge: net4 -> vout_1} 920 -30 0 0 0.2 0.2 {}
 T {bridge: net1 -> vout_2} 1540 -30 0 1 0.2 0.2 {}
+T {Vds=440m Vdsat=101m
+Id=0.66nA Vgs=167m
+gm/ID=32.0 gm/gds=2620 [sat/weak]} 70 -276 0 0 0.12 0.12 {name=opannot_m2 layer=11}
+T {Vds=440m Vdsat=101m
+Id=0.66nA Vgs=167m
+gm/ID=32.0 gm/gds=2620 [sat/weak]} 610 -276 0 0 0.12 0.12 {name=opannot_m5 layer=11}
+T {Vds=817m Vdsat=101m
+Id=1.34nA Vgs=377m
+gm/ID=28.2 gm/gds=1711 [sat/weak]} 210 -66 0 0 0.12 0.12 {name=opannot_m4 layer=11}
+T {Vds=817m Vdsat=101m
+Id=1.34nA Vgs=377m
+gm/ID=28.2 gm/gds=1711 [sat/weak]} 470 -66 0 0 0.12 0.12 {name=opannot_m8 layer=11}
+T {Vds=377m Vdsat=101m
+Id=0.66nA Vgs=361m
+gm/ID=28.1 gm/gds=3931 [sat/weak]} 70 -66 0 0 0.12 0.12 {name=opannot_m9 layer=11}
+T {Vds=377m Vdsat=101m
+Id=0.66nA Vgs=361m
+gm/ID=28.1 gm/gds=3931 [sat/weak]} 610 -66 0 0 0.12 0.12 {name=opannot_m10 layer=11}
+T {Vds=138m Vdsat=104m
+Id=2.00nA Vgs=594m
+gm/ID=22.9 gm/gds=808 [sat/weak]} 990 -26 0 0 0.12 0.12 {name=opannot_mst layer=11}
+T {Vds=138m Vdsat=104m
+Id=2.00nA Vgs=594m
+gm/ID=22.9 gm/gds=808 [sat/weak]} 1530 -26 0 0 0.12 0.12 {name=opannot_mstn layer=11}
+T {Vds=363m Vdsat=102m
+Id=2.00nA Vgs=501m
+gm/ID=25.0 gm/gds=4616 [sat/weak]} 990 -216 0 0 0.12 0.12 {name=opannot_m0 layer=11}
+T {Vds=363m Vdsat=102m
+Id=2.00nA Vgs=501m
+gm/ID=25.0 gm/gds=4616 [sat/weak]} 1530 -216 0 0 0.12 0.12 {name=opannot_m1 layer=11}
+T {Vds=182m Vdsat=102m
+Id=2.00nA Vgs=545m
+gm/ID=24.6 gm/gds=2683 [sat/weak]} 990 -406 0 0 0.12 0.12 {name=opannot_m14 layer=11}
+T {Vds=182m Vdsat=102m
+Id=2.00nA Vgs=545m
+gm/ID=24.6 gm/gds=2683 [sat/weak]} 1530 -406 0 0 0.12 0.12 {name=opannot_m15 layer=11}
+T {OP ANNOTATION -- corner mos_tt, 27 C, VDD 1.5 V, measured by lab.oppoint (PSP vdss = Vdsat). P half shown on both halves (differential symmetry).} 40 96 0 0 0.16 0.16 {name=opannot_banner layer=11}

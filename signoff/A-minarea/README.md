@@ -42,6 +42,23 @@ Sizing from round `scale/020C-frozen_x1`. Same topology as every other candidate
 
 ![noise](A-minarea_noise.png)
 
+<!-- robustness-dynamics:begin -->
+## Robustness & dynamics
+
+Nominal (mos_tt, 27 C, VDD 1.5 V): fc 249.86 Hz - dc -0.0088 dB - group delay tau(0) 1.653 ms, tau_max 2.477 ms (at-fc 2.345 ms)
+
+| artifact | what |
+|---|---|
+| [`op_lpf_core_A.md`](op_lpf_core_A.md) | measured operating point: per-device ID, gm/ID, gm/gds, **Vds, Vdsat** and saturation margin; the same numbers are stamped on the schematic sheet |
+| [`mc.md`](mc.md) | mismatch Monte-Carlo, n = 100: all-pass yield **45.0 %**, with per-line yields and sigmas for fc, dc gain and **group delay** |
+| [`pvt.md`](pvt.md) | PVT screen (ss/ff/sf/fs x -40/27/125 C x 1.35/1.5/1.65 V): **1/22 corners clean** — the family's documented supply sensitivity |
+| `asbuilt/core_tb_gd.sp` | runnable single-file group-delay bench (tau computed in-deck) — drawn as [`lpf_tb_A_gd.sch`](lpf_tb_A_gd.sch) |
+| `asbuilt/core_tb_mc.sp` | runnable single-seed mismatch sample (edit `.option seed=`) — drawn as [`lpf_tb_A_mc.sch`](lpf_tb_A_mc.sch) |
+
+The core schematic [`lpf_core_A.sch`](lpf_core_A.sch) carries the op
+annotation on-sheet (render: `lpf_core_A.png`).
+<!-- robustness-dynamics:end -->
+
 ## Files
 
 | file | what |

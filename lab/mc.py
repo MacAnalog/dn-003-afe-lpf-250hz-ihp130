@@ -61,10 +61,12 @@ WORKERS = 6
 
 # The columns whose distribution is reported.  sigma(dc_db) first -- see the
 # module docstring.
-STAT_KEYS = ("dc_db", "fc_hz", "ripple_db", "irn_uv", "p_core_nw")
+STAT_KEYS = ("dc_db", "fc_hz", "ripple_db", "irn_uv", "p_core_nw",
+             "gd_dc_ms", "gd_max_ms")
 
 _STAT_FMT = {"dc_db": "{:+.5f}", "fc_hz": "{:.3f}", "ripple_db": "{:.4f}",
-             "irn_uv": "{:.3f}", "p_core_nw": "{:.3f}"}
+             "irn_uv": "{:.3f}", "p_core_nw": "{:.3f}",
+             "gd_dc_ms": "{:.4f}", "gd_max_ms": "{:.4f}"}
 
 
 # --------------------------------------------------------------- one sample --

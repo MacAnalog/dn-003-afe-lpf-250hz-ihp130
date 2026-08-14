@@ -35,7 +35,7 @@ from lab import config as C            # noqa: E402
 from lab import metrics as M           # noqa: E402
 from lab import ngspice as ng          # noqa: E402
 from lab import thd as T               # noqa: E402
-from lab.deck import ac_noise, tran_thd  # noqa: E402
+from lab.deck import ac_gd, ac_mc, ac_noise, tran_thd  # noqa: E402
 from lab.dut import Design, Dev, subckt  # noqa: E402
 from lab.grid import legalize            # noqa: E402
 from lab.retune import restore_fc        # noqa: E402
@@ -128,6 +128,10 @@ def build(name: str) -> dict:
     (out / "asbuilt" / "core.sp").write_text(subckt(d) + "\n")
     (out / "asbuilt" / "core_tb_acnoise.sp").write_text(ac_noise(d))
     (out / "asbuilt" / "core_tb_thd.sp").write_text(tran_thd(d, 50.0, 87.5e-3))
+    # Reviewer-facing single-file benches: group delay (tau computed in-deck)
+    # and one seeded mismatch MC sample (the distribution runner is lab.mc).
+    (out / "asbuilt" / "core_tb_gd.sp").write_text(ac_gd(d))
+    (out / "asbuilt" / "core_tb_mc.sp").write_text(ac_mc(d))
 
     s = M.evaluate(d, f"pkg_{name}", record=False)
     t = T.measure(d, tag=f"pkg_{name}_thd", gate=False)

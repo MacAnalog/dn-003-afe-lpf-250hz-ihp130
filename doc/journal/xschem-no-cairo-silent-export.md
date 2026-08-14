@@ -22,10 +22,20 @@ host (`~/local/tools/tools/xschem`) needs glibc ≥ 2.34 against the EL8 host's
    the cairo-less build, which is what the identity gates need (`lab/xsch.py`,
    `LPF_XSCHEM` mirror of the `LPF_NGSPICE` lane switch). The `.sch` sources
    plus Gate 1/Gate 2 are the binding evidence; the pngs are a convenience.
-3. Regenerate renders only in a lane whose xschem links cairo (the docker
-   image), and never leave a stale render beside a re-sized schematic — a
-   wrong-numbers picture is worse than none. The signoff renders were removed
-   on feat/signoff-grid-legal for exactly this reason.
+3. Never leave a stale render beside a re-sized schematic — a wrong-numbers
+   picture is worse than none. The signoff renders were briefly removed on
+   feat/signoff-grid-legal for exactly this reason.
+4. **The render lane exists after all** (found later the same day): the SVG
+   export writes COMPLETE geometry — every path, every text — but with a
+   broken document header (`width="1" height="1"`, no viewBox: the coordinates
+   are scaled into the 1×1 Tk window that never maps under Xvfb) and the CSS
+   stroke-width left in screen pixels (rasterize that and you get the
+   solid-colour blobs). Both are repairable after the fact:
+   `scripts/render_sch.py` recomputes the bounding box from the path data,
+   rewrites the header, rescales the strokes, and rasterizes with **cairosvg**
+   (`rsvg-convert` silently drops the text elements at these font sizes).
+   All signoff renders are produced this way on the EDA server.
 
-**Provenance.** `signoff/schematic/README.md` (render row),
-`lab/xsch.py`; session experiments on Xvfb :77–:79, 2026-08-14.
+**Provenance.** `scripts/render_sch.py`, `signoff/schematic/README.md`
+(render row), `lab/xsch.py`; session experiments on Xvfb :77–:79 and the
+E-combo render inspection, 2026-08-14.

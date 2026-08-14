@@ -550,10 +550,16 @@ def main() -> int:
         out.mkdir(parents=True, exist_ok=True)
         (out / f"{a.name}.sch").write_text(core_sch(mos, caps, a.name))
         (out / f"{a.name}.sym").write_text(core_sym(a.name))
-        for suffix, what, nm in (("_tb_acnoise", "op + ac + noise", tb),
-                                 ("_tb_thd", "coherent strobed transient, S7",
-                                  tb + "_thd")):
-            bench, ctrl = split_tb(ab.with_name(ab.stem + suffix + ab.suffix))
+        sheets = [("_tb_acnoise", "op + ac + noise", tb),
+                  ("_tb_thd", "coherent strobed transient, S7", tb + "_thd"),
+                  # optional reviewer benches -- drawn only when the deck exists
+                  ("_tb_gd", "group delay, tau computed in-deck", tb + "_gd"),
+                  ("_tb_mc", "one seeded mismatch MC sample", tb + "_mc")]
+        for suffix, what, nm in sheets:
+            src = ab.with_name(ab.stem + suffix + ab.suffix)
+            if suffix in ("_tb_gd", "_tb_mc") and not src.exists():
+                continue
+            bench, ctrl = split_tb(src)
             (out / f"{nm}.sch").write_text(tb_sch(a.name, bench, ctrl, what))
         print(f"drew {a.name}.sch/.sym + {tb}.sch + {tb}_thd.sch into {out}")
         return 0

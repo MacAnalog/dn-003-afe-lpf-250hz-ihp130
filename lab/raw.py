@@ -307,6 +307,24 @@ def _floor_prefix(h: np.ndarray, floor_db: float) -> int:
     return int(below[0]) if below.size else len(h)
 
 
+def group_delay_s(f: np.ndarray, h: np.ndarray,
+                  floor_db: float = -100.0) -> tuple[np.ndarray, np.ndarray]:
+    """Group delay tau(f) = -d(phase)/d(omega), in seconds, over the same
+    contiguous scored band as the phase certificate (`_floor_prefix`) -- beyond
+    the floor the sampled phase aliases and its derivative is fiction.
+
+    Returns (f_band, tau).  Uses np.gradient on the unwrapped phase, so the
+    endpoints are one-sided differences; on the repo's 50-points-per-decade
+    sweeps that costs <1 % at the band edges.
+    """
+    n = _floor_prefix(h, floor_db)
+    if n < 2:
+        return np.array([]), np.array([])
+    fx = np.asarray(np.real(f[:n]), float)
+    ph = np.unwrap(np.angle(h[:n]))
+    return fx, -np.gradient(ph, 2.0 * np.pi * fx)
+
+
 def _ph_stats(f: np.ndarray, h: np.ndarray, floor_db: float) -> tuple:
     n = _floor_prefix(h, floor_db)
     if n < 2:

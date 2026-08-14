@@ -57,6 +57,32 @@ well inside the ±0.2 dB window.
 Per-cell plots (passband, Bode, noise density) are in each design's own
 directory, embedded in its `README.md`.
 
+## Robustness & dynamics — per cell
+
+Mismatch MC is n = 100 over the PDK's own statistical model; group delay is
+the report-only soft metric (tau = −dφ/dω over the phase certificate's band);
+the PVT screen is ss/ff/sf/fs (+ tt anchors) × −40/27/125 °C × 1.35/1.5/1.65 V.
+Per-cell details: `<cell>/mc.md`, `<cell>/pvt.md`, `<cell>/op_lpf_core_*.md`
+(measured Vds/Vdsat per device, also stamped on each core schematic).
+
+| cell | MC all-pass yield | σ(fc) Hz | τ(0) ms | τ_max ms | PVT clean |
+|---|---|---|---|---|---|
+| [`A-minarea`](A-minarea/) | **45.0 %** | 5.070 | 1.653 | 2.477 | 1/22 |
+| [`B-balanced`](B-balanced/) | **70.0 %** | 3.319 | 1.639 | 2.463 | 1/22 |
+| [`C-lownoise`](C-lownoise/) | **75.0 %** | 2.707 | 1.658 | 2.500 | 1/22 |
+| [`D-thdjump`](D-thdjump/) | **75.0 %** | 2.140 | 1.623 | 2.372 | 1/22 |
+| [`E-combo`](E-combo/) | **92.0 %** | 2.761 | 1.652 | 2.475 | 1/22 |
+| [`F-minnoise`](F-minnoise/) | **93.0 %** | 2.753 | 1.659 | 2.483 | 1/22 |
+| [`G-maxthd`](G-maxthd/) | **90.0 %** | 2.997 | 1.661 | 2.483 | 1/22 |
+| [`E1-prev`](E1-prev/) | **96.0 %** | 2.199 | 1.641 | 2.431 | 2/22 |
+| [`H-shipped`](H-shipped/) | **95.0 %** | 2.350 | 1.659 | 2.462 | 1/22 |
+
+Yield is the family's bias-area lever made visible (see
+doc/journal/bias-area-buys-yield-phase-pays.md): the min-area corner pays for
+its 4.15 nW in mismatch yield, while the shipped-class sizings hold 90–96 %.
+Every cell's supply sensitivity is the same threshold-referenced mechanism —
+PVT clean counts of 1–2/22 are the documented limitation, not per-cell news.
+
 ## Flat-response check
 
 All nine are maximally flat low-pass responses, not merely inside the bounds.

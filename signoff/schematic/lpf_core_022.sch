@@ -170,3 +170,40 @@ T {in_b} 1560 -300 0 0 0.25 0.25 {}
 T {stage A per half: m2/m5 pmos input follower (bulk tied to source), m4/m8 shunt gm_f to gnd (gate on net2/net3), m9/m10 vbn bias sink, c13/c17 the Miller cap, c19 the differential load.} 0 130 0 0 0.25 0.25 {}
 T {stage B per half: m14/m15 branch-top pmos acting as bias source AND gm_f loop device, m0/m1 pmos input follower, c1/c10 the Miller cap, c12 the differential load.} 0 160 0 0 0.25 0.25 {}
 T {dc ladder per half, top to bottom: vdd - m14 - voutp - m0 - net4 - mst - vout_1 - m2 - net2 - m9 - gnd, with m4 shunting vout_1 to gnd. No CMFB: c12/c19 set the differential poles.} 0 190 0 0 0.25 0.25 {}
+T {Vds=400m Vdsat=101m
+Id=0.66nA Vgs=167m
+gm/ID=32.0 gm/gds=2619 [sat/weak]} 70 -276 0 0 0.12 0.12 {name=opannot_m2 layer=11}
+T {Vds=400m Vdsat=101m
+Id=0.66nA Vgs=167m
+gm/ID=32.0 gm/gds=2619 [sat/weak]} 610 -276 0 0 0.12 0.12 {name=opannot_m5 layer=11}
+T {Vds=817m Vdsat=102m
+Id=4.17nA Vgs=417m
+gm/ID=28.1 gm/gds=1641 [sat/weak]} 230 -66 0 0 0.12 0.12 {name=opannot_m4 layer=11}
+T {Vds=817m Vdsat=102m
+Id=4.17nA Vgs=417m
+gm/ID=28.1 gm/gds=1641 [sat/weak]} 450 -66 0 0 0.12 0.12 {name=opannot_m8 layer=11}
+T {Vds=417m Vdsat=101m
+Id=0.66nA Vgs=356m
+gm/ID=28.1 gm/gds=13435 [sat/weak]} 70 -66 0 0 0.12 0.12 {name=opannot_m9 layer=11}
+T {Vds=417m Vdsat=101m
+Id=0.66nA Vgs=356m
+gm/ID=28.1 gm/gds=13435 [sat/weak]} 610 -66 0 0 0.12 0.12 {name=opannot_m10 layer=11}
+T {Vds=324m Vdsat=158m
+Id=4.83nA Vgs=785m
+gm/ID=9.9 gm/gds=2587 [sat/mod]} 990 -26 0 0 0.12 0.12 {name=opannot_mst layer=11}
+T {Vds=324m Vdsat=158m
+Id=4.83nA Vgs=785m
+gm/ID=9.9 gm/gds=2587 [sat/mod]} 1530 -26 0 0 0.12 0.12 {name=opannot_mstn layer=11}
+T {Vds=213m Vdsat=102m
+Id=4.83nA Vgs=537m
+gm/ID=24.7 gm/gds=2646 [sat/weak]} 990 -216 0 0 0.12 0.12 {name=opannot_m0 layer=11}
+T {Vds=213m Vdsat=102m
+Id=4.83nA Vgs=537m
+gm/ID=24.7 gm/gds=2646 [sat/weak]} 1530 -216 0 0 0.12 0.12 {name=opannot_m1 layer=11}
+T {Vds=146m Vdsat=116m
+Id=4.83nA Vgs=359m
+gm/ID=21.7 gm/gds=184 [sat/weak]} 990 -406 0 0 0.12 0.12 {name=opannot_m14 layer=11}
+T {Vds=146m Vdsat=116m
+Id=4.83nA Vgs=359m
+gm/ID=21.7 gm/gds=184 [sat/weak]} 1530 -406 0 0 0.12 0.12 {name=opannot_m15 layer=11}
+T {OP ANNOTATION -- corner mos_tt, 27 C, VDD 1.5 V, measured by lab.oppoint (PSP vdss = Vdsat). P half shown on both halves (differential symmetry).} 40 96 0 0 0.16 0.16 {name=opannot_banner layer=11}

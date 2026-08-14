@@ -12,7 +12,7 @@ halves mirrored, and the cross-caps drawn between them.
 | `lpf_core_022.sym` | its symbol (7 ports, in the order `lab.deck` instantiates) |
 | `lpf_tb_022.sch` | testbench: op + ac + noise, with its `.control` block |
 | `lpf_tb_022_thd.sch` | testbench: coherent strobed transient for S7 |
-| `*.png` | renders (visual evidence) — **absent in this revision**: the EDA server's native xschem is built without cairo, so its `--png`/`--svg` export silently writes nothing; regenerate in the docker lane (cairo xschem) with `xschem -q --plotfile <f>.png --png <f>.sch` when it is available. The `.sch` sources and both identity gates are the binding evidence. |
+| `*.png` | renders (visual evidence), produced by `scripts/render_sch.py` — the native xschem has no cairo so its own png export is a silent no-op; the script repairs the SVG export's broken header and rasterizes with cairosvg (doc/journal/xschem-no-cairo-silent-export.md). Core sheets carry the **measured op annotation** (per-device Vds, Vdsat, Id, Vgs, gm/ID, gm/gds — `scripts/annotate_op.py`; text-only, so the identity gates are unaffected). Re-annotate + re-render after any drawer regeneration: the drawers emit clean sheets. |
 | `*.spice` | the netlists xschem produced from the above |
 | `draw_lpf_core_022.py` | the generator |
 | `check_netlist.py` | gate 1 — canonical netlist compare vs `../asbuilt/` |
