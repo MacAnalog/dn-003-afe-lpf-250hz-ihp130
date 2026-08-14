@@ -44,8 +44,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-ASB = HERE.parent / "asbuilt"
+# This emitter moved from signoff/schematic/ into scripts/; its outputs stay
+# with the schematics it maintains, and its inputs stay the certified decks.
+HERE = Path(__file__).resolve().parents[1] / "signoff" / "schematic"
+ASB = Path(__file__).resolve().parents[1] / "signoff" / "asbuilt"
 CELL = "lpf_core_022"
 PR = "sg13g2_pr"
 HDR = "v {xschem version=3.4.4 file_version=1.2}\nG {}\nK {}\nV {}\nS {}\nE {}\n"

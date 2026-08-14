@@ -8,13 +8,13 @@
     "gmf_b"
   ],
   "scorecard": {
-    "fc_hz": 249.8741,
+    "fc_hz": 249.8757,
     "dc_db": -0.0207,
-    "ripple_db": 0.0544,
-    "peak_db": 0.0016,
-    "mono_db": 0.0016,
-    "a1000_db": -48.9177,
-    "ph_max_deg": 334.628,
+    "ripple_db": 0.0546,
+    "peak_db": 0.0015,
+    "mono_db": 0.0015,
+    "a1000_db": -48.917,
+    "ph_max_deg": 334.6279,
     "irn_uv": 27.2683,
     "p_core_nw": 8.881,
     "c_total_pf": 220.018

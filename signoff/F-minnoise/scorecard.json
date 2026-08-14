@@ -8,15 +8,15 @@
     "gmf_b"
   ],
   "scorecard": {
-    "fc_hz": 249.9552,
+    "fc_hz": 249.9467,
     "dc_db": -0.0327,
-    "ripple_db": 0.0556,
-    "peak_db": 0.0089,
-    "mono_db": 0.0089,
-    "a1000_db": -48.9895,
-    "ph_max_deg": 336.4103,
-    "irn_uv": 26.2433,
-    "p_core_nw": 12.6281,
+    "ripple_db": 0.0546,
+    "peak_db": 0.0093,
+    "mono_db": 0.0093,
+    "a1000_db": -48.9923,
+    "ph_max_deg": 336.4108,
+    "irn_uv": 26.2432,
+    "p_core_nw": 12.6282,
     "c_total_pf": 305.0232
   },
   "thd_db": -58.515,

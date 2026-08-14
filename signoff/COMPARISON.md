@@ -6,20 +6,25 @@ flavours and capacitor values. Every one **passes all nine spec lines**, and
 every one has been through both identity gates: its schematic netlists to its
 as-built netlist, and that netlist simulates to the numbers below.
 
+Every sizing is **layout-legal** (5 nm grid, PDK minimum widths, ≤10 µm
+on-grid gate fingers — `lab.grid.legalize`, fc restored where the min-width
+projection moved it by `lab.retune.restore_fc`), and old-vs-new netlists are
+circuitgraph-verified connectivity-identical with unchanged device models.
+
 Ranked by the stated priority: **noise, power and capacitance first, THD
 second** — subject to the response still being a flat low-pass.
 
 | cell | IRN µV | P nW | C pF | THD dB | ph° | fc Hz | ripple | peak | `mono_db` | vicm |
 |---|---|---|---|---|---|---|---|---|---|---|
-| [**`A-minarea`](A-minarea/) | **39.70** | **4.15** | **104.4** | -41.69 | 339.8 | 249.86 | 0.0545 | +0.0000 | 0.0000 | 0.2 |
-| [**`B-balanced`](B-balanced/) | **29.38** | **6.01** | **152.9** | -41.90 | 332.2 | 249.85 | 0.0545 | +0.0000 | 0.0000 | 0.65 |
-| [**`C-lownoise`](C-lownoise/) | **28.54** | **6.46** | **164.0** | -42.39 | 332.8 | 249.85 | 0.0538 | +0.0000 | 0.0000 | 0.65 |
-| [**`D-thdjump`](D-thdjump/) | **29.34** | **7.31** | **187.9** | -52.29 | 331.6 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
-| [**`E-combo`](E-combo/) | **27.27** | **8.88** | **220.0** | -54.88 | 334.6 | 249.87 | 0.0544 | +0.0016 | 0.0016 | 0.32 |
-| [**`F-minnoise`](F-minnoise/) | **26.24** | **12.63** | **305.0** | -58.52 | 336.4 | 249.96 | 0.0556 | +0.0089 | 0.0089 | 0.32 |
-| [**`G-maxthd`](G-maxthd/) | **26.81** | **14.32** | **348.2** | -70.98 | 343.5 | 249.88 | 0.0541 | +0.0029 | 0.0029 | 0.32 |
-| [**`E1-prev`](E1-prev/) | **28.33** | **8.98** | **229.3** | -52.64 | 333.5 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
-| [**`H-shipped`](H-shipped/) | **28.07** | **14.45** | **366.3** | -56.46 | 341.4 | 249.99 | 0.0691 | +0.0068 | 0.0068 | 0.65 |
+| [**`A-minarea`](A-minarea/) | **39.70** | **4.15** | **104.4** | -41.68 | 339.8 | 249.86 | 0.0545 | +0.0000 | 0.0000 | 0.2 |
+| [**`B-balanced`](B-balanced/) | **29.38** | **6.01** | **152.9** | -41.94 | 332.2 | 250.01 | 0.0590 | +0.0000 | 0.0000 | 0.65 |
+| [**`C-lownoise`](C-lownoise/) | **28.56** | **6.38** | **164.0** | -41.69 | 333.0 | 248.14 | 0.0667 | +0.0000 | 0.0000 | 0.65 |
+| [**`D-thdjump`](D-thdjump/) | **28.81** | **7.47** | **187.9** | -52.48 | 330.7 | 250.00 | 0.1604 | +0.0000 | 0.0000 | 0.65 |
+| [**`E-combo`](E-combo/) | **27.27** | **8.88** | **220.0** | -54.88 | 334.6 | 249.88 | 0.0546 | +0.0015 | 0.0015 | 0.32 |
+| [**`F-minnoise`](F-minnoise/) | **26.24** | **12.63** | **305.0** | -58.52 | 336.4 | 249.95 | 0.0546 | +0.0093 | 0.0093 | 0.32 |
+| [**`G-maxthd`](G-maxthd/) | **26.81** | **14.32** | **348.2** | -70.98 | 343.5 | 249.88 | 0.0542 | +0.0029 | 0.0029 | 0.32 |
+| [**`E1-prev`](E1-prev/) | **28.21** | **9.01** | **229.3** | -52.60 | 333.3 | 250.00 | 0.1119 | +0.0000 | 0.0000 | 0.65 |
+| [**`H-shipped`](H-shipped/) | **27.87** | **14.50** | **366.3** | -56.18 | 341.3 | 249.99 | 0.0929 | +0.0003 | 0.0003 | 0.65 |
 
 *spec:* IRN < 40 · P < 50 nW · C reported only · THD ≤ −40 · ph ≥ 330 (ideal-4-pole ceiling **350.5**) · fc 245–255 · ripple ≤ 0.2 · peak ≤ 0.2.
 
@@ -56,9 +61,11 @@ directory, embedded in its `README.md`.
 
 All nine are maximally flat low-pass responses, not merely inside the bounds.
 `mono_db` is the worst *rise* of |H| below the corner — **0 means the response
-never climbs anywhere**. The largest value in the set is 0.0089 dB, i.e. ~22×
+never climbs anywhere**. The largest value in the set is 0.0093 dB, i.e. ~21×
 inside the 0.2 dB flatness bound and ~2 000× below a visible bump. Peaking is
-at most +0.0090 dB. Cutoff is within 0.13 Hz of 250 on every cell.
+at most +0.0093 dB. Cutoff is within 1.9 Hz of 250 on every cell (a 2 % box;
+the widest offset is `C-lownoise` at 248.14 Hz, whose sizing needed no
+min-width projection and therefore kept its original — legal — geometry).
 
 ## Which to take to layout
 

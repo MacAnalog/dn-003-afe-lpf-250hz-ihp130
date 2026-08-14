@@ -132,18 +132,18 @@ C {devices/lab_pin.sym} 20 -630 0 1 {name=l_vbn lab=vbn}
 C {devices/ipin.sym} -40 -670 0 0 {name=p_vbp lab=vbp}
 C {devices/lab_pin.sym} 20 -670 0 1 {name=l_vbp lab=vbp}
 C {devices/gnd.sym} 310 110 0 0 {name=g0 lab=0}
-C {sg13g2_pr/sg13_lv_pmos.sym} 40 -320 0 0 {name=m2 w=1.56e-05 l=1.04e-05 ng=1 m=1 model=sg13_lv_pmos spiceprefix=X}
-C {sg13g2_pr/sg13_lv_pmos.sym} 580 -320 0 1 {name=m5 w=1.56e-05 l=1.04e-05 ng=1 m=1 model=sg13_lv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_lv_pmos.sym} 40 -320 0 0 {name=m2 w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_lv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_lv_pmos.sym} 580 -320 0 1 {name=m5 w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_lv_pmos spiceprefix=X}
 C {sg13g2_pr/sg13_hv_nmos.sym} 180 -110 0 0 {name=m4 w=7.8e-06 l=5.2e-06 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
 C {sg13g2_pr/sg13_hv_nmos.sym} 440 -110 0 1 {name=m8 w=7.8e-06 l=5.2e-06 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_nmos.sym} 40 -110 0 0 {name=m9 w=2.925e-05 l=3.12e-05 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_nmos.sym} 580 -110 0 1 {name=m10 w=2.925e-05 l=3.12e-05 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 960 -70 0 0 {name=mst w=2.5896e-07 l=4.368e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 1500 -70 0 1 {name=mstn w=2.5896e-07 l=4.368e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 960 -260 0 0 {name=m0 w=1.56e-05 l=1.04e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 1500 -260 0 1 {name=m1 w=1.56e-05 l=1.04e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
-C {sg13g2_pr/sg13_lv_pmos.sym} 960 -450 0 0 {name=m14 w=1.29324e-06 l=6.24e-05 ng=1 m=1 model=sg13_lv_pmos spiceprefix=X}
-C {sg13g2_pr/sg13_lv_pmos.sym} 1500 -450 0 1 {name=m15 w=1.29324e-06 l=6.24e-05 ng=1 m=1 model=sg13_lv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 40 -110 0 0 {name=m9 w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 580 -110 0 1 {name=m10 w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 960 -70 0 0 {name=mst w=3e-07 l=4.599e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 1500 -70 0 1 {name=mstn w=3e-07 l=4.599e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 960 -260 0 0 {name=m0 w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 1500 -260 0 1 {name=m1 w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_lv_pmos.sym} 960 -450 0 0 {name=m14 w=1.295e-06 l=6.24e-05 ng=1 m=1 model=sg13_lv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_lv_pmos.sym} 1500 -450 0 1 {name=m15 w=1.295e-06 l=6.24e-05 ng=1 m=1 model=sg13_lv_pmos spiceprefix=X}
 C {devices/capa.sym} 110 -230 2 0 {name=c13 m=1 value=8.53159e-12 footprint=1206 device="ceramic capacitor"}
 C {devices/capa.sym} 510 -230 2 1 {name=c17 m=1 value=8.53159e-12 footprint=1206 device="ceramic capacitor"}
 C {devices/capa.sym} 310 -380 1 0 {name=c19 m=1 value=3.22133e-11 footprint=1206 device="ceramic capacitor"}

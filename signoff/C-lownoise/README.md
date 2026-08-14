@@ -14,15 +14,15 @@ Sizing from round `lv065_bias/sb3`. Same topology as every other candidate (bran
 
 | line | requirement | measured | |
 |---|---|---|---|
-| S1 phase | ph_max ≥ 330° | **332.83°** | PASS |
-| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.78 dB** | PASS |
-| S2 cutoff | fc 245–255 Hz | **249.85 Hz** | PASS |
-| S3 dc | |dc| ≤ 0.2 dB | **-0.0133 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0538 dB** | PASS |
+| S1 phase | ph_max ≥ 330° | **333.04°** | PASS |
+| S1 stopband | |H|@1 kHz ≤ −48 dB | **-50.17 dB** | PASS |
+| S2 cutoff | fc 245–255 Hz | **248.14 Hz** | PASS |
+| S3 dc | |dc| ≤ 0.2 dB | **-0.0127 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0667 dB** | PASS |
 | S4 peaking | peak ≤ 0.2 dB | **+0.0000 dB** | PASS |
-| S5 irn | IRN < 40 µVrms | **28.54 µV** | PASS |
-| S6 power | P < 50 nW | **6.46 nW** | PASS |
-| S7 thd | THD ≤ −40 dB | **-42.39 dB** | PASS |
+| S5 irn | IRN < 40 µVrms | **28.56 µV** | PASS |
+| S6 power | P < 50 nW | **6.38 nW** | PASS |
+| S7 thd | THD ≤ −40 dB | **-41.69 dB** | PASS |
 
 `mono_db` = **0.0000 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **164.0 pF** (reported, never specced).
 

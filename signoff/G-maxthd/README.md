@@ -18,7 +18,7 @@ Sizing from round `combo/cb_0p1_0p16_2p5`. Same topology as every other candidat
 | S1 stopband | |H|@1 kHz ≤ −48 dB | **-48.69 dB** | PASS |
 | S2 cutoff | fc 245–255 Hz | **249.88 Hz** | PASS |
 | S3 dc | |dc| ≤ 0.2 dB | **-0.0417 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0541 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0542 dB** | PASS |
 | S4 peaking | peak ≤ 0.2 dB | **+0.0029 dB** | PASS |
 | S5 irn | IRN < 40 µVrms | **26.81 µV** | PASS |
 | S6 power | P < 50 nW | **14.32 nW** | PASS |

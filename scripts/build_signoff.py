@@ -37,6 +37,8 @@ from lab import ngspice as ng          # noqa: E402
 from lab import thd as T               # noqa: E402
 from lab.deck import ac_noise, tran_thd  # noqa: E402
 from lab.dut import Design, Dev, subckt  # noqa: E402
+from lab.grid import legalize            # noqa: E402
+from lab.retune import restore_fc        # noqa: E402
 
 SIGNOFF = REPO / "signoff"
 SRC = REPO / "experiments" / "021-publication-cell"
@@ -99,7 +101,17 @@ def find(tag: str, fname: str) -> dict:
 def build(name: str) -> dict:
     tag, fname, why = CANDIDATES[name]
     row = find(tag, fname)
-    d = design_of(row)
+    # The experiment rows are CONTINUOUS-space optima; the sizing of record is
+    # their layout-legal projection (5 nm grid, PDK minima, <=10 um fingers).
+    # Everything below -- decks, scorecard, schematic -- measures the legalized
+    # sizing, so no certified number ever describes an undrawable geometry.
+    d, moves = legalize(design_of(row))
+    if moves:
+        d, tunes = restore_fc(d, tag=f"pkg_{name}")
+        moves += tunes
+    for mv in moves:
+        print(f"  grid: {mv}")
+    assert not legalize(d)[1], f"{name}: sizing of record is not layout-legal"
     out = SIGNOFF / name
     (out / "asbuilt").mkdir(parents=True, exist_ok=True)
 

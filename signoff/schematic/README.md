@@ -12,7 +12,7 @@ halves mirrored, and the cross-caps drawn between them.
 | `lpf_core_022.sym` | its symbol (7 ports, in the order `lab.deck` instantiates) |
 | `lpf_tb_022.sch` | testbench: op + ac + noise, with its `.control` block |
 | `lpf_tb_022_thd.sch` | testbench: coherent strobed transient for S7 |
-| `*.png` | the renders, committed as the visual-inspection evidence |
+| `*.png` | renders (visual evidence) — **absent in this revision**: the EDA server's native xschem is built without cairo, so its `--png`/`--svg` export silently writes nothing; regenerate in the docker lane (cairo xschem) with `xschem -q --plotfile <f>.png --png <f>.sch` when it is available. The `.sch` sources and both identity gates are the binding evidence. |
 | `*.spice` | the netlists xschem produced from the above |
 | `draw_lpf_core_022.py` | the generator |
 | `check_netlist.py` | gate 1 — canonical netlist compare vs `../asbuilt/` |

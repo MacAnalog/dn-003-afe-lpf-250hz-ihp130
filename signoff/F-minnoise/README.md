@@ -16,15 +16,15 @@ Sizing from round `combo/cb_0p3_0p25_4`. Same topology as every other candidate 
 |---|---|---|---|
 | S1 phase | ph_max ≥ 330° | **336.41°** | PASS |
 | S1 stopband | |H|@1 kHz ≤ −48 dB | **-48.99 dB** | PASS |
-| S2 cutoff | fc 245–255 Hz | **249.96 Hz** | PASS |
+| S2 cutoff | fc 245–255 Hz | **249.95 Hz** | PASS |
 | S3 dc | |dc| ≤ 0.2 dB | **-0.0327 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0556 dB** | PASS |
-| S4 peaking | peak ≤ 0.2 dB | **+0.0089 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0546 dB** | PASS |
+| S4 peaking | peak ≤ 0.2 dB | **+0.0093 dB** | PASS |
 | S5 irn | IRN < 40 µVrms | **26.24 µV** | PASS |
 | S6 power | P < 50 nW | **12.63 nW** | PASS |
 | S7 thd | THD ≤ −40 dB | **-58.52 dB** | PASS |
 
-`mono_db` = **0.0089 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **305.0 pF** (reported, never specced).
+`mono_db` = **0.0093 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **305.0 pF** (reported, never specced).
 
 **All nine lines: PASS.**
 

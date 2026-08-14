@@ -1,4 +1,4 @@
-** sch_path: /sch/lpf_tb_E.sch
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/E-combo/lpf_tb_E.sch
 **.subckt lpf_tb_E
 xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_E
 **** begin user architecture code
@@ -35,8 +35,8 @@ write sim.raw
 **.ends
 
 * expanding   symbol:  lpf_core_E.sym # of pins=7
-** sym_path: /sch/lpf_core_E.sym
-** sch_path: /sch/lpf_core_E.sch
+** sym_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/E-combo/lpf_core_E.sym
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/E-combo/lpf_core_E.sch
 .subckt lpf_core_E vinp vinn voutp voutn vbn vbp vdd
 *.ipin vinp
 *.ipin vinn

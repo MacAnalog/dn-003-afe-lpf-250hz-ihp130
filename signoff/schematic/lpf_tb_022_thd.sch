@@ -89,9 +89,9 @@ C {lpf_core_022.sym} 1200 400 0 0 {name=xdut}
 C {devices/vsource.sym} 1450 140 0 0 {name=vflt value=0 savecurrent=false}
 C {devices/vsource.sym} 2050 140 0 0 {name=vdd_meas value=1.5 savecurrent=false}
 C {devices/isource.sym} 1600 140 0 0 {name=iref value=6.624e-10}
-C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.925e-05 l=3.12e-05 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.925e-05 l=3.12e-05 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.56e-05 l=1.04e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
 C {devices/code_shown.sym} 200 820 0 0 {name=BENCH only_toplevel=false value=".title lpf b -- thd fin=50 ampl=0.0875
 .lib cornerMOShv.lib mos_tt
 .lib cornerMOSlv.lib mos_tt

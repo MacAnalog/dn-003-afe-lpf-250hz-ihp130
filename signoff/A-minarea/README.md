@@ -22,7 +22,7 @@ Sizing from round `scale/020C-frozen_x1`. Same topology as every other candidate
 | S4 peaking | peak ≤ 0.2 dB | **+0.0000 dB** | PASS |
 | S5 irn | IRN < 40 µVrms | **39.70 µV** | PASS |
 | S6 power | P < 50 nW | **4.15 nW** | PASS |
-| S7 thd | THD ≤ −40 dB | **-41.69 dB** | PASS |
+| S7 thd | THD ≤ −40 dB | **-41.68 dB** | PASS |
 
 `mono_db` = **0.0000 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **104.4 pF** (reported, never specced).
 

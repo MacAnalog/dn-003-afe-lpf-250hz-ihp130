@@ -15,14 +15,14 @@ Sizing from round `lvcm/lc65`. Same topology as every other candidate (branch-st
 | line | requirement | measured | |
 |---|---|---|---|
 | S1 phase | ph_max ≥ 330° | **332.23°** | PASS |
-| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.89 dB** | PASS |
-| S2 cutoff | fc 245–255 Hz | **249.85 Hz** | PASS |
-| S3 dc | |dc| ≤ 0.2 dB | **-0.0121 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0545 dB** | PASS |
+| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.86 dB** | PASS |
+| S2 cutoff | fc 245–255 Hz | **250.01 Hz** | PASS |
+| S3 dc | |dc| ≤ 0.2 dB | **-0.0118 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0590 dB** | PASS |
 | S4 peaking | peak ≤ 0.2 dB | **+0.0000 dB** | PASS |
 | S5 irn | IRN < 40 µVrms | **29.38 µV** | PASS |
 | S6 power | P < 50 nW | **6.01 nW** | PASS |
-| S7 thd | THD ≤ −40 dB | **-41.90 dB** | PASS |
+| S7 thd | THD ≤ −40 dB | **-41.94 dB** | PASS |
 
 `mono_db` = **0.0000 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **152.9 pF** (reported, never specced).
 

@@ -8,18 +8,18 @@
     "in_a"
   ],
   "scorecard": {
-    "fc_hz": 249.8536,
-    "dc_db": -0.0121,
-    "ripple_db": 0.0545,
+    "fc_hz": 250.0099,
+    "dc_db": -0.0118,
+    "ripple_db": 0.059,
     "peak_db": 0.0,
     "mono_db": 0.0,
-    "a1000_db": -49.8902,
-    "ph_max_deg": 332.2288,
-    "irn_uv": 29.3822,
-    "p_core_nw": 6.0064,
+    "a1000_db": -49.8618,
+    "ph_max_deg": 332.2348,
+    "irn_uv": 29.3763,
+    "p_core_nw": 6.0099,
     "c_total_pf": 152.8547
   },
-  "thd_db": -41.899,
+  "thd_db": -41.944,
   "passes": {
     "S1_phase": true,
     "S1_stopband": true,

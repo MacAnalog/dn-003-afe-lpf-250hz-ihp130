@@ -483,11 +483,8 @@ def gate1(asbuilt: str, drawn: str) -> tuple[bool, list]:
 # -------------------------------------------------------------------- main --
 
 def netlist_with_xschem(outdir: Path, name: str, image: str) -> str:
-    subprocess.run(
-        ["docker", "run", "--rm", "-v", f"{outdir}:/sch", "-w", "/sch", image,
-         "sh", "-lc", f"xschem -n -s -q --rcfile /sch/xschemrc /sch/{name}.sch"],
-        check=True, capture_output=True, text=True)
-    return (outdir / f"{name}.spice").read_text()
+    from lab import xsch
+    return xsch.netlist(outdir, name, image)
 
 
 SCORE_KEYS = ("fc_hz", "dc_db", "ripple_db", "peak_db", "mono_db", "a1000_db",

@@ -14,15 +14,15 @@ Sizing from round `reuse/cp_0p16_4`. Same topology as every other candidate (bra
 
 | line | requirement | measured | |
 |---|---|---|---|
-| S1 phase | ph_max ≥ 330° | **333.47°** | PASS |
-| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.84 dB** | PASS |
-| S2 cutoff | fc 245–255 Hz | **249.86 Hz** | PASS |
-| S3 dc | |dc| ≤ 0.2 dB | **-0.0135 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0532 dB** | PASS |
+| S1 phase | ph_max ≥ 330° | **333.30°** | PASS |
+| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.55 dB** | PASS |
+| S2 cutoff | fc 245–255 Hz | **250.00 Hz** | PASS |
+| S3 dc | |dc| ≤ 0.2 dB | **-0.0134 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.1119 dB** | PASS |
 | S4 peaking | peak ≤ 0.2 dB | **+0.0000 dB** | PASS |
-| S5 irn | IRN < 40 µVrms | **28.33 µV** | PASS |
-| S6 power | P < 50 nW | **8.98 nW** | PASS |
-| S7 thd | THD ≤ −40 dB | **-52.64 dB** | PASS |
+| S5 irn | IRN < 40 µVrms | **28.21 µV** | PASS |
+| S6 power | P < 50 nW | **9.01 nW** | PASS |
+| S7 thd | THD ≤ −40 dB | **-52.60 dB** | PASS |
 
 `mono_db` = **0.0000 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **229.3 pF** (reported, never specced).
 

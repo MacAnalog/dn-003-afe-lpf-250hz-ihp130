@@ -26,9 +26,9 @@ vdd_meas vdd_top 0 1.5
 vflt vdd_top vdd 0
 .nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3273 v(voutn)=1.3273
 iref vdd_top vbn 6.624e-10
-xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
+xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
 vcm vcm 0 0.65
 vsig sig vcm dc 0 ac 1
 evp vinp vcm sig vcm 0.5
