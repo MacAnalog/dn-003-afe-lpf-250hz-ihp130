@@ -443,6 +443,10 @@ def core_sch(dut: dict) -> Sch:
     s.text("dc ladder per half, top to bottom: vdd - m14 - voutp - m0 - net4 - "
            "mst - vout_1 - m2 - net2 - m9 - gnd, with m4 shunting vout_1 to gnd. "
            "No CMFB: c12/c19 set the differential poles.", 0, 190, 0.25)
+    from datetime import datetime, timezone
+    s.text(datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_lpf_core_022.py"),
+        0, 220, 0.2)
     s.comp("devices/title.sym", 0, 260, 0, 0,
            f'name=l1 author="{CELL} -- drawn from signoff/asbuilt"')
     return s
@@ -585,6 +589,10 @@ def tb_sch(tb: dict, analysis: str) -> Sch:
     s.text("vflt is a 0 V series probe carrying the CORE current only. The bias "
            "reference sits AHEAD of it, so S6 excludes the reference by "
            "construction rather than by subtraction.", 200, 760, 0.3)
+    from datetime import datetime, timezone
+    s.text(datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_lpf_core_022.py"),
+        200, 1220, 0.2)
     s.comp("devices/title.sym", 200, 1260, 0, 0,
            f'name=l1 author="{CELL} testbench -- {analysis}"')
     return s

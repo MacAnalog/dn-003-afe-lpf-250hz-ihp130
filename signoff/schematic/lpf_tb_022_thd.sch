@@ -121,3 +121,4 @@ C {devices/lab_pin.sym} 1420 440 0 1 {name=l5_1420_440 lab=voutn}
 T {lpf_core_022 sign-off testbench -- coherent strobed transient (THD)} 200 40 0 0 0.5 0.5 {}
 T {balun gains +-0.5 so the vsig amplitude IS the differential input.} 200 75 0 0 0.3 0.3 {}
 T {vflt is a 0 V series probe carrying the CORE current only. The bias reference sits AHEAD of it, so S6 excludes the reference by construction rather than by subtraction.} 200 760 0 0 0.3 0.3 {}
+T {generated 2026-08-14 23:28 UTC by scripts/draw_lpf_core_022.py} 200 1220 0 0 0.2 0.2 {}

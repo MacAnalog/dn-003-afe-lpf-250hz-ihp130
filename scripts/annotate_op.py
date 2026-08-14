@@ -62,9 +62,11 @@ def annotate(schdir: Path, core: str, design_json: Path, tag: str) -> None:
 
     sch_path = schdir / f"{core}.sch"
     text = sch_path.read_text()
-    # strip every annotation we own (idempotence)
+    # strip every annotation we own (idempotence) -- baked text AND live blocks
     text = re.sub(r"T \{[^{}]*\} -?\d+ -?\d+ \d \d [\d.]+ [\d.]+ "
                   r"\{name=" + MARK + r"[^{}]*\}\n?", "", text)
+    text = re.sub(r"C \{sg13g2_pr/annotate_fet_params\.sym\} [^\n]*"
+                  r"\{name=" + MARK + r"_live[^{}]*\}\n?", "", text)
 
     # instance -> sheet position (drawn names carry no x; spiceprefix adds it)
     pos: dict[str, tuple[int, int]] = {}
@@ -77,16 +79,33 @@ def annotate(schdir: Path, core: str, design_json: Path, tag: str) -> None:
         if role not in ops:
             continue
         block = _fmt(ops[role])
-        for inst in insts:
+        for k, inst in enumerate(insts):
             xy = pos.get(inst)
             if xy is None:
                 continue
             # below-right of the symbol; device value text sits above-right
             add.append(f"T {{{block}}} {xy[0] + 30} {xy[1] + 44} 0 0 0.12 0.12 "
                        f"{{name={MARK}_{inst} layer=11}}")
-    banner = (f"OP ANNOTATION -- corner mos_tt, 27 C, VDD 1.5 V, measured by "
-              f"lab.oppoint (PSP vdss = Vdsat). P half shown on both halves "
-              f"(differential symmetry).")
+            if k == 0:
+                # The IHP PDK's own LIVE annotator, P half only (symmetry),
+                # in a dedicated strip above the circuit so the blocks never
+                # collide with devices.  Each block prints its @ref, so the
+                # strip is self-labelling.  The text tcleval-s
+                # `display_fet_params` against whatever op raw is loaded in
+                # the xschem session -- run the *_gd bench (its deck saves
+                # the PSP op-vars), load sim.raw, descend.
+                add.append(f"C {{sg13g2_pr/annotate_fet_params.sym}} "
+                           f"{40 + 250 * len([a for a in add if '_live_' in a])} "
+                           f"-680 0 0 {{name={MARK}_live_{inst} ref={inst}}}")
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    banner = (f"OP ANNOTATION (generated {ts}) -- corner mos_tt, 27 C, VDD "
+              f"1.5 V, measured by lab.oppoint (PSP vdss = Vdsat). P half "
+              f"shown on both halves (differential symmetry). The empty "
+              f"L-brackets are the IHP PDK live annotator "
+              f"(annotate_fet_params): run the *_gd bench, load its sim.raw "
+              f"in xschem, descend into the DUT, and they fill with the same "
+              f"numbers plus ft.")
     add.append(f"T {{{banner}}} 40 96 0 0 0.16 0.16 {{name={MARK}_banner layer=11}}")
     sch_path.write_text(text.rstrip("\n") + "\n" + "\n".join(add) + "\n")
 

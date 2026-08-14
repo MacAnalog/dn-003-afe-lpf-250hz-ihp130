@@ -42,5 +42,6 @@ tran 3.90625e-05 0.56 0.16 3.90625e-05
 write sim.raw
 .endc"}
 T {lpf_core_E sign-off testbench -- coherent strobed transient, S7} -260 -360 0 0 0.5 0.5 {}
+T {generated 2026-08-14 23:27 UTC by scripts/draw_xschem.py} -260 -270 0 0 0.18 0.18 {}
 T {The bench text below is copied verbatim from signoff/asbuilt/ - balun evp/evn at +-0.5 so vsig IS the differential input, series vflt carrying the filter-core current only, bias reference ahead of that probe so S6 excludes it by construction.} -260 -320 0 0 0.25 0.25 {}
 C {devices/title.sym} -260 1220 0 0 {name=l1 author="lpf_core_E testbench"}

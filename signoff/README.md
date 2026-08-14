@@ -65,7 +65,15 @@ the reference itself misses.
 | `<cell>/asbuilt/core_tb_gd.sp` | runnable group-delay bench, τ(f) computed in-deck; drawn as `lpf_tb_*_gd.sch` |
 
 Schematic renders (`*.png` beside each `.sch`) are produced by
-`scripts/render_sch.py`; core sheets carry the op annotation. The
+`scripts/render_sch.py`; core sheets carry the op annotation two ways:
+**baked text** (the signoff-measured numbers, visible in every render, with a
+generation timestamp) and the **IHP PDK live annotator**
+(`sg13g2_pr/annotate_fet_params.sym`, one per P-half device in a strip above
+the circuit). The live blocks evaluate against whatever op raw is loaded in
+an xschem session: run the `*_gd` bench (its deck saves the PSP op-vars),
+load `sim.raw`, descend into the DUT symbol, and each block fills with
+ids/gm/gds/vth/vgs/**vdss**/vds/cgg plus ft and gm/id. Every generated sheet,
+render and plot carries its generation timestamp. The
 **robustness & dynamics summary table** for all nine cells is in
 [COMPARISON.md](COMPARISON.md).
 

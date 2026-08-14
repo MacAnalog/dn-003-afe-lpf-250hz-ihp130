@@ -52,7 +52,12 @@ def _rcfile(schdir: Path, work: Path) -> Path:
         f"set XSCHEM_LIBRARY_PATH {prefix}/share/xschem/xschem_library\n"
         f"append XSCHEM_LIBRARY_PATH :{pdk}\n"
         f"append XSCHEM_LIBRARY_PATH :{schdir}\n"
-        f"set netlist_dir {schdir}\n")
+        f"set netlist_dir {schdir}\n"
+        # the PDK live annotator's text tcleval-s display_fet_params; source
+        # the PDK menu tcl so an annotated sheet exports cleanly (values
+        # render as NaN without a loaded raw, which is correct for a bare
+        # render -- the committed numbers are the baked text blocks).
+        f"catch {{ source {pdk}/xschem-menu }}\n")
     return rc
 
 
@@ -94,8 +99,17 @@ def _repair(svg: str, px: int) -> str:
     svg = svg.replace(
         'width="1" height="1"',
         f'width="{px}" height="{hpx}" viewBox="{x0:.6f} {y0:.6f} {w:.6f} {h:.6f}"', 1)
-    return re.sub(r'stroke-width:\s*[\d.]+;',
-                  f'stroke-width: {w / px * 1.7:.6f};', svg)
+    svg = re.sub(r'stroke-width:\s*[\d.]+;',
+                 f'stroke-width: {w / px * 1.7:.6f};', svg)
+    # Render timestamp, bottom-right corner of the computed viewport: every
+    # committed picture names the moment it was produced.
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime(
+        "rendered %Y-%m-%d %H:%M UTC -- scripts/render_sch.py")
+    stamp = (f'<text fill="#999999" font-size="{w * 0.007:.6f}" '
+             f'text-anchor="end" transform="translate({x0 + w * 0.995:.6f}, '
+             f'{y0 + h * 0.99:.6f})">{ts}</text>')
+    return svg.replace("</svg>", stamp + "\n</svg>")
 
 
 def render(sheets: list[Path], px: int) -> None:

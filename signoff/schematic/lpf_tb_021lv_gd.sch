@@ -5,7 +5,7 @@ V {}
 S {}
 E {}
 
-C {lpf_core_C.sym} 600 0 0 0 {name=xdut}
+C {lpf_core_021lv.sym} 600 0 0 0 {name=xdut}
 N 480 -40 360 -40 {lab=vinp}
 C {devices/lab_pin.sym} 360 -40 0 0 {name=t0 lab=vinp}
 N 480 40 360 40 {lab=vinn}
@@ -53,7 +53,7 @@ meas ac fc_hz when hrel = -3 fall = 1
 print dc_db gd_dc_ms gd_max_ms
 write sim.raw hdiff ph gd frequency
 .endc"}
-T {lpf_core_C sign-off testbench -- group delay, tau computed in-deck} -260 -360 0 0 0.5 0.5 {}
-T {generated 2026-08-14 23:27 UTC by scripts/draw_xschem.py} -260 -270 0 0 0.18 0.18 {}
+T {lpf_core_021lv sign-off testbench -- group delay, tau computed in-deck} -260 -360 0 0 0.5 0.5 {}
+T {generated 2026-08-14 23:28 UTC by scripts/draw_xschem.py} -260 -270 0 0 0.18 0.18 {}
 T {The bench text below is copied verbatim from signoff/asbuilt/ - balun evp/evn at +-0.5 so vsig IS the differential input, series vflt carrying the filter-core current only, bias reference ahead of that probe so S6 excludes it by construction.} -260 -320 0 0 0.25 0.25 {}
-C {devices/title.sym} -260 1220 0 0 {name=l1 author="lpf_core_C testbench"}
+C {devices/title.sym} -260 1220 0 0 {name=l1 author="lpf_core_021lv testbench"}

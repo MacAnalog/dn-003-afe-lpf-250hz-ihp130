@@ -191,6 +191,27 @@ write sim.raw
 """
 
 
+def _op_saves(d: Design) -> str:
+    """`save` line carrying every device's PSP op-vars alongside `all`.
+
+    This is what makes the op plot in the rawfile feed the IHP PDK's live
+    annotator (`sg13g2_pr/annotate_fet_params.sym` -> `display_fet_params`):
+    the annotator reads `@n.xdut.x<inst>.n<model>[gm]` etc. out of the loaded
+    raw, and those vectors exist only if the deck saved them before the `op`.
+    `all` stays first so the ac sweep in the same run keeps its node vectors
+    (the noise-starving trap of a restrictive save -- see SIGNAL_NETS note --
+    does not bite here because this deck runs no noise analysis).
+    """
+    from .dut import INSTANCES
+    parms = ("ids", "gm", "gds", "gmb", "vgs", "vds", "vth", "vdss", "cgg")
+    out = ["all"]
+    for role, insts in INSTANCES[d.topology].items():
+        for inst in insts:
+            base = f"@n.xdut.x{inst}.n{d.model(role)}"
+            out += [f"{base}[{p}]" for p in parms]
+    return "save " + " ".join(out)
+
+
 def ac_gd(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
           fstart: float = 0.1, fstop: float = 1e3, dec: int = C.AC_DEC,
           vdd: float | None = None) -> str:
@@ -214,6 +235,7 @@ def ac_gd(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
 .control
 set filetype=binary
 set appendwrite
+{_op_saves(d)}
 op
 write sim.raw
 ac dec {dec} {fstart:.6g} {fstop:.6g}

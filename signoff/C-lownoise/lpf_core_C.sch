@@ -152,6 +152,7 @@ C {devices/capa.sym} 1410 -190 0 1 {name=c10 m=1 value=5.18878e-11 footprint=120
 C {devices/capa.sym} 1230 -320 1 0 {name=c12 m=1 value=2.04984e-11 footprint=1206 device="ceramic capacitor"}
 C {devices/title.sym} 0 300 0 0 {name=l1 author="drawn from signoff/asbuilt/"}
 T {lpf_core_C -- fully differential 4th-order 250 Hz low-pass core, IHP SG13G2, VDD 1.5 V} 0 -760 0 0 0.5 0.5 {}
+T {generated 2026-08-14 23:27 UTC by scripts/draw_xschem.py} 0 -685 0 0 0.18 0.18 {}
 T {Layout carried forward from the originating campaign's drawing of this topology; biquad A is re-drawn because this cell inverts its polarity. Sizes, models and connectivity read verbatim from the certified netlist.} 0 -720 0 0 0.25 0.25 {}
 T {BIQUAD A - input stage: p-type follower xm2/xm5 descends vout_1 -> net2; n-type gm_f xm4/xm8 sinks vout_1 to ground, gate on net2; n-type bias sink xm9/xm10 on net2; c13/c17 Miller, c19 differential load} 0 130 0 0 0.2 0.2 {}
 T {BIQUAD B - output stage: p-type follower xm0/xm1; THE MERGE - xm14/xm15 is branch-top bias source AND gm_f in one device, its gate driven by the internal node net4/net1; c1/c10 Miller, c12 differential load} 0 160 0 0 0.2 0.2 {}
@@ -166,37 +167,43 @@ T {bridge: net1 -> vout_2} 1540 -30 0 1 0.2 0.2 {}
 T {Vds=437m Vdsat=101m
 Id=0.66nA Vgs=167m
 gm/ID=32.0 gm/gds=2622 [sat/weak]} 70 -276 0 0 0.12 0.12 {name=opannot_m2 layer=11}
+C {sg13g2_pr/annotate_fet_params.sym} 40 -680 0 0 {name=opannot_live_m2 ref=m2}
 T {Vds=437m Vdsat=101m
 Id=0.66nA Vgs=167m
 gm/ID=32.0 gm/gds=2622 [sat/weak]} 610 -276 0 0 0.12 0.12 {name=opannot_m5 layer=11}
 T {Vds=817m Vdsat=101m
 Id=1.47nA Vgs=380m
 gm/ID=28.2 gm/gds=1708 [sat/weak]} 210 -66 0 0 0.12 0.12 {name=opannot_m4 layer=11}
+C {sg13g2_pr/annotate_fet_params.sym} 290 -680 0 0 {name=opannot_live_m4 ref=m4}
 T {Vds=817m Vdsat=101m
 Id=1.47nA Vgs=380m
 gm/ID=28.2 gm/gds=1708 [sat/weak]} 470 -66 0 0 0.12 0.12 {name=opannot_m8 layer=11}
 T {Vds=380m Vdsat=101m
 Id=0.66nA Vgs=356m
 gm/ID=28.1 gm/gds=12742 [sat/weak]} 70 -66 0 0 0.12 0.12 {name=opannot_m9 layer=11}
+C {sg13g2_pr/annotate_fet_params.sym} 540 -680 0 0 {name=opannot_live_m9 ref=m9}
 T {Vds=380m Vdsat=101m
 Id=0.66nA Vgs=356m
 gm/ID=28.1 gm/gds=12742 [sat/weak]} 610 -66 0 0 0.12 0.12 {name=opannot_m10 layer=11}
 T {Vds=136m Vdsat=105m
 Id=2.13nA Vgs=597m
 gm/ID=22.7 gm/gds=689 [sat/weak]} 990 -26 0 0 0.12 0.12 {name=opannot_mst layer=11}
+C {sg13g2_pr/annotate_fet_params.sym} 790 -680 0 0 {name=opannot_live_mst ref=mst}
 T {Vds=136m Vdsat=105m
 Id=2.13nA Vgs=597m
 gm/ID=22.7 gm/gds=689 [sat/weak]} 1530 -26 0 0 0.12 0.12 {name=opannot_mstn layer=11}
 T {Vds=368m Vdsat=102m
 Id=2.13nA Vgs=504m
 gm/ID=25.0 gm/gds=4674 [sat/weak]} 990 -216 0 0 0.12 0.12 {name=opannot_m0 layer=11}
+C {sg13g2_pr/annotate_fet_params.sym} 1040 -680 0 0 {name=opannot_live_m0 ref=m0}
 T {Vds=368m Vdsat=102m
 Id=2.13nA Vgs=504m
 gm/ID=25.0 gm/gds=4674 [sat/weak]} 1530 -216 0 0 0.12 0.12 {name=opannot_m1 layer=11}
 T {Vds=179m Vdsat=102m
 Id=2.13nA Vgs=547m
 gm/ID=24.5 gm/gds=2632 [sat/weak]} 990 -406 0 0 0.12 0.12 {name=opannot_m14 layer=11}
+C {sg13g2_pr/annotate_fet_params.sym} 1290 -680 0 0 {name=opannot_live_m14 ref=m14}
 T {Vds=179m Vdsat=102m
 Id=2.13nA Vgs=547m
 gm/ID=24.5 gm/gds=2632 [sat/weak]} 1530 -406 0 0 0.12 0.12 {name=opannot_m15 layer=11}
-T {OP ANNOTATION -- corner mos_tt, 27 C, VDD 1.5 V, measured by lab.oppoint (PSP vdss = Vdsat). P half shown on both halves (differential symmetry).} 40 96 0 0 0.16 0.16 {name=opannot_banner layer=11}
+T {OP ANNOTATION (generated 2026-08-14 23:27 UTC) -- corner mos_tt, 27 C, VDD 1.5 V, measured by lab.oppoint (PSP vdss = Vdsat). P half shown on both halves (differential symmetry). The empty L-brackets are the IHP PDK live annotator (annotate_fet_params): run the *_gd bench, load its sim.raw in xschem, descend into the DUT, and they fill with the same numbers plus ft.} 40 96 0 0 0.16 0.16 {name=opannot_banner layer=11}

@@ -271,8 +271,12 @@ def core_sch(mos: list, caps: list, cell: str) -> str:
 
     # ---- annotation.  No braces inside T {} (they delimit xschem attributes)
     #      and no non-ASCII (it renders as ???).
+    from datetime import datetime, timezone
     text(f"{cell} -- fully differential 4th-order 250 Hz low-pass core, "
          f"IHP SG13G2, VDD 1.5 V", 0, -760, 0.5)
+    text(datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_xschem.py"),
+        0, -685, 0.18)
     text("Layout carried forward from the originating campaign's drawing of "
          "this topology; biquad A is re-drawn because this cell inverts its "
          "polarity. Sizes, models and connectivity read verbatim from the "
@@ -388,8 +392,12 @@ def tb_sch(cell: str, bench: str, ctrl: str, what: str) -> str:
                f'only_toplevel=false value="{esc(bench)}"}}')
     out.append(f'C {{devices/code_shown.sym}} -260 800 0 0 {{name=CTRL '
                f'only_toplevel=false value="{esc(ctrl)}"}}')
+    from datetime import datetime, timezone
     out.append(f"T {{{cell} sign-off testbench -- {what}}} -260 -360 0 0 "
                f"0.5 0.5 {{}}")
+    out.append("T {" + datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_xschem.py")
+        + "} -260 -270 0 0 0.18 0.18 {}")
     out.append("T {The bench text below is copied verbatim from "
                "signoff/asbuilt/ - balun evp/evn at +-0.5 so vsig IS the "
                "differential input, series vflt carrying the filter-core "
