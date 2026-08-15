@@ -22,7 +22,7 @@ What changed versus `pre-pvt/`, and why this set exists:
   expectation that a nA-class filter does not meet a full PVT box holds; the
   mechanism is in 023 §5).
 
-Both cells are **layout-legal** (`lab.grid.legalize` + `restore_fc`, asserted at
+All four cells are **layout-legal** (`lab.grid.legalize` + `restore_fc`, asserted at
 packaging), their certified decks are in `<cell>/asbuilt/`, and **both identity
 gates pass** on each (`scripts/draw_xschem.py check` / `sim`, native xschem
 lane): the drawn `lpf_core_H*.sch` netlists to the as-built subckt with a full
