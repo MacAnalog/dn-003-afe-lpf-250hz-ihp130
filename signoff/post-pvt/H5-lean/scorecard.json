@@ -1,0 +1,33 @@
+{
+  "cell": "H5-lean",
+  "from": "023-replica-bias/H5",
+  "why": "All-hv, replica-biased, headroom-centred (vicm 0.22). Every S1-S8 line at 8.9 nW / 140 pF; THD -48.8; S1 phase margin thin (330.6 deg).",
+  "vicm": 0.22,
+  "vocm": 1.2489,
+  "lv_roles": [],
+  "scorecard": {
+    "fc_hz": 249.7235,
+    "dc_db": -0.0083,
+    "ripple_db": 0.0609,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -48.5204,
+    "ph_max_deg": 330.808,
+    "irn_uv": 30.146,
+    "p_core_nw": 8.935,
+    "c_total_pf": 140.4066
+  },
+  "thd_db": -48.982,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

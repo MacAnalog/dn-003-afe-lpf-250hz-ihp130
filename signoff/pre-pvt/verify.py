@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parent
+REPO = HERE.parents[1]          # signoff/pre-pvt/verify.py -> repo root
 sys.path.insert(0, str(REPO))
 
 from lab import metrics as M          # noqa: E402

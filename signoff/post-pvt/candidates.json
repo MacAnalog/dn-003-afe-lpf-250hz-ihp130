@@ -1,0 +1,35 @@
+[
+  {
+    "cell": "H12-robust",
+    "from": "023-replica-bias/H12-y2v",
+    "why": "H5 at m = 4 (I_L 2.6 nA), vicm 0.24, bias-device area x9/x6, gmf_b x2: THD -50.8, all four process corners + the high rail, MC 83 %, for 11.9 nW / 183 pF (phase 332.0).",
+    "vicm": 0.24,
+    "vocm": 1.2811,
+    "lv_roles": [],
+    "scorecard": {
+      "fc_hz": 249.6504,
+      "dc_db": -0.0079,
+      "ripple_db": 0.0653,
+      "peak_db": 0.0,
+      "mono_db": 0.0,
+      "a1000_db": -48.8649,
+      "ph_max_deg": 332.1301,
+      "irn_uv": 29.2135,
+      "p_core_nw": 11.9121,
+      "c_total_pf": 183.4639
+    },
+    "thd_db": -50.836,
+    "passes": {
+      "S1_phase": true,
+      "S1_stopband": true,
+      "S2_cutoff": true,
+      "S3_dc": true,
+      "S3_flatness": true,
+      "S4_peaking": true,
+      "S5_irn": true,
+      "S6_power": true,
+      "S7_thd": true
+    },
+    "all_pass": true
+  }
+]

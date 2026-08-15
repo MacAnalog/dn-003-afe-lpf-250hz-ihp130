@@ -15,6 +15,7 @@ ap.add_argument("src"); ap.add_argument("out")
 ap.add_argument("--qa", type=float, default=None); ap.add_argument("--qb", type=float, default=None)
 ap.add_argument("--k", type=float, default=None)
 ap.add_argument("--vicm", type=float, default=None)
+ap.add_argument("--hv", action="store_true", help="all-hv: clear lv_roles (in_a lv -> hv)")
 ap.add_argument("--dev", nargs=3, action="append", default=[], metavar=("ROLE", "W_UM", "L_UM"))
 ap.add_argument("--polish", type=int, default=150)
 ap.add_argument("--caps", nargs=4, type=float, default=None, metavar=("C1A","C2A","C1B","C2B"), help="pF start, then trims")
@@ -34,6 +35,8 @@ if a.k is not None:
     u = d.devs["bias_a_int"]
     d = d.with_(devs={**d.devs, "rep_sink": Dev(u.w, u.l, u.ng, int(a.k)) if float(a.k).is_integer()
                        else Dev(u.w * a.k, u.l, u.ng, 1)})
+if a.hv:
+    d = d.with_(lv_roles=frozenset())
 if a.vicm is not None:
     d = d.with_(vicm=a.vicm)
 ops, volts = O.probe(d, f"v023_{a.out}_op")

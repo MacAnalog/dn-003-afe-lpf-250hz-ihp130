@@ -23,6 +23,7 @@ capacitor values.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -40,7 +41,7 @@ from lab.dut import Design, Dev, subckt  # noqa: E402
 from lab.grid import legalize            # noqa: E402
 from lab.retune import restore_fc        # noqa: E402
 
-SIGNOFF = REPO / "signoff"
+SIGNOFF = REPO / "signoff" / os.environ.get("LPF_SIGNOFF_SET", "pre-pvt")   # pre-pvt (original set) | post-pvt (023 cells)
 SRC = REPO / "experiments" / "021-publication-cell"
 
 # cell -> (source json, index in that json, one-line "why this one is here")
@@ -111,8 +112,24 @@ def design_of(g: dict) -> Design:
                   **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
 
 
+# post-pvt set: cell -> (023 candidate json stem, why).  These are all-hv,
+# replica-biased (topology d) sizings from experiments/023-replica-bias/;
+# selected with LPF_SIGNOFF_SET=post-pvt.
+SRC_POST = REPO / "experiments" / "023-replica-bias"
+CANDIDATES_POST: dict[str, tuple[str, str]] = {
+    "H5-lean":    ("H5",  "All-hv, replica-biased, headroom-centred (vicm 0.22). Every S1-S8 line "
+                          "at 8.9 nW / 140 pF; THD -48.8; S1 phase margin thin (330.6 deg)."),
+    "H12-robust": ("H12-y2v", "H5 at m = 4 (I_L 2.6 nA), vicm 0.24, bias-device area x9/x6, gmf_b x2: "
+                              "THD -50.8, all four process corners + the high rail, MC 83 %, "
+                              "for 11.9 nW / 183 pF (phase 332.0)."),
+}
+POST = SIGNOFF.name == "post-pvt"
+
+
 def find(tag: str, fname: str) -> dict:
     """Pull one sizing row out of the round JSON that produced it."""
+    if POST:
+        return json.loads((SRC_POST / f"{fname}.json").read_text())["design"]
     cell = tag.split("/", 1)[1]
     for r in json.loads((SRC / fname).read_text()):
         if r.get("name") == cell:
@@ -121,7 +138,11 @@ def find(tag: str, fname: str) -> dict:
 
 
 def build(name: str) -> dict:
-    tag, fname, why = CANDIDATES[name]
+    if POST:
+        fname, why = CANDIDATES_POST[name]
+        tag = f"023-replica-bias/{fname}"
+    else:
+        tag, fname, why = CANDIDATES[name]
     row = find(tag, fname)
     # The experiment rows are CONTINUOUS-space optima; the sizing of record is
     # their layout-legal projection (5 nm grid, PDK minima, <=10 um fingers).
@@ -181,7 +202,7 @@ def build(name: str) -> dict:
 
 
 def main() -> int:
-    want = sys.argv[1:] or list(CANDIDATES)
+    want = sys.argv[1:] or list(CANDIDATES_POST if POST else CANDIDATES)
     cards = [build(n) for n in want]
     (SIGNOFF / "candidates.json").write_text(json.dumps(cards, indent=2))
     print(f"\npackaged {len(cards)} candidates into signoff/<cell>/")

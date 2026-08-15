@@ -202,10 +202,39 @@ Every failing 45-grid corner of both cells is a two- or three-axis corner
 containing 1.35 V, −40 °C or ≥ 100 °C; none is a bias failure (fc span over the
 passing region ≤ 1.02×). What the two cells cannot do, and why, is §5.
 
+### 8. All-hv pass — lv devices withdrawn (VDD 1.5 V > lv rating), every line at nominal
+
+The lv `in_a` was the CM lever, not a budget lever (§3): with hv `in_a`
+(|V_SG| ≈ 0.46 V) the same X is reached at **vicm 0.20–0.24 V**. Arms `H1`–`H12`
+(`--hv` in `variant.py`, all from `E3-y0`), THD + AXES each:
+
+| cell | gmf_a · gmf_b · in_b (µm) | m | vicm | THD | ph | IRN / P / C | process 4/4 | 1.65 V | note |
+|---|---|---|---|---|---|---|---|---|---|
+| H1 / H2 | 1.5/45 · 6/31.2 · 2/30 | 3 | 0.18 / 0.20 | −43.6 / −44.7 | 332.0 / 331.0 | 30.6 / 8.9 / 123 | sf fails | ✓ | in_a squeezed at sf |
+| H3 / H4 | 1/45 · 6/31.2 · 2/30 | 3 | 0.20 / 0.22 | −45.9 / −45.4 | 332.6 / 332.7 | 30.6 / 8.9 / 123 | sf (ss) fail | ✓ | |
+| **H5** | 1.5/45 · **8.5/22 · 4/15** | 3 | 0.22 | **−48.8** | 330.6 | 30.1 / 8.9 / 140 | **4/4** | ✓ | in_b/gmf_b re-shaped: same gate area, |V_SG| −35 mV ⇒ margins in_a 62 / gmf_b 147 / bridge 161 |
+| H6 | as H5 | 3 | 0.25 | −48.4 | 330.7 | 30.1 / 8.9 / 140 | 4/4 | ✓ | |
+| H7 / H10 | as H5 | 4 / 5 | 0.22 | — | — | — | — | — | fitter landed in the wrong basin (ripple 0.5 / 2.6 dB) |
+| H7b / H11 | as H5, caps warm-started ×4/3 | 4 | 0.22 / 0.20 | −54.6 / −56.5 | 334.7 | 29.5 / 11.9 / 183 | sf, ff(a1k) fail | ✓ | |
+| **H12** | as H5, warm-started | **4** | **0.24** | **−50.8** | **335.6** | 29.5 / 11.9 / 183 | **4/4** | ✓ | |
+| H12-y1 / **y2** / y3 | H12 + area bridge ×2.25 / unit ×1.5 (/ gmf_b ×2) | 4 | 0.24 | −50.8 (y2) | 334.3 / **332.0** / 330.4 | 29.2 / 11.9 / 183 | 4/4 (y2) | ✓ | MC 78 / **83** / 81 % |
+
+Ladder current is the phase lever (m 3 → 4: +5°, `B1-k4` had shown it) at
++3 nW; the re-shaped `in_b`/`gmf_b` (wider/shorter at equal W·L) is the
+headroom lever that costs no phase. **`H12-y2` (= `signoff/post-pvt/H12-robust`)
+and `H5` (= `H5-lean`) are the delivered cells** — see
+[`signoff/post-pvt/README.md`](../../signoff/post-pvt/README.md) for the
+side-by-side, envelopes (H12-y2: 1.40–1.65 V, 0…+70 °C at α 1.1, MC 83 %; H5:
+1.40–1.65 V, −20…+55 °C, MC 55 %) and the recommendation.
+
 ## Findings — verdict
 
 **Verdict: the hypothesis holds on process and supply and is falsified on
-temperature; the S7 ↔ supply trade is real and is resolved as two cells.**
+temperature; the S7 ↔ supply trade is real. Delivered: two all-hv cells
+(`H12-robust`, `H5-lean`, §8) that pass every S1–S8 line at nominal with margin,
+all four process corners, 1.40–1.65 V and a stated temperature window; the
+lv-`in_a` cells `B1-y2` / `E3-y0` (§7) stay as the record of the wider-envelope
+trade that lv would have bought.**
 
 * **Process:** replica bias (three devices, signal path untouched) takes the
   merged ladder's fc span at 27 °C / 1.5 V from 14× (`E-combo`) / 3–38× (family)
@@ -238,7 +267,13 @@ B1-y2); temperature 1/T unchanged at α = 0 — **met**, and the PTAT fix is
 measured; MC — 81 % / 73 %, replica term visible (σ fc 3.7–4.1 Hz vs 2.2–3.3
 on the sign-off cells at larger area).
 
-## Hand-off (2026-08-15, second session)
+## Hand-off (2026-08-15, end of second session)
+
+**Delivered:** `signoff/post-pvt/{H12-robust,H5-lean}` (all-hv, topology `d`,
+layout-legal, scorecards measured from `asbuilt/`); `signoff/pre-pvt/` holds
+the original nine. Open: the schematic gate for topology `d`, THD at
+corners/MC for the shipping cell, and the layout lane.
+
 
 **Cells** (all `<name>.json` here; numbers at 27 °C / 1.5 V / tt unless stated):
 

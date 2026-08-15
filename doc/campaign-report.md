@@ -1,7 +1,7 @@
 # Campaign report — porting the 250 Hz SSF low-pass to IHP SG13G2
 
 **KIND: REPORT.** What was delivered, how it was arrived at, and what is still
-open. The deliverable and its evidence live in [`signoff/`](../signoff/); every
+open. The deliverable and its evidence live in [`signoff/`](../signoff/pre-pvt/); every
 sizing round attempted is in [`sizing-history/`](sizing-history/rounds.md).
 
 ## 1. The result

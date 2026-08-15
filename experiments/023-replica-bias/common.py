@@ -40,7 +40,7 @@ synth_from, full, gms, caps_for = c021.synth_from, c021.full, c021.gms, c021.cap
 
 from build_signoff import design_of              # noqa: E402
 
-SIGNOFF = REPO / "signoff"
+SIGNOFF = REPO / "signoff" / "pre-pvt"      # the original nine cells (moved 2026-08-15)
 
 
 def load_cell(name: str) -> Design:
