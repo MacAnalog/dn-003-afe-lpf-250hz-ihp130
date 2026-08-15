@@ -270,9 +270,9 @@ on the sign-off cells at larger area).
 ## Hand-off (2026-08-15, end of second session)
 
 **Delivered:** `signoff/post-pvt/{H12-robust,H5-lean}` (all-hv, topology `d`,
-layout-legal, scorecards measured from `asbuilt/`); `signoff/pre-pvt/` holds
-the original nine. Open: the schematic gate for topology `d`, THD at
-corners/MC for the shipping cell, and the layout lane.
+layout-legal, scorecards measured from `asbuilt/`, **both identity gates PASS**
+— `draw_xschem.py` now draws topology `d`); `signoff/pre-pvt/` holds the
+original nine. Open: THD at corners/MC for the shipping cell, and the layout lane.
 
 
 **Cells** (all `<name>.json` here; numbers at 27 °C / 1.5 V / tt unless stated):
@@ -301,11 +301,9 @@ corners/MC for the shipping cell, and the layout lane.
    `sf`/`ss` corner conceded, and that trade is stated.
 2. **fc trim of +1 Hz nominal on both cells** (caps ×0.996) buys +85 °C on
    `E3-y0` (fc 244.86) and is free; do it in the cap re-fit, not by hand.
-3. Move `B1-y2` and `E3-y0` toward `signoff/`: `scripts/draw_xschem.py` needs
-   topology `d` (the replica branch + `vbr` rail are not drawn yet; `verify.py`
-   refuses until then). Sign-off must state per cell: rail range, temperature
-   range at α = 1.1, and that the bench reference is ideal (α is a model of a
-   constant-gm reference, not a circuit here).
+3. ~~Schematic gate for topology `d`~~ — done (`signoff/post-pvt/`, both gates
+   PASS on `H12-robust` and `H5-lean`). Sign-off states per cell: rail range,
+   temperature range at α = 1.1, and that the bench reference is ideal.
 4. Graduate to `doc/journal/`: (a) *temperature window of the merged ladder:
    fixed vicm cannot cover −40…+125 °C; lv in_a runs out of |V_SG| above 100 °C*;
    (b) *α ≈ 1.1 (constant-gm) not α = 1 flattens fc*; (c) *phase certificate

@@ -23,12 +23,15 @@ What changed versus `pre-pvt/`, and why this set exists:
   mechanism is in 023 §5).
 
 Both cells are **layout-legal** (`lab.grid.legalize` + `restore_fc`, asserted at
-packaging) and their certified decks are in `<cell>/asbuilt/`. The **schematic
-identity gate is pending**: `scripts/draw_xschem.py` does not yet draw topology
-`d` (replica branch + `vbr` rail), so there is no `.sch` in these directories
-and `verify.py` has not been run on this set. Netlist ≡ simulation holds
-(`scorecard.json` is measured from `asbuilt/`); drawing ≡ netlist is the open
-item.
+packaging), their certified decks are in `<cell>/asbuilt/`, and **both identity
+gates pass** on each (`scripts/draw_xschem.py check` / `sim`, native xschem
+lane): the drawn `lpf_core_H*.sch` netlists to the as-built subckt with a full
+net bijection (15 MOS + 6 caps, `vbr`/`rep_x` included), and simulating the
+drawing's own testbench sheets reproduces every scorecard line and THD to
+≤ 5e-4. `draw_xschem.py` learned topology `d` for this: the replica branch is
+drawn as one column right of biquad B under the same vdd rail, and the two
+bridge-gate labels read `vbr`; nothing else in the picture moved. Op
+annotations (`annotate_op.py`) are stamped on each core sheet.
 
 ## The two cells
 
@@ -96,12 +99,29 @@ yield in MC; keep it in the table as the trade, not as the shipping cell.
 
 ```
 H5-lean/ , H12-robust/
-    design.json          sizing of record (layout-legal), why it is here
-    asbuilt/core.sp      certified subckt (topology d)
+    design.json              sizing of record (layout-legal), why it is here
+    asbuilt/core.sp          certified subckt (topology d)
     asbuilt/core_tb_acnoise.sp / core_tb_thd.sp / core_tb_gd.sp / core_tb_mc.sp
-    scorecard.json       measured numbers + per-line pass/fail
-    xschemrc             library path (schematic lane pending for topology d)
-candidates.json          both scorecards
+    lpf_core_H*.sch/.sym     the schematic of record (+ op annotation) and its symbol
+    lpf_tb_H*.sch            testbench: op + ac + noise, .control on the sheet
+    lpf_tb_H*_thd.sch        testbench: coherent strobed transient (S7)
+    lpf_tb_H*_gd.sch / _mc.sch   reviewer benches (group delay, one MC sample)
+    *.spice                  netlists xschem produced from the drawings
+    *.png                    renders (P-half label texts are dropped by the
+                             headless SVG export -- known renderer artefact)
+    op_lpf_core_H*.md/.json  measured operating point per device
+    scorecard.json           measured numbers + per-line pass/fail
+    xschemrc                 library path
+candidates.json              both scorecards
 ```
 
-Rebuild: `LPF_SIGNOFF_SET=post-pvt uv run python scripts/build_signoff.py`.
+Rebuild + re-gate (native lane: `LPF_XSCHEM=$(which xschem)`):
+
+```bash
+LPF_SIGNOFF_SET=post-pvt uv run python scripts/build_signoff.py
+C=H12-robust; N=lpf_core_H12
+uv run python scripts/draw_xschem.py build signoff/post-pvt/$C/asbuilt/core.sp signoff/post-pvt/$C --name $N
+uv run python scripts/draw_xschem.py check signoff/post-pvt/$C/asbuilt/core.sp signoff/post-pvt/$C --name $N
+uv run python scripts/draw_xschem.py sim   signoff/post-pvt/$C/asbuilt/core.sp signoff/post-pvt/$C --name $N --design signoff/post-pvt/$C/design.json
+uv run python scripts/annotate_op.py signoff/post-pvt/$C --core $N --design signoff/post-pvt/$C/design.json
+```
