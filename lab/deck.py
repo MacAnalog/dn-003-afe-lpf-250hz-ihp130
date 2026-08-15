@@ -43,7 +43,7 @@ def _libs(corner: str = C.CORNER_NOM, d: Design | None = None) -> str:
         # corner's mismatch flag (cap_typ_mismatch draws cap_carea per instance)
         # and stay at cap_typ across the process/V/T grid.
         if lib == C.CAP_LIB:
-            return "cap_typ_mismatch" if corner.endswith("_mismatch") else "cap_typ"
+            return C.CAP_CORNER + "_mismatch" if corner.endswith("_mismatch") else C.CAP_CORNER
         return corner
     return "\n".join(f".lib {lib} {section(lib)}" for lib in libs)
 

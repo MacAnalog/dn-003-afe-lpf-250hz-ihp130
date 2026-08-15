@@ -95,7 +95,9 @@ H12 and 3 % of MC yield on H5, i.e. the ideal-cap numbers were honest.
 **`H12-pdk-cap`** — the sizing with margin on every axis that matters for a
 paper claim (THD −50.4 = 10.4 dB, IRN 29.2 = 10.8 µV, phase 332.4 with 100 %
 S1 yield in MC, all process corners, 82 % yield, for 11.9 nW and 184 pF), in
-its PDK-capacitor realisation: it is the cell to take to layout. `H12-robust`
+its PDK-capacitor realisation: it is the cell to take to layout — its full
+pre-layout report (THD at corners −47.3 dB worst, THD MC 30/30 σ 0.8 dB, THD
+profile, MIM cap corners + iref trim, MC 82 %) is [`H12-pdk-cap/PRELAYOUT.md`](H12-pdk-cap/PRELAYOUT.md). `H12-robust`
 is the same sizing with ideal caps (the pre-layout reference for it);
 `H5-lean` / `H5-pdk-cap` are the low-power / low-area marker of the same
 design (8.9 nW, 142 pF) — wider supply window (1.35–1.65 V) but 64–67 % yield.
