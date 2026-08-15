@@ -92,7 +92,9 @@ class Mos:
 class Cap:
     name: str
     nets: tuple            # p m
-    value: str
+    value: str             # farads (ideal) or "" for a PDK MIM instance
+    model: str = ""        # "" (ideal `c` element) or e.g. cap_cmim (an `xc` instance)
+    params: dict = None    # w/l/m of the MIM instance
 
 
 def read_asbuilt(path: Path) -> tuple[list, list]:
@@ -109,7 +111,10 @@ def read_asbuilt(path: Path) -> tuple[list, list]:
         if not inside or not s or s.startswith("*"):
             continue
         t = s.split()
-        if t[0].lower().startswith("x"):
+        if t[0].lower().startswith("xc"):          # a PDK MIM capacitor instance
+            caps.append(Cap(t[0].lower(), tuple(n.lower() for n in t[1:3]), "",
+                            t[3], dict(kv.split("=", 1) for kv in t[4:])))
+        elif t[0].lower().startswith("x"):
             mos.append(Mos(t[0].lower(), tuple(n.lower() for n in t[1:5]),
                            t[5], dict(kv.split("=", 1) for kv in t[6:])))
         elif t[0].lower().startswith("c"):
@@ -319,11 +324,21 @@ def core_sch(mos: list, caps: list, cell: str) -> str:
             f"name={m.name[1:]} w={p['w']} l={p['l']} ng={p['ng']} m={p['m']} "
             f"model={m.model} spiceprefix=X")
     for c in caps:
-        x, y, rot, flip, want = cplace[c.name]
+        key = c.name[1:] if c.model else c.name           # xc13 -> c13
+        x, y, rot, flip, want = cplace[key]
         check(c.name, c.nets, want)
-        sym("devices/capa.sym", x, y, rot, flip,
-            f'name={c.name} m=1 value={c.value} footprint=1206 '
-            f'device="ceramic capacitor"')
+        if c.model:
+            # PDK MIM: the IHP symbol has the SAME pin geometry as devices/capa
+            # (c0 (0,-30) / c1 (0,+30)), so it drops into the ideal cap's place;
+            # `spiceprefix=X` + name without the x, as for the MOS instances.
+            p = c.params
+            sym(f"{PR}/{c.model}.sym", x, y, rot, flip,
+                f"name={key} model={c.model} w={p['w']} l={p['l']} m={p['m']} "
+                f"spiceprefix=X")
+        else:
+            sym("devices/capa.sym", x, y, rot, flip,
+                f'name={c.name} m=1 value={c.value} footprint=1206 '
+                f'device="ceramic capacitor"')
 
     # ---- annotation.  No braces inside T {} (they delimit xschem attributes)
     #      and no non-ASCII (it renders as ???).
@@ -351,10 +366,15 @@ def core_sch(mos: list, caps: list, cell: str) -> str:
          "bridge. vbp is brought out as a port but is unused inside this cell.",
          0, 190, 0.2)
     lv = sorted({m.name for m in mos if "_lv_" in m.model})
+    mim = any(c.model for c in caps)
     text((f"{'/'.join(lv)} are the thin-oxide flavour; every other device is "
           "thick-oxide. " if lv else "Every device is the thick-oxide (hv) flavour. ")
-         + "Capacitors are ideal - mapping farads to area is a "
-         "layout decision, not an electrical one.", 0, 220, 0.2)
+         + ("Capacitors are the PDK MIM (cap_cmim): m identical square units per "
+            "capacitor, sized so area*1.5 fF/um2 + perimeter*40 aF/um equals the "
+            "fitted value; corner section cap_typ (cap_typ_mismatch in MC)."
+            if mim else
+            "Capacitors are ideal - mapping farads to area is a "
+            "layout decision, not an electrical one."), 0, 220, 0.2)
     if replica:
         text("REPLICA BIAS - xr1 (= gmf_b) and xr2 (= bridge) diode-stacked from "
              "vdd, sunk by xr3 (mirror unit off vbn): vbr = vdd - |Vsg|(xr1) - "
@@ -569,14 +589,31 @@ def parse_spice_subckt(text: str) -> tuple[dict, dict]:
         if not inside or not s or s.startswith("*"):
             continue
         t = s.split()
-        if t[0].lower().startswith("x"):
+        if t[0].lower().startswith("xc"):          # PDK MIM instance
+            caps[t[0].lower()] = (
+                tuple(n.lower() for n in t[1:3]), None, t[3].lower(),
+                {k.lower(): _num(v) for k, v in
+                 (kv.split("=", 1) for kv in t[4:] if "=" in kv)})
+        elif t[0].lower().startswith("x"):
             mos[t[0].lower()] = (
                 t[5].lower(), tuple(n.lower() for n in t[1:5]),
                 {k.lower(): float(v) for k, v in
                  (kv.split("=", 1) for kv in t[6:] if "=" in kv)})
         elif t[0].lower().startswith("c"):
-            caps[t[0].lower()] = (tuple(n.lower() for n in t[1:3]), float(t[3]))
+            caps[t[0].lower()] = (tuple(n.lower() for n in t[1:3]), float(t[3]), "", {})
     return mos, caps
+
+
+_SI = {"f": 1e-15, "p": 1e-12, "n": 1e-9, "u": 1e-6, "m": 1e-3, "k": 1e3, "meg": 1e6}
+
+
+def _num(v: str) -> float:
+    """SPICE number with an optional SI suffix (7u, 4.86e-05, 12.5p)."""
+    v = v.strip().lower()
+    for suf, k in sorted(_SI.items(), key=lambda kv: -len(kv[0])):
+        if v.endswith(suf):
+            return float(v[:-len(suf)]) * k
+    return float(v)
 
 
 def gate1(asbuilt: str, drawn: str) -> tuple[bool, list]:
@@ -612,8 +649,15 @@ def gate1(asbuilt: str, drawn: str) -> tuple[bool, list]:
         for a, d in zip(na, nd):
             link(a, d, i)
     for i in sorted(set(ac) & set(dc)):
-        (na, va), (nd, vd) = ac[i], dc[i]
-        if abs(vd - va) > abs(va) * 1e-3:
+        (na, va, ma, pa), (nd, vd, md, pd) = ac[i], dc[i]
+        if ma != md:
+            bad(f"{i}: cap model {ma!r} vs {md!r}")
+        if ma:                                     # PDK MIM: compare geometry
+            for k in ("w", "l", "m"):
+                x, y = pa.get(k), pd.get(k)
+                if x is None or y is None or abs(y - x) > max(1e-15, abs(x) * 1e-3):
+                    bad(f"{i}: {k} {x} vs {y}")
+        elif abs(vd - va) > abs(va) * 1e-3:
             bad(f"{i}: value {va} vs {vd}")
         for a, d in zip(na, nd):
             link(a, d, i)
@@ -668,6 +712,7 @@ def gate2(outdir: Path, tb: str, design_json: Path, image: str) -> tuple[bool, l
                devs={r: Dev(**v) for r, v in g["devs"].items()},
                iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
                lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  cap_model=g.get("cap_model", "ideal"),
                **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
 
     s = M.score_plots(ng.simulate(netlist_with_xschem(outdir, tb, image) +

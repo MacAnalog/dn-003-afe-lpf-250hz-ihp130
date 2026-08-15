@@ -269,7 +269,10 @@ on the sign-off cells at larger area).
 
 ## Hand-off (2026-08-15, end of second session)
 
-**Delivered:** `signoff/post-pvt/{H12-robust,H5-lean}` (all-hv, topology `d`,
+**Delivered:** `signoff/post-pvt/{H12-robust,H12-pdk-cap,H5-lean,H5-pdk-cap}` (all-hv,
+topology `d`, devices rounded to natural sizes — `H*-r.json`, `round_sizes.py` —
+and the `-pdk-cap` twins re-fitted through the PDK MIM model `cap_cmim`,
+`Design.cap_model="cmim"`;
 layout-legal, scorecards measured from `asbuilt/`, **both identity gates PASS**
 — `draw_xschem.py` now draws topology `d`); `signoff/pre-pvt/` holds the
 original nine. Open: THD at corners/MC for the shipping cell, and the layout lane.

@@ -46,6 +46,7 @@ def design_of(cell: str) -> Design:
                   devs={r: Dev(**v) for r, v in g["devs"].items()},
                   iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
                   lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  cap_model=g.get("cap_model", "ideal"),
                   **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
 
 

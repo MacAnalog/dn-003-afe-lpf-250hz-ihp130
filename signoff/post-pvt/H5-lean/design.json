@@ -1,24 +1,25 @@
 {
   "name": "H5-lean",
-  "from": "023-replica-bias/H5",
-  "why": "All-hv, replica-biased, headroom-centred (vicm 0.22). Every S1-S8 line at 8.9 nW / 140 pF; THD -48.8; S1 phase margin thin (330.6 deg).",
+  "from": "023-replica-bias/H5-r",
+  "why": "All-hv, replica-biased, headroom-centred (vicm 0.22), devices rounded to natural sizes (integer / 0.5 um), ideal caps. Every S1-S8 line at 8.9 nW / 142 pF; THD -46.7; MC 67 %.",
   "design": {
     "topology": "d",
     "iref": 6.624e-10,
     "vicm": 0.22,
-    "vocm": 1.2489,
-    "vmid": 0.6775,
+    "vocm": 1.2463,
+    "vmid": 0.6748,
     "lv_roles": [],
+    "cap_model": "ideal",
     "caps_pf": {
-      "c1_a": 5.061418534877712,
-      "c2_a": 20.288428716278457,
-      "c1_b": 46.688658862096204,
-      "c2_b": 16.617982166598463
+      "c1_a": 4.81,
+      "c2_a": 21.349999999999994,
+      "c1_b": 46.15,
+      "c2_b": 18.740000000000002
     },
     "devs": {
       "in_a": {
-        "w": 1.56e-05,
-        "l": 1.04e-05,
+        "w": 1.6e-05,
+        "l": 1e-05,
         "ng": 2,
         "m": 1
       },
@@ -29,14 +30,14 @@
         "m": 1
       },
       "bias_a_int": {
-        "w": 1.95e-05,
-        "l": 2.08e-05,
+        "w": 2e-05,
+        "l": 2.1e-05,
         "ng": 2,
         "m": 1
       },
       "bridge": {
-        "w": 3.24e-06,
-        "l": 2.184e-05,
+        "w": 3e-06,
+        "l": 2.2e-05,
         "ng": 1,
         "m": 1
       },
@@ -59,14 +60,14 @@
         "m": 1
       },
       "rep_bridge": {
-        "w": 3.24e-06,
-        "l": 2.184e-05,
+        "w": 3e-06,
+        "l": 2.2e-05,
         "ng": 1,
         "m": 1
       },
       "rep_sink": {
-        "w": 1.95e-05,
-        "l": 2.08e-05,
+        "w": 2e-05,
+        "l": 2.1e-05,
         "ng": 2,
         "m": 3
       }

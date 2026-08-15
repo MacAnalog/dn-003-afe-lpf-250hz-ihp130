@@ -89,12 +89,12 @@ C {lpf_core_H12.sym} 1200 400 0 0 {name=xdut}
 C {devices/vsource.sym} 1450 140 0 0 {name=vflt value=0 savecurrent=false}
 C {devices/vsource.sym} 2050 140 0 0 {name=vdd_meas value=1.5 savecurrent=false}
 C {devices/isource.sym} 1600 140 0 0 {name=iref value=6.624e-10}
-C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.3885e-05 l=2.5475e-05 ng=17 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.3885e-05 l=2.5475e-05 ng=17 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.4e-05 l=2.5e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.4e-05 l=2.5e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.6e-05 l=1e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
 C {devices/code_shown.sym} 200 820 0 0 {name=DIRECTIVES only_toplevel=false value=".title lpf d -- group delay (single run)
 .lib cornerMOShv.lib mos_tt
-.nodeset v(xdut.vout_1)=0.6975 v(xdut.vout_2)=0.6975 v(voutp)=1.2811 v(voutn)=1.2811
+.nodeset v(xdut.vout_1)=0.6948 v(xdut.vout_2)=0.6948 v(voutp)=1.2784 v(voutn)=1.2784
 .temp 27.0"}
 C {devices/code_shown.sym} 200 1000 0 0 {name=CTRL only_toplevel=false value=".control
 set filetype=binary
@@ -133,4 +133,4 @@ T {lpf_core_H12 sign-off testbench -- group delay, tau computed in-deck} 200 40 
 T {balun gains +-0.5 so the vsig amplitude IS the differential input.} 200 75 0 0 0.3 0.3 {}
 T {vflt is a 0 V series probe carrying the CORE current only. The bias reference sits AHEAD of it, so S6 excludes the reference by construction rather than by subtraction.} 200 760 0 0 0.3 0.3 {}
 T {The .control computes tau(f) = -dphi/dw in-deck and saves the PSP op-vars, so the PDK live annotator fills from this bench's sim.raw.} 200 105 0 0 0.3 0.3 {}
-T {generated 2026-08-15 21:25 UTC by scripts/draw_xschem.py} 200 1450 0 0 0.2 0.2 {}
+T {generated 2026-08-15 21:42 UTC by scripts/draw_xschem.py} 200 1450 0 0 0.2 0.2 {}

@@ -109,6 +109,7 @@ def design_of(g: dict) -> Design:
                   devs={r: Dev(**v) for r, v in g["devs"].items()},
                   iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
                   lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  cap_model=g.get("cap_model", "ideal"),
                   **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
 
 
@@ -117,11 +118,18 @@ def design_of(g: dict) -> Design:
 # selected with LPF_SIGNOFF_SET=post-pvt.
 SRC_POST = REPO / "experiments" / "023-replica-bias"
 CANDIDATES_POST: dict[str, tuple[str, str]] = {
-    "H5-lean":    ("H5",  "All-hv, replica-biased, headroom-centred (vicm 0.22). Every S1-S8 line "
-                          "at 8.9 nW / 140 pF; THD -48.8; S1 phase margin thin (330.6 deg)."),
-    "H12-robust": ("H12-y2v", "H5 at m = 4 (I_L 2.6 nA), vicm 0.24, bias-device area x9/x6, gmf_b x2: "
-                              "THD -50.8, all four process corners + the high rail, MC 83 %, "
-                              "for 11.9 nW / 183 pF (phase 332.0)."),
+    "H5-lean":     ("H5-r",  "All-hv, replica-biased, headroom-centred (vicm 0.22), devices rounded to "
+                             "natural sizes (integer / 0.5 um), ideal caps. Every S1-S8 line at "
+                             "8.9 nW / 142 pF; THD -46.7; MC 67 %."),
+    "H12-robust":  ("H12-r", "H5 at m = 4 (I_L 2.6 nA), vicm 0.24, bias-device area x9/x6, gmf_b x2, "
+                             "devices rounded to natural sizes, ideal caps: THD -50.7, all four "
+                             "process corners + the high rail, MC 82 %, 11.9 nW / 184 pF."),
+    "H5-pdk-cap":  ("H5-pdk-cap",  "H5-lean with the PDK MIM capacitors (cap_cmim, cornerCAP.lib): "
+                                   "m square units per capacitor, re-fitted through the real model. "
+                                   "THD -46.7, MC 64 %."),
+    "H12-pdk-cap": ("H12-pdk-cap", "H12-robust with the PDK MIM capacitors (cap_cmim): re-fitted "
+                                   "through the real model. THD -50.4, all process corners, MC 82 %. "
+                                   "The cell to take to layout."),
 }
 POST = SIGNOFF.name == "post-pvt"
 
@@ -161,7 +169,7 @@ def build(name: str) -> dict:
     (out / "design.json").write_text(json.dumps(
         {"name": name, "from": tag, "why": why, "design": {
             "topology": d.topology, "iref": d.iref, "vicm": d.vicm, "vocm": d.vocm,
-            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles),
+            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles), "cap_model": d.cap_model,
             "caps_pf": {k: getattr(d, k) * 1e12
                         for k in ("c1_a", "c2_a", "c1_b", "c2_b")},
             "devs": {r: {"w": g.w, "l": g.l, "ng": g.ng, "m": g.m}

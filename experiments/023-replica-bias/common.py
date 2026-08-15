@@ -54,7 +54,7 @@ def replica(d: Design, k: float) -> Design:
 
 def to_json(d: Design) -> dict:
     return {"topology": d.topology, "iref": d.iref, "vicm": d.vicm, "vocm": d.vocm,
-            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles),
+            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles), "cap_model": d.cap_model,
             "caps_pf": {k: getattr(d, k) * 1e12 for k in ("c1_a", "c2_a", "c1_b", "c2_b")},
             "devs": {r: {"w": g.w, "l": g.l, "ng": g.ng, "m": g.m} for r, g in d.devs.items()}}
 

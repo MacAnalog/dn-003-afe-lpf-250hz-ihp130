@@ -1,0 +1,76 @@
+{
+  "name": "H5-pdk-cap",
+  "from": "023-replica-bias/H5-pdk-cap",
+  "why": "H5-lean with the PDK MIM capacitors (cap_cmim, cornerCAP.lib): m square units per capacitor, re-fitted through the real model. THD -46.7, MC 64 %.",
+  "design": {
+    "topology": "d",
+    "iref": 6.624e-10,
+    "vicm": 0.22,
+    "vocm": 1.2463,
+    "vmid": 0.6748,
+    "lv_roles": [],
+    "cap_model": "cmim",
+    "caps_pf": {
+      "c1_a": 4.82,
+      "c2_a": 21.32,
+      "c1_b": 46.14,
+      "c2_b": 18.699999999999996
+    },
+    "devs": {
+      "in_a": {
+        "w": 1.6e-05,
+        "l": 1e-05,
+        "ng": 2,
+        "m": 1
+      },
+      "gmf_a": {
+        "w": 1.5e-06,
+        "l": 4.5e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "bias_a_int": {
+        "w": 2e-05,
+        "l": 2.1e-05,
+        "ng": 2,
+        "m": 1
+      },
+      "bridge": {
+        "w": 3e-06,
+        "l": 2.2e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "in_b": {
+        "w": 4e-06,
+        "l": 1.5e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "gmf_b": {
+        "w": 8.5e-06,
+        "l": 2.2e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "rep_gmfb": {
+        "w": 8.5e-06,
+        "l": 2.2e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "rep_bridge": {
+        "w": 3e-06,
+        "l": 2.2e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "rep_sink": {
+        "w": 2e-05,
+        "l": 2.1e-05,
+        "ng": 2,
+        "m": 3
+      }
+    }
+  }
+}

@@ -163,6 +163,14 @@ class Design:
     # MEASURED op probe, never from arithmetic.
     vmid: float | None = None
     note: str = ""
+    # How the six capacitors are REALISED.  "ideal" emits the plain `c` elements
+    # every certified deck has always had (sha-pinned reference: this branch is
+    # byte-identical).  "cmim" emits each as the PDK's MIM capacitor `cap_cmim`
+    # (`cornerCAP.lib`): `m` identical square units of side <= CMIM_UNIT_MAX,
+    # sized so the realised value (area * cap_carea + perimeter * CJSW) equals
+    # the design farads -- see `cmim_geom`.  The design still stores farads, so
+    # every fitter keeps working; the geometry is derived at emit time.
+    cap_model: str = "ideal"
 
     def model(self, role: str) -> str:
         """The compact model this role instantiates, honouring `lv_roles`."""
@@ -177,10 +185,23 @@ class Design:
         wrong answer.
         """
         from . import config as C
-        return (C.MOS_LIB_HV, C.MOS_LIB_LV) if self.lv_roles else (C.MOS_LIB_HV,)
+        libs = (C.MOS_LIB_HV, C.MOS_LIB_LV) if self.lv_roles else (C.MOS_LIB_HV,)
+        if self.cap_model == "cmim":
+            libs = libs + (C.CAP_LIB,)
+        return libs
+
+    def cap(self, name: str) -> float:
+        """The REALISED value of one design capacitor: the design farads for
+        ideal caps, the geometry-quantised value for the PDK MIM."""
+        c = getattr(self, name)
+        return cmim_value(*cmim_geom(c)) if self.cap_model == "cmim" else c
 
     def total_cap(self) -> float:
         """Total DRAWN capacitance (both sides), in farads -- the area report."""
+        if self.cap_model == "cmim":
+            k2 = 4.0 if self.c2_grounded else 1.0
+            return (2 * self.cap("c1_a") + k2 * self.cap("c2_a")
+                    + 2 * self.cap("c1_b") + k2 * self.cap("c2_b"))
         k2 = 4.0 if self.c2_grounded else 1.0
         return 2 * self.c1_a + k2 * self.c2_a + 2 * self.c1_b + k2 * self.c2_b
 
@@ -203,6 +224,37 @@ class Design:
 # small-signal derivations in doc/design-reference.md transfer verbatim.
 
 
+# IHP SG13G2 MIM capacitor (cornerCAP.lib, section cap_typ): C = cap_carea*w*l +
+# 2*CJSW*(w+l), cap_carea 1.5 fF/um^2, CJSW 40 aF/um (capacitors_mod.lib
+# `.model cmim_core`).  A design capacitor is realised as `m` identical SQUARE
+# units of side s <= CMIM_UNIT_MAX -- the shape a layout array takes -- with s
+# solved so the realised value equals the design farads to the 10 nm grid.
+CMIM_CAREA = 1.5e-15          # F / um^2
+CMIM_CJSW = 40e-18            # F / um   (per unit of perimeter)
+CMIM_UNIT_MAX = 50.0          # um, side of the largest unit we draw
+CMIM_MODEL = "cap_cmim"
+
+
+def cmim_value(s_um: float, m: int) -> float:
+    """Realised farads of `m` square MIM units of side `s_um` (um)."""
+    return m * (CMIM_CAREA * s_um * s_um + 2 * CMIM_CJSW * (2 * s_um))
+
+
+def cmim_geom(c: float) -> tuple[float, int]:
+    """(side_um, m) realising `c` farads: the fewest units of side <= CMIM_UNIT_MAX,
+    side rounded to 0.01 um."""
+    import math
+    m = max(1, math.ceil(c / cmim_value(CMIM_UNIT_MAX, 1) - 1e-9))
+    a, b, cc = CMIM_CAREA, 4 * CMIM_CJSW, -c / m
+    s = (-b + math.sqrt(b * b - 4 * a * cc)) / (2 * a)
+    return round(s, 2), m
+
+
+def _cmim_line(name: str, n1: str, n2: str, c: float) -> str:
+    s, m = cmim_geom(c)
+    return f"x{name} {n1} {n2} {CMIM_MODEL} w={s:g}u l={s:g}u m={m}"
+
+
 def _caps(d: Design) -> list[str]:
     """The six capacitors.  `c2_*` is ONE floating cap across the pair.
 
@@ -222,6 +274,17 @@ def _caps(d: Design) -> list[str]:
     # `make lint`, so the default (floating) branch must emit exactly the lines
     # it always has, in the order it always has.  The grounded branch is the
     # only thing that may add or move anything.
+    if d.cap_model == "cmim":
+        if d.c2_grounded:
+            raise ValueError("cap_model='cmim' with c2_grounded is not emitted")
+        return [_cmim_line("c13", "net2", "vout_1", d.c1_a),
+                _cmim_line("c17", "net3", "vout_2", d.c1_a),
+                _cmim_line("c19", "vout_2", "vout_1", d.c2_a),
+                _cmim_line("c1", "voutp", "net4", d.c1_b),
+                _cmim_line("c10", "voutn", "net1", d.c1_b),
+                _cmim_line("c12", "voutn", "voutp", d.c2_b)]
+    if d.cap_model != "ideal":
+        raise ValueError(f"unknown cap_model {d.cap_model!r}")
     c19 = ([f"c19 vout_1 0 {2 * d.c2_a:.6g}", f"c19b vout_2 0 {2 * d.c2_a:.6g}"]
            if d.c2_grounded else [f"c19 vout_2 vout_1 {d.c2_a:.6g}"])
     c12 = ([f"c12 voutn 0 {2 * d.c2_b:.6g}", f"c12b voutp 0 {2 * d.c2_b:.6g}"]
