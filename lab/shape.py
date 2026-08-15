@@ -148,19 +148,29 @@ def monotone_db(f, h, fmax: float) -> float:
 
 def fit_butter(base: Design, tag: str, *, fc_target: float = 250.0,
                fmax: float | None = None, a1000_max: float = -48.2,
-               maxiter: int = 300, verbose: bool = True):
+               maxiter: int = 300, verbose: bool = True,
+               fixed: dict | None = None):
     """Nelder-Mead over log-capacitance against the Butterworth TEMPLATE.
 
     Device sizing is untouched, so gm, current, noise and power do not move --
     only where the four capacitors put the two pole pairs.  Returns
     `(design, result)` like `fit_caps`.
+
+    `fixed` pins named capacitors (farads) out of the search: the shape
+    template alone does not care WHICH biquad carries the high Q, but THD does
+    (the internal node of the high-Q section swings most, and it is a gate) --
+    measured in experiments/023: c1_b 34 -> 81 pF at equal template error is
+    THD -36 -> -55 dB.  Pinning c1_b lets a fit walk that trade on purpose.
     """
     from . import config as C
     from . import ngspice as ng
     from . import raw as R
     from .deck import ac_noise
 
-    keys = ("c1_a", "c2_a", "c1_b", "c2_b")
+    fixed = dict(fixed or {})
+    if fixed:
+        base = base.with_(**fixed)
+    keys = tuple(k for k in ("c1_a", "c2_a", "c1_b", "c2_b") if k not in fixed)
     x0 = np.log(np.array([getattr(base, k) for k in keys]))
     n = {"i": 0}
     seen: dict = {}

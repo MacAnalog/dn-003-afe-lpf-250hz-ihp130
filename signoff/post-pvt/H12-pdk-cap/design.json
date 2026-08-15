@@ -1,0 +1,76 @@
+{
+  "name": "H12-pdk-cap",
+  "from": "023-replica-bias/H12-pdk-cap",
+  "why": "H12-robust with the PDK MIM capacitors (cap_cmim): re-fitted through the real model. THD -50.4, all process corners, MC 82 %. The cell to take to layout.",
+  "design": {
+    "topology": "d",
+    "iref": 6.624e-10,
+    "vicm": 0.24,
+    "vocm": 1.2784,
+    "vmid": 0.6948,
+    "lv_roles": [],
+    "cap_model": "cmim",
+    "caps_pf": {
+      "c1_a": 4.94,
+      "c2_a": 29.369999999999997,
+      "c1_b": 59.89999999999999,
+      "c2_b": 24.7
+    },
+    "devs": {
+      "in_a": {
+        "w": 1.6e-05,
+        "l": 1e-05,
+        "ng": 2,
+        "m": 1
+      },
+      "gmf_a": {
+        "w": 1.5e-06,
+        "l": 4.5e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "bias_a_int": {
+        "w": 2.4e-05,
+        "l": 2.5e-05,
+        "ng": 3,
+        "m": 1
+      },
+      "bridge": {
+        "w": 5e-06,
+        "l": 3.3e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "in_b": {
+        "w": 4e-06,
+        "l": 1.5e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "gmf_b": {
+        "w": 1.2e-05,
+        "l": 3.1e-05,
+        "ng": 2,
+        "m": 1
+      },
+      "rep_gmfb": {
+        "w": 1.2e-05,
+        "l": 3.1e-05,
+        "ng": 2,
+        "m": 1
+      },
+      "rep_bridge": {
+        "w": 5e-06,
+        "l": 3.3e-05,
+        "ng": 1,
+        "m": 1
+      },
+      "rep_sink": {
+        "w": 2.4e-05,
+        "l": 2.5e-05,
+        "ng": 3,
+        "m": 4
+      }
+    }
+  }
+}

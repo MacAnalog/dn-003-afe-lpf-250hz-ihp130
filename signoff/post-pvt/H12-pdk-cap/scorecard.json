@@ -1,0 +1,33 @@
+{
+  "cell": "H12-pdk-cap",
+  "from": "023-replica-bias/H12-pdk-cap",
+  "why": "H12-robust with the PDK MIM capacitors (cap_cmim): re-fitted through the real model. THD -50.4, all process corners, MC 82 %. The cell to take to layout.",
+  "vicm": 0.24,
+  "vocm": 1.2784,
+  "lv_roles": [],
+  "scorecard": {
+    "fc_hz": 249.7746,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0523,
+    "peak_db": 0.0018,
+    "mono_db": 0.0018,
+    "a1000_db": -49.026,
+    "ph_max_deg": 332.3823,
+    "irn_uv": 29.199,
+    "p_core_nw": 11.9125,
+    "c_total_pf": 183.7792
+  },
+  "thd_db": -50.401,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

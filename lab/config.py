@@ -55,6 +55,10 @@ PDK = "ihp-sg13g2"
 MOS_LIB_LV = "cornerMOSlv.lib"      # sg13_lv_{n,p}mos  (1.5 V thin oxide)
 MOS_LIB_HV = "cornerMOShv.lib"      # sg13_hv_{n,p}mos  (3.3 V thick oxide)
 CAP_LIB = "cornerCAP.lib"           # cap_cmim (MIM), cap_rfcmim
+# MIM corner section for cap_model="cmim" designs: cap_typ | cap_bcs (0.9x) |
+# cap_wcs (1.1x).  Env-selectable so a cap-corner run is a separate invocation,
+# like BIAS_ALPHA; the `_mismatch` twin is chosen by deck._libs from the MOS corner.
+CAP_CORNER = os.environ.get("LPF_CAP_CORNER", "cap_typ")
 RES_LIB = "cornerRES.lib"           # rsil, rhigh, rppd
 
 # The process corners this repo scores.  `mos_tt` etc. are section names inside

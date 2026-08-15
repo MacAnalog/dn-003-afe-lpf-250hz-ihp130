@@ -37,7 +37,15 @@ def _libs(corner: str = C.CORNER_NOM, d: Design | None = None) -> str:
     meaningful across a mixed-flavour cell.
     """
     libs = d.libs() if d is not None else (C.MOS_LIB_HV,)
-    return "\n".join(f".lib {lib} {corner}" for lib in libs)
+
+    def section(lib: str) -> str:
+        # cornerCAP.lib has its own section names; the MIM caps ride the MOS
+        # corner's mismatch flag (cap_typ_mismatch draws cap_carea per instance)
+        # and stay at cap_typ across the process/V/T grid.
+        if lib == C.CAP_LIB:
+            return C.CAP_CORNER + "_mismatch" if corner.endswith("_mismatch") else C.CAP_CORNER
+        return corner
+    return "\n".join(f".lib {lib} {section(lib)}" for lib in libs)
 
 
 def _bias(d: Design) -> str:

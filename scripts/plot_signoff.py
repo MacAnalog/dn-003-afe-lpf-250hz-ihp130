@@ -21,6 +21,7 @@ check by eye.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -34,7 +35,7 @@ import matplotlib.pyplot as plt                        # noqa: E402
 from lab import plot as P                              # noqa: E402
 from lab.dut import Design, Dev                        # noqa: E402
 
-SIGNOFF = REPO / "signoff"
+SIGNOFF = REPO / "signoff" / os.environ.get("LPF_SIGNOFF_SET", "pre-pvt")   # pre-pvt (original set) | post-pvt (023 cells)
 ORDER = ["A-minarea", "B-balanced", "C-lownoise", "D-thdjump", "E-combo",
          "F-minnoise", "G-maxthd", "E1-prev", "H-shipped"]
 
@@ -45,6 +46,7 @@ def design_of(cell: str) -> Design:
                   devs={r: Dev(**v) for r, v in g["devs"].items()},
                   iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
                   lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  cap_model=g.get("cap_model", "ideal"),
                   **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
 
 

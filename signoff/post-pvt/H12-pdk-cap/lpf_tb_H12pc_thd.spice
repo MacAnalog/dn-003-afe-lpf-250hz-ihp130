@@ -1,0 +1,68 @@
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/post-pvt/H12-pdk-cap/lpf_tb_H12pc_thd.sch
+**.subckt lpf_tb_H12pc_thd
+vsig sig vcm dc 0 sin(0 0.0875 50) ac 1
+vcm vcm 0 0.24
+evp vinp vcm sig vcm 0.5
+evn vinn vcm sig vcm -0.5
+xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_H12pc
+vflt vdd_top vdd 0
+vdd_meas vdd_top 0 1.5
+iref vdd_top vbn 6.624e-10
+Xmbn vbn vbn 0 0 sg13_hv_nmos w=2.4e-05 l=2.5e-05 ng=3 m=1
+Xmbp vbp vbn 0 0 sg13_hv_nmos w=2.4e-05 l=2.5e-05 ng=3 m=1
+Xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.6e-05 l=1e-05 ng=2 m=1
+**** begin user architecture code
+
+.title lpf d -- thd fin=50 ampl=0.0875
+.lib cornerMOShv.lib mos_tt
+.lib cornerCAP.lib cap_typ
+.nodeset v(xdut.vout_1)=0.6948 v(xdut.vout_2)=0.6948 v(voutp)=1.2784 v(voutn)=1.2784
+.temp 27.0
+.options reltol=1e-5 abstol=1e-13 vntol=1e-9 chgtol=1e-16 method=gear maxord=2
+
+
+.control
+set filetype=binary
+op
+tran 3.90625e-05 0.56 0.16 3.90625e-05
+write sim.raw
+.endc
+
+**** end user architecture code
+**.ends
+
+* expanding   symbol:  lpf_core_H12pc.sym # of pins=7
+** sym_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/post-pvt/H12-pdk-cap/lpf_core_H12pc.sym
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/post-pvt/H12-pdk-cap/lpf_core_H12pc.sch
+.subckt lpf_core_H12pc vinp vinn voutp voutn vbn vbp vdd
+*.ipin vinp
+*.ipin vinn
+*.opin voutp
+*.opin voutn
+*.ipin vdd
+*.ipin vbn
+*.ipin vbp
+Xm2 net2 vinp vout_1 vout_1 sg13_hv_pmos w=1.6e-05 l=1e-05 ng=2 m=1
+Xm5 net3 vinn vout_2 vout_2 sg13_hv_pmos w=1.6e-05 l=1e-05 ng=2 m=1
+Xm4 vout_1 net2 0 0 sg13_hv_nmos w=1.5e-06 l=4.5e-05 ng=1 m=1
+Xm8 vout_2 net3 0 0 sg13_hv_nmos w=1.5e-06 l=4.5e-05 ng=1 m=1
+Xm9 net2 vbn 0 0 sg13_hv_nmos w=2.4e-05 l=2.5e-05 ng=3 m=1
+Xm10 net3 vbn 0 0 sg13_hv_nmos w=2.4e-05 l=2.5e-05 ng=3 m=1
+Xmst vout_1 vbr net4 net4 sg13_hv_pmos w=5e-06 l=3.3e-05 ng=1 m=1
+Xmstn vout_2 vbr net1 net1 sg13_hv_pmos w=5e-06 l=3.3e-05 ng=1 m=1
+Xm0 net4 vout_1 voutp voutp sg13_hv_pmos w=4e-06 l=1.5e-05 ng=1 m=1
+Xm1 net1 vout_2 voutn voutn sg13_hv_pmos w=4e-06 l=1.5e-05 ng=1 m=1
+Xm14 voutp net4 vdd vdd sg13_hv_pmos w=1.2e-05 l=3.1e-05 ng=2 m=1
+Xm15 voutn net1 vdd vdd sg13_hv_pmos w=1.2e-05 l=3.1e-05 ng=2 m=1
+Xr1 rep_x rep_x vdd vdd sg13_hv_pmos w=1.2e-05 l=3.1e-05 ng=2 m=1
+Xr2 vbr vbr rep_x rep_x sg13_hv_pmos w=5e-06 l=3.3e-05 ng=1 m=1
+Xr3 vbr vbn 0 0 sg13_hv_nmos w=2.4e-05 l=2.5e-05 ng=3 m=4
+Xc13 net2 vout_1 cap_cmim w=40.53u l=40.53u m=2
+Xc17 net3 vout_2 cap_cmim w=40.53u l=40.53u m=2
+Xc19 vout_2 vout_1 cap_cmim w=49.42u l=49.42u m=8
+Xc1 voutp net4 cap_cmim w=49.91u l=49.91u m=16
+Xc10 voutn net1 cap_cmim w=49.91u l=49.91u m=16
+Xc12 voutn voutp cap_cmim w=48.45u l=48.45u m=7
+.ends
+
+.end

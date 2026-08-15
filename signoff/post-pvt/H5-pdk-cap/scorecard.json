@@ -1,0 +1,33 @@
+{
+  "cell": "H5-pdk-cap",
+  "from": "023-replica-bias/H5-pdk-cap",
+  "why": "H5-lean with the PDK MIM capacitors (cap_cmim, cornerCAP.lib): m square units per capacitor, re-fitted through the real model. THD -46.7, MC 64 %.",
+  "vicm": 0.22,
+  "vocm": 1.2463,
+  "lv_roles": [],
+  "scorecard": {
+    "fc_hz": 249.7726,
+    "dc_db": -0.0085,
+    "ripple_db": 0.0515,
+    "peak_db": 0.0007,
+    "mono_db": 0.0007,
+    "a1000_db": -49.2559,
+    "ph_max_deg": 332.5278,
+    "irn_uv": 30.0853,
+    "p_core_nw": 8.9347,
+    "c_total_pf": 141.9425
+  },
+  "thd_db": -46.723,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

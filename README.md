@@ -11,7 +11,7 @@ model references, logs and schematics all live in git with nothing redacted.
 
 ## Result
 
-**Solved.** [`signoff/`](signoff/README.md) holds the delivered cell,
+**Solved.** [`signoff/`](signoff/pre-pvt/README.md) holds the delivered cell,
 `022-reuse-final` — the originating **branch-stacked** super-source-follower,
 bridge and current reuse intact, ported by *device type and size only* (all 42
 device connections identical to the drawn topology).
@@ -26,7 +26,7 @@ device connections identical to the drawn topology).
 | drawn capacitance | 98.0 pF | 366.3 pF |
 | mismatch yield | — | **95 %** (100 samples) |
 
-All of S1–S8 pass. `uv run python signoff/verify.py --regen` re-derives the whole
+All of S1–S8 pass. `uv run python signoff/pre-pvt/verify.py --regen` re-derives the whole
 sign-off — it regenerates the schematics from the sizing, netlists them with
 xschem, simulates *those* netlists and checks them against both the deck builder
 and the certified scorecard. The story is in
@@ -95,7 +95,7 @@ lands mid-supply (~1.25 V). See `doc/journal/nmos-bulk-tie.md` and
 That common-mode shift is also why the **delivered** cell runs at vicm 0.65 V
 rather than VDD/2: with the bridge in place 0.65 V is the measured ceiling, and
 a level shifter closes the rest. Reaching VDD/2 in-core requires deleting the
-bridge — see `signoff/README.md`.
+bridge — see `signoff/pre-pvt/README.md`.
 
 **One honest caveat about the yardstick.** Re-measured on a dense sweep, the
 reference does **not** meet its own S3 flatness clause (ripple 0.2512 dB against
@@ -121,7 +121,7 @@ already carries 2.5 nA at Vgs = 0). The measured evidence is in
 | `decks/reference/` | the **frozen** reference testbench + core deck, its `design.json` sizing point and `build-sheet.md`. sha-pinned by `make lint`; splice against it, never edit it |
 | `experiments/NNN-<name>/` | one directory per technique: `README.md` (hypothesis → verdict) + scripts |
 | `experiments/_template/` | copy me to start a new experiment |
-| `signoff/` | **the deliverable and its evidence**: `design/` (sizings of record), `schematic/` (xschem `.sch`/`.sym` + two testbenches with their `.control` blocks + generated netlists), `asbuilt/` (certified decks), `scorecard.json`, and `verify.py` — the one command that re-derives all of it |
+| `signoff/` | **the deliverable and its evidence**, in two sets — [`pre-pvt/`](signoff/pre-pvt/) (the original nine sizings, PVT-unaware) and [`post-pvt/`](signoff/post-pvt/) (the all-hv, replica-biased cells of experiment 023; see [`signoff/README.md`](signoff/README.md)). Each set: `design/` (sizings of record), `schematic/` (xschem `.sch`/`.sym` + two testbenches with their `.control` blocks + generated netlists), `asbuilt/` (certified decks), `scorecard.json`, and `verify.py` — the one command that re-derives all of it |
 | `doc/sizing-history/` | every sizing round attempted and what it returned, **derived** from the round JSONs by `build.py`, never typed. The dead ends are kept deliberately |
 | `doc/campaign-report.md` | the narrative: the four diagnoses that drove the design, what device type and size could not fix, and the corrections made to this repo's own record |
 | `doc/target-spec.md` | **the design challenge** — S1–S8 and their definitions |
@@ -151,7 +151,7 @@ make check         # lint + the reference deck still reproduces its certified nu
 make lint          # repo invariants only (fast, no simulation)
 make runs          # query the run ledger
 
-uv run python signoff/verify.py --regen   # re-derive the whole sign-off
+uv run python signoff/pre-pvt/verify.py --regen   # re-derive the whole sign-off
 ```
 
 `make doctor` is the first thing to run on a new machine and the first thing to

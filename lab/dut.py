@@ -163,6 +163,14 @@ class Design:
     # MEASURED op probe, never from arithmetic.
     vmid: float | None = None
     note: str = ""
+    # How the six capacitors are REALISED.  "ideal" emits the plain `c` elements
+    # every certified deck has always had (sha-pinned reference: this branch is
+    # byte-identical).  "cmim" emits each as the PDK's MIM capacitor `cap_cmim`
+    # (`cornerCAP.lib`): `m` identical square units of side <= CMIM_UNIT_MAX,
+    # sized so the realised value (area * cap_carea + perimeter * CJSW) equals
+    # the design farads -- see `cmim_geom`.  The design still stores farads, so
+    # every fitter keeps working; the geometry is derived at emit time.
+    cap_model: str = "ideal"
 
     def model(self, role: str) -> str:
         """The compact model this role instantiates, honouring `lv_roles`."""
@@ -177,10 +185,23 @@ class Design:
         wrong answer.
         """
         from . import config as C
-        return (C.MOS_LIB_HV, C.MOS_LIB_LV) if self.lv_roles else (C.MOS_LIB_HV,)
+        libs = (C.MOS_LIB_HV, C.MOS_LIB_LV) if self.lv_roles else (C.MOS_LIB_HV,)
+        if self.cap_model == "cmim":
+            libs = libs + (C.CAP_LIB,)
+        return libs
+
+    def cap(self, name: str) -> float:
+        """The REALISED value of one design capacitor: the design farads for
+        ideal caps, the geometry-quantised value for the PDK MIM."""
+        c = getattr(self, name)
+        return cmim_value(*cmim_geom(c)) if self.cap_model == "cmim" else c
 
     def total_cap(self) -> float:
         """Total DRAWN capacitance (both sides), in farads -- the area report."""
+        if self.cap_model == "cmim":
+            k2 = 4.0 if self.c2_grounded else 1.0
+            return (2 * self.cap("c1_a") + k2 * self.cap("c2_a")
+                    + 2 * self.cap("c1_b") + k2 * self.cap("c2_b"))
         k2 = 4.0 if self.c2_grounded else 1.0
         return 2 * self.c1_a + k2 * self.c2_a + 2 * self.c1_b + k2 * self.c2_b
 
@@ -203,6 +224,37 @@ class Design:
 # small-signal derivations in doc/design-reference.md transfer verbatim.
 
 
+# IHP SG13G2 MIM capacitor (cornerCAP.lib, section cap_typ): C = cap_carea*w*l +
+# 2*CJSW*(w+l), cap_carea 1.5 fF/um^2, CJSW 40 aF/um (capacitors_mod.lib
+# `.model cmim_core`).  A design capacitor is realised as `m` identical SQUARE
+# units of side s <= CMIM_UNIT_MAX -- the shape a layout array takes -- with s
+# solved so the realised value equals the design farads to the 10 nm grid.
+CMIM_CAREA = 1.5e-15          # F / um^2
+CMIM_CJSW = 40e-18            # F / um   (per unit of perimeter)
+CMIM_UNIT_MAX = 50.0          # um, side of the largest unit we draw
+CMIM_MODEL = "cap_cmim"
+
+
+def cmim_value(s_um: float, m: int) -> float:
+    """Realised farads of `m` square MIM units of side `s_um` (um)."""
+    return m * (CMIM_CAREA * s_um * s_um + 2 * CMIM_CJSW * (2 * s_um))
+
+
+def cmim_geom(c: float) -> tuple[float, int]:
+    """(side_um, m) realising `c` farads: the fewest units of side <= CMIM_UNIT_MAX,
+    side rounded to 0.01 um."""
+    import math
+    m = max(1, math.ceil(c / cmim_value(CMIM_UNIT_MAX, 1) - 1e-9))
+    a, b, cc = CMIM_CAREA, 4 * CMIM_CJSW, -c / m
+    s = (-b + math.sqrt(b * b - 4 * a * cc)) / (2 * a)
+    return round(s, 2), m
+
+
+def _cmim_line(name: str, n1: str, n2: str, c: float) -> str:
+    s, m = cmim_geom(c)
+    return f"x{name} {n1} {n2} {CMIM_MODEL} w={s:g}u l={s:g}u m={m}"
+
+
 def _caps(d: Design) -> list[str]:
     """The six capacitors.  `c2_*` is ONE floating cap across the pair.
 
@@ -222,6 +274,17 @@ def _caps(d: Design) -> list[str]:
     # `make lint`, so the default (floating) branch must emit exactly the lines
     # it always has, in the order it always has.  The grounded branch is the
     # only thing that may add or move anything.
+    if d.cap_model == "cmim":
+        if d.c2_grounded:
+            raise ValueError("cap_model='cmim' with c2_grounded is not emitted")
+        return [_cmim_line("c13", "net2", "vout_1", d.c1_a),
+                _cmim_line("c17", "net3", "vout_2", d.c1_a),
+                _cmim_line("c19", "vout_2", "vout_1", d.c2_a),
+                _cmim_line("c1", "voutp", "net4", d.c1_b),
+                _cmim_line("c10", "voutn", "net1", d.c1_b),
+                _cmim_line("c12", "voutn", "voutp", d.c2_b)]
+    if d.cap_model != "ideal":
+        raise ValueError(f"unknown cap_model {d.cap_model!r}")
     c19 = ([f"c19 vout_1 0 {2 * d.c2_a:.6g}", f"c19b vout_2 0 {2 * d.c2_a:.6g}"]
            if d.c2_grounded else [f"c19 vout_2 vout_1 {d.c2_a:.6g}"])
     c12 = ([f"c12 voutn 0 {2 * d.c2_b:.6g}", f"c12b voutp 0 {2 * d.c2_b:.6g}"]
@@ -409,6 +472,92 @@ def build_c(d: Design) -> list[str]:
     return build_b(d)
 
 
+def build_d(d: Design) -> list[str]:
+    """023D -- the merge (020B) with a REPLICA-BIASED ladder.
+
+    Same signal path as `build_b`, device for device: the only re-wire is that
+    the two bridge gates leave the n-mirror rail `vbn` and take a new rail
+    `vbr`, generated by ONE shared replica branch (three devices, both halves):
+
+        vdd -> xr1 (p, DIODE, replica of gmf_b) -> rep_x
+            -> xr2 (p, DIODE, replica of bridge) -> vbr
+            -> xr3 (n, gate = vbn, the mirror sink)          -> gnd
+
+    Why.  In 020B the ladder current is the solution of
+
+        |V_SG|(gmf_b) + |V_SG|(bridge) = VDD - vbn
+
+    i.e. two p-thresholds against the supply minus an n-diode -- THRESHOLD-
+    referenced.  Measured on the sign-off cells: fc 13.6 -> 524 Hz across
+    ss/ff at nominal V/T, dI/I = dVDD/(2 n U_T) on the rail, and the whole
+    1/22 PVT count of the family (signoff/COMPARISON.md).  The replica pins the
+    same sum from the other side:  vbr = VDD - |V_SG|(xr1) - |V_SG|(xr2) at the
+    sink's mirrored current I_t, so with xr1 == gmf_b and xr2 == bridge in
+    geometry and flavour the ladder solves to I_L = I_t -- MIRROR-referenced,
+    like every current in the un-stacked reference.  VDD, temperature and
+    process now enter only through Vds/gds terms and replica-to-ladder
+    mismatch, not through an exponential.
+
+    Costs, all measured in experiments/023-replica-bias: one extra branch of
+    I_t (~1-3 nA, ~2-4 nW at 1.5 V, INSIDE the core so S6 sees it), three
+    devices, and a new mismatch term (replica vs ladder) that the MC has to
+    price.  Nothing in the signal path moves, so the S8 provenance of 020B
+    (branch stacking + the gm_f merge + floating caps) is untouched.
+
+    Roles:  rep_gmfb (p, must match gmf_b's flavour: put it in `lv_roles`
+    whenever gmf_b is), rep_bridge (p, matches bridge), rep_sink (n, a ratio
+    mirror off vbn -- same L as bias_a_int, W sets I_t).
+    """
+    D = d.devs
+    M = d.model
+    L = []
+    L += [D["in_a"].card("m2", "net2", "vinp", "vout_1", "vout_1", M("in_a")),
+          D["in_a"].card("m5", "net3", "vinn", "vout_2", "vout_2", M("in_a"))]
+    L += [D["gmf_a"].card("m4", "vout_1", "net2", "0", "0", M("gmf_a")),
+          D["gmf_a"].card("m8", "vout_2", "net3", "0", "0", M("gmf_a"))]
+    L += [D["bias_a_int"].card("m9", "net2", "vbn", "0", "0", M("bias_a_int")),
+          D["bias_a_int"].card("m10", "net3", "vbn", "0", "0", M("bias_a_int"))]
+    # THE RE-WIRE: bridge gate = the replica rail, not the n-mirror rail.
+    L += [D["bridge"].card("mst", "vout_1", "vbr", "net4", "net4", M("bridge")),
+          D["bridge"].card("mstn", "vout_2", "vbr", "net1", "net1", M("bridge"))]
+    L += [D["in_b"].card("m0", "net4", "vout_1", "voutp", "voutp", M("in_b")),
+          D["in_b"].card("m1", "net1", "vout_2", "voutn", "voutn", M("in_b"))]
+    L += [D["gmf_b"].card("m14", "voutp", "net4", "vdd", "vdd", M("gmf_b")),
+          D["gmf_b"].card("m15", "voutn", "net1", "vdd", "vdd", M("gmf_b"))]
+    # THE REPLICA: one branch, shared by both halves.
+    L += [D["rep_gmfb"].card("r1", "rep_x", "rep_x", "vdd", "vdd", M("rep_gmfb")),
+          D["rep_bridge"].card("r2", "vbr", "vbr", "rep_x", "rep_x", M("rep_bridge")),
+          D["rep_sink"].card("r3", "vbr", "vbn", "0", "0", M("rep_sink"))]
+    return L + _caps(d)
+
+
+def replica_of(d: Design, i_t_units: float, *, model_check: bool = True) -> Design:
+    """A `b`/`c` sizing re-issued as topology `d` with a matched replica.
+
+    `rep_gmfb`/`rep_bridge` copy gmf_b/bridge (geometry AND flavour), so the
+    ladder current equals the replica's; `rep_sink` is the mirror unit
+    (bias_a_int's geometry) at `i_t_units` = I_t / iref -- an integer becomes
+    the multiplier `m` (a layout-friendly unit-copy mirror, like every current
+    in the reference), a non-integer scales W.  Nothing else moves.
+    """
+    if d.topology not in ("b", "c"):
+        raise ValueError(f"replica_of expects a merged (b/c) sizing, got {d.topology!r}")
+    devs = dict(d.devs)
+    devs["rep_gmfb"] = replace(d.devs["gmf_b"])
+    devs["rep_bridge"] = replace(d.devs["bridge"])
+    u = d.devs["bias_a_int"]
+    if float(i_t_units).is_integer():
+        devs["rep_sink"] = Dev(w=u.w, l=u.l, ng=u.ng, m=int(i_t_units) * u.m)
+    else:
+        devs["rep_sink"] = Dev(w=u.w * i_t_units, l=u.l, ng=u.ng, m=1)
+    lv = set(d.lv_roles)
+    if "gmf_b" in lv:
+        lv.add("rep_gmfb")
+    if "bridge" in lv:
+        lv.add("rep_bridge")
+    return replace(d, topology="d", devs=devs, lv_roles=frozenset(lv))
+
+
 # Which roles are n-channel, per topology.  The reference is all-p in the signal
 # path (see build_reference); the 020 family must alternate to close its dc
 # ladder, so its biquad A follower is n-type.
@@ -417,6 +566,7 @@ NROLES_BY_TOPOLOGY = {
     "a": frozenset({"gmf_a", "bias_a_int"}),
     "b": frozenset({"gmf_a", "bias_a_int"}),
     "c": frozenset({"gmf_a", "bias_a_int"}),
+    "d": frozenset({"gmf_a", "bias_a_int", "rep_sink"}),
 }
 
 
@@ -425,6 +575,7 @@ BUILDERS = {
     "a": build_a,
     "b": build_b,
     "c": build_c,
+    "d": build_d,
 }
 
 PORTS = "vinp vinn voutp voutn vbn vbp vdd"
@@ -475,6 +626,9 @@ INSTANCES = {
     },
 }
 INSTANCES["c"] = INSTANCES["b"]
+# The replica devices are single (shared) instances; the probe reads insts[0].
+INSTANCES["d"] = {**INSTANCES["b"], "rep_gmfb": ("r1", "r1"),
+                  "rep_bridge": ("r2", "r2"), "rep_sink": ("r3", "r3")}
 
 # Internal nets worth reporting in an operating-point table, in ladder order.
 LADDER_NETS = ("voutp", "net4", "vout_1", "net2")

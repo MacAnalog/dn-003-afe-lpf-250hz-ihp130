@@ -1,0 +1,33 @@
+{
+  "cell": "H5-lean",
+  "from": "023-replica-bias/H5-r",
+  "why": "All-hv, replica-biased, headroom-centred (vicm 0.22), devices rounded to natural sizes (integer / 0.5 um), ideal caps. Every S1-S8 line at 8.9 nW / 142 pF; THD -46.7; MC 67 %.",
+  "vicm": 0.22,
+  "vocm": 1.2463,
+  "lv_roles": [],
+  "scorecard": {
+    "fc_hz": 249.8939,
+    "dc_db": -0.0085,
+    "ripple_db": 0.0546,
+    "peak_db": 0.0,
+    "mono_db": 0.0,
+    "a1000_db": -49.2645,
+    "ph_max_deg": 332.5609,
+    "irn_uv": 30.0836,
+    "p_core_nw": 8.9347,
+    "c_total_pf": 142.01
+  },
+  "thd_db": -46.743,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

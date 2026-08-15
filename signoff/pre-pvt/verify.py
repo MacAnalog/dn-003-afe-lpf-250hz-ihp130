@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parent
+REPO = HERE.parents[1]          # signoff/pre-pvt/verify.py -> repo root
 sys.path.insert(0, str(REPO))
 
 from lab import metrics as M          # noqa: E402
@@ -57,6 +57,7 @@ def design_of(path: Path) -> Design:
                   devs={r: Dev(**v) for r, v in g["devs"].items()},
                   iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
                   lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  cap_model=g.get("cap_model", "ideal"),
                   **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
 
 

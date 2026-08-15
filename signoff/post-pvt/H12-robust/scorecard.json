@@ -1,0 +1,33 @@
+{
+  "cell": "H12-robust",
+  "from": "023-replica-bias/H12-r",
+  "why": "H5 at m = 4 (I_L 2.6 nA), vicm 0.24, bias-device area x9/x6, gmf_b x2, devices rounded to natural sizes, ideal caps: THD -50.7, all four process corners + the high rail, MC 82 %, 11.9 nW / 184 pF.",
+  "vicm": 0.24,
+  "vocm": 1.2784,
+  "lv_roles": [],
+  "scorecard": {
+    "fc_hz": 249.8316,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0538,
+    "peak_db": 0.0002,
+    "mono_db": 0.0002,
+    "a1000_db": -48.9916,
+    "ph_max_deg": 332.3205,
+    "irn_uv": 29.2014,
+    "p_core_nw": 11.9124,
+    "c_total_pf": 183.73
+  },
+  "thd_db": -50.676,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "all_pass": true
+}

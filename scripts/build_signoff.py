@@ -23,6 +23,7 @@ capacitor values.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -40,7 +41,7 @@ from lab.dut import Design, Dev, subckt  # noqa: E402
 from lab.grid import legalize            # noqa: E402
 from lab.retune import restore_fc        # noqa: E402
 
-SIGNOFF = REPO / "signoff"
+SIGNOFF = REPO / "signoff" / os.environ.get("LPF_SIGNOFF_SET", "pre-pvt")   # pre-pvt (original set) | post-pvt (023 cells)
 SRC = REPO / "experiments" / "021-publication-cell"
 
 # cell -> (source json, index in that json, one-line "why this one is here")
@@ -108,11 +109,35 @@ def design_of(g: dict) -> Design:
                   devs={r: Dev(**v) for r, v in g["devs"].items()},
                   iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
                   lv_roles=frozenset(g.get("lv_roles") or ()), vmid=g.get("vmid"),
+                  cap_model=g.get("cap_model", "ideal"),
                   **{k: v * 1e-12 for k, v in g["caps_pf"].items()})
+
+
+# post-pvt set: cell -> (023 candidate json stem, why).  These are all-hv,
+# replica-biased (topology d) sizings from experiments/023-replica-bias/;
+# selected with LPF_SIGNOFF_SET=post-pvt.
+SRC_POST = REPO / "experiments" / "023-replica-bias"
+CANDIDATES_POST: dict[str, tuple[str, str]] = {
+    "H5-lean":     ("H5-r",  "All-hv, replica-biased, headroom-centred (vicm 0.22), devices rounded to "
+                             "natural sizes (integer / 0.5 um), ideal caps. Every S1-S8 line at "
+                             "8.9 nW / 142 pF; THD -46.7; MC 67 %."),
+    "H12-robust":  ("H12-r", "H5 at m = 4 (I_L 2.6 nA), vicm 0.24, bias-device area x9/x6, gmf_b x2, "
+                             "devices rounded to natural sizes, ideal caps: THD -50.7, all four "
+                             "process corners + the high rail, MC 82 %, 11.9 nW / 184 pF."),
+    "H5-pdk-cap":  ("H5-pdk-cap",  "H5-lean with the PDK MIM capacitors (cap_cmim, cornerCAP.lib): "
+                                   "m square units per capacitor, re-fitted through the real model. "
+                                   "THD -46.7, MC 64 %."),
+    "H12-pdk-cap": ("H12-pdk-cap", "H12-robust with the PDK MIM capacitors (cap_cmim): re-fitted "
+                                   "through the real model. THD -50.4, all process corners, MC 82 %. "
+                                   "The cell to take to layout."),
+}
+POST = SIGNOFF.name == "post-pvt"
 
 
 def find(tag: str, fname: str) -> dict:
     """Pull one sizing row out of the round JSON that produced it."""
+    if POST:
+        return json.loads((SRC_POST / f"{fname}.json").read_text())["design"]
     cell = tag.split("/", 1)[1]
     for r in json.loads((SRC / fname).read_text()):
         if r.get("name") == cell:
@@ -121,7 +146,11 @@ def find(tag: str, fname: str) -> dict:
 
 
 def build(name: str) -> dict:
-    tag, fname, why = CANDIDATES[name]
+    if POST:
+        fname, why = CANDIDATES_POST[name]
+        tag = f"023-replica-bias/{fname}"
+    else:
+        tag, fname, why = CANDIDATES[name]
     row = find(tag, fname)
     # The experiment rows are CONTINUOUS-space optima; the sizing of record is
     # their layout-legal projection (5 nm grid, PDK minima, <=10 um fingers).
@@ -140,7 +169,7 @@ def build(name: str) -> dict:
     (out / "design.json").write_text(json.dumps(
         {"name": name, "from": tag, "why": why, "design": {
             "topology": d.topology, "iref": d.iref, "vicm": d.vicm, "vocm": d.vocm,
-            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles),
+            "vmid": d.vmid, "lv_roles": sorted(d.lv_roles), "cap_model": d.cap_model,
             "caps_pf": {k: getattr(d, k) * 1e12
                         for k in ("c1_a", "c2_a", "c1_b", "c2_b")},
             "devs": {r: {"w": g.w, "l": g.l, "ng": g.ng, "m": g.m}
@@ -181,7 +210,7 @@ def build(name: str) -> dict:
 
 
 def main() -> int:
-    want = sys.argv[1:] or list(CANDIDATES)
+    want = sys.argv[1:] or list(CANDIDATES_POST if POST else CANDIDATES)
     cards = [build(n) for n in want]
     (SIGNOFF / "candidates.json").write_text(json.dumps(cards, indent=2))
     print(f"\npackaged {len(cards)} candidates into signoff/<cell>/")

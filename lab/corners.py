@@ -111,7 +111,7 @@ from . import config as C
 from . import metrics as M
 from . import ngspice as ng
 from .dut import Design
-from .parallel import batch
+from .parallel import batch, jobs
 
 # ----------------------------------------------------------------- the grid --
 
@@ -127,8 +127,11 @@ VDDS: tuple[float, ...] = (round(C.VDD * (1 - VDD_TOL), 6), C.VDD,
 
 # Never exceed this many concurrent containers: each ngspice is single-threaded
 # but every point pays a Docker start-up, and past ~6 the contention makes the
-# sweep slower AND the wall-time column meaningless.
-MAX_WORKERS = 6
+# sweep slower AND the wall-time column meaningless.  The NATIVE lane pays no
+# start-up, so there the cap is the core budget (`lab.parallel.jobs`, i.e.
+# `LPF_JOBS` or cpu_count-2) -- a 45-point grid on a many-core host is one
+# wave, not eight.
+MAX_WORKERS = 6 if C.lane() == "docker" else max(6, jobs())
 
 
 @dataclass(frozen=True, order=True)
@@ -196,6 +199,21 @@ REDUCED: tuple[Corner, ...] = (
            temps=(TEMPS[0], TEMPS[-1]), vdds=(VDDS[0], VDDS[-1]))
     + grid(processes=PROCESSES, temps=(C.TEMP_NOM,), vdds=(VDDS[0],))
 )
+
+#: ONE AXIS AT A TIME -- the diagnostic set the 22-point screen cannot give.
+#: Every off-nominal row of `REDUCED` moves two or three axes at once, so a
+#: process failure and a headroom failure read the same.  Measured on the
+#: sign-off cells (experiments/023-replica-bias): the family's ss/ff spread at
+#: NOMINAL V and T was fc 13.6 -> 524 Hz, invisible in `REDUCED` because every
+#: ss/ff row there is also at +-10 % rail or at a temperature extreme.
+PROCESS_ONLY: tuple[Corner, ...] = tuple(
+    Corner(p, C.TEMP_NOM, C.VDD) for p in PROCESSES if p != C.CORNER_NOM)
+SUPPLY_ONLY: tuple[Corner, ...] = tuple(
+    Corner(C.CORNER_NOM, C.TEMP_NOM, v) for v in VDDS if v != C.VDD)
+TEMP_ONLY: tuple[Corner, ...] = tuple(
+    Corner(C.CORNER_NOM, t, C.VDD) for t in TEMPS if t != C.TEMP_NOM)
+#: nominal + process alone + supply alone + temperature alone = 9 points.
+AXES: tuple[Corner, ...] = (NOMINAL,) + PROCESS_ONLY + SUPPLY_ONLY + TEMP_ONLY
 
 # Every pass/fail column, in the reading order `metrics.table` uses, derived
 # from SPEC so a new spec line shows up here without an edit.
