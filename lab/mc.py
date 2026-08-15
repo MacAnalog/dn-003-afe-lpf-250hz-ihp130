@@ -53,11 +53,11 @@ from . import metrics as M
 from . import ngspice as ng
 from .deck import ac_noise
 from .dut import Design
-from .parallel import batch
+from .parallel import batch, jobs
 
 # Docker contention: each sample is its own container, and past ~6 concurrent
 # containers the wall time per sample grows faster than the batch shrinks.
-WORKERS = 6
+WORKERS = 6 if C.lane() == "docker" else max(6, jobs())
 
 # The columns whose distribution is reported.  sigma(dc_db) first -- see the
 # module docstring.

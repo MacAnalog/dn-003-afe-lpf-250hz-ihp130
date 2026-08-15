@@ -1,0 +1,3274 @@
+{
+ "name": "B1-y2",
+ "alpha": 1.0,
+ "nominal": {
+  "dc_db": -0.010616004931024157,
+  "fc_hz": 250.03370757189134,
+  "peak_db": 0.0066878253570511964,
+  "ripple_db": 0.047307389892918335,
+  "mono_db": 0.0066878253570511964,
+  "a1000_db": -49.5384679568549,
+  "ph_max_deg": 332.9670786594618,
+  "ph_step_deg": 9.708536099492107,
+  "f_scored_hi": 2630.2679918954236,
+  "gd_dc_ms": 1.6435166818479694,
+  "gd_max_ms": 2.4679692309392127,
+  "gd_fc_ms": 2.3413526593736287,
+  "irn_uv": 29.286650678618436,
+  "onoise_uv": 34.405047763097,
+  "i_core_na": 5.956082421951101,
+  "idd_total_na": 7.281796514111746,
+  "p_core_nw": 8.934123632926651,
+  "c_total_pf": 126.00734624832046
+ },
+ "axes": [
+  {
+   "corner": {
+    "process": "mos_tt",
+    "temp": 27.0,
+    "vdd": 1.5,
+    "slug": "tt_27c_1v500"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.010616004931024157,
+    "fc_hz": 250.03370757189134,
+    "peak_db": 0.0066878253570511964,
+    "ripple_db": 0.047307389892918335,
+    "mono_db": 0.0066878253570511964,
+    "a1000_db": -49.5384679568549,
+    "ph_max_deg": 332.9670786594618,
+    "ph_step_deg": 9.708536099492107,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6435166818479694,
+    "gd_max_ms": 2.4679692309392127,
+    "gd_fc_ms": 2.3413526593736287,
+    "irn_uv": 29.286650678618436,
+    "onoise_uv": 34.405047763097,
+    "i_core_na": 5.956082421951101,
+    "idd_total_na": 7.281796514111746,
+    "p_core_nw": 8.934123632926651,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_ss",
+    "temp": 27.0,
+    "vdd": 1.5,
+    "slug": "ss_27c_1v500"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.008587086203657657,
+    "fc_hz": 248.37307165542927,
+    "peak_db": 0.0,
+    "ripple_db": 0.10449418617437553,
+    "mono_db": 0.0,
+    "a1000_db": -49.84979925911315,
+    "ph_max_deg": 333.3241409377203,
+    "ph_step_deg": 9.7729550161053,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6642720367845778,
+    "gd_max_ms": 2.485447117566257,
+    "gd_fc_ms": 2.368970379180508,
+    "irn_uv": 29.50221745818352,
+    "onoise_uv": 34.496776656912644,
+    "i_core_na": 5.951004373975746,
+    "idd_total_na": 7.2766727275953995,
+    "p_core_nw": 8.926506560963618,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_ff",
+    "temp": 27.0,
+    "vdd": 1.5,
+    "slug": "ff_27c_1v500"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.020716789711326067,
+    "fc_hz": 250.7913711304397,
+    "peak_db": 0.04650525849620307,
+    "ripple_db": 0.04650525849620307,
+    "mono_db": 0.04650525849620307,
+    "a1000_db": -49.30482250144761,
+    "ph_max_deg": 332.1596562248144,
+    "ph_step_deg": 9.628306547005735,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6258470228162458,
+    "gd_max_ms": 2.4557062503698344,
+    "gd_fc_ms": 2.3157478770578646,
+    "irn_uv": 29.144122956078263,
+    "onoise_uv": 34.33678934693379,
+    "i_core_na": 5.960684295642603,
+    "idd_total_na": 7.286609664028516,
+    "p_core_nw": 8.941026443463905,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_sf",
+    "temp": 27.0,
+    "vdd": 1.5,
+    "slug": "sf_27c_1v500"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.022393841837104883,
+    "fc_hz": 250.07167252948597,
+    "peak_db": 0.032844746928017546,
+    "ripple_db": 0.032844746928017546,
+    "mono_db": 0.032844746928017546,
+    "a1000_db": -49.481506944663884,
+    "ph_max_deg": 332.66722776309024,
+    "ph_step_deg": 9.676160479578556,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6357124308240887,
+    "gd_max_ms": 2.470234256276009,
+    "gd_fc_ms": 2.3319552986156102,
+    "irn_uv": 29.20210973022805,
+    "onoise_uv": 34.338499548695594,
+    "i_core_na": 5.9574578969682745,
+    "idd_total_na": 7.283161093877761,
+    "p_core_nw": 8.936186845452411,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_fs",
+    "temp": 27.0,
+    "vdd": 1.5,
+    "slug": "fs_27c_1v500"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.00774453169053615,
+    "fc_hz": 249.4903236265721,
+    "peak_db": 0.0,
+    "ripple_db": 0.09014490868319514,
+    "mono_db": 0.0,
+    "a1000_db": -49.63573493844608,
+    "ph_max_deg": 333.1538063893469,
+    "ph_step_deg": 9.73517632550434,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6531727448594749,
+    "gd_max_ms": 2.467762462035665,
+    "gd_fc_ms": 2.351613095888027,
+    "irn_uv": 29.383661071468563,
+    "onoise_uv": 34.43429489572653,
+    "i_core_na": 5.955610526569577,
+    "idd_total_na": 7.281470733656911,
+    "p_core_nw": 8.933415789854367,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_tt",
+    "temp": 27.0,
+    "vdd": 1.35,
+    "slug": "tt_27c_1v350"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.013000488263877525,
+    "fc_hz": 249.4736905041948,
+    "peak_db": 0.006561148325022109,
+    "ripple_db": 0.04648777727447134,
+    "mono_db": 0.006561148325022109,
+    "a1000_db": -49.65800798344342,
+    "ph_max_deg": 332.84294004223517,
+    "ph_step_deg": 9.72980798402773,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6480170754997876,
+    "gd_max_ms": 2.4787768118756834,
+    "gd_fc_ms": 2.3498018586277234,
+    "irn_uv": 29.2921141327715,
+    "onoise_uv": 34.37500380505996,
+    "i_core_na": 5.933162972576716,
+    "idd_total_na": 7.258724277498529,
+    "p_core_nw": 8.009770012978567,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_tt",
+    "temp": 27.0,
+    "vdd": 1.65,
+    "slug": "tt_27c_1v650"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.011466094296495848,
+    "fc_hz": 250.15967837418327,
+    "peak_db": 0.006393900131971987,
+    "ripple_db": 0.048004635439738846,
+    "mono_db": 0.006393900131971987,
+    "a1000_db": -49.512267438298196,
+    "ph_max_deg": 332.9898666271005,
+    "ph_step_deg": 9.704327258426872,
+    "f_scored_hi": 2630.2679918954236,
+    "gd_dc_ms": 1.6426134793247178,
+    "gd_max_ms": 2.4656418050898674,
+    "gd_fc_ms": 2.3396271614802924,
+    "irn_uv": 29.286238432538894,
+    "onoise_uv": 34.40648692556326,
+    "i_core_na": 5.960357177240717,
+    "idd_total_na": 7.286271464096876,
+    "p_core_nw": 9.834589342447183,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_tt",
+    "temp": -40.0,
+    "vdd": 1.5,
+    "slug": "tt_m40c_1v500"
+   },
+   "status": "PASS",
+   "values": {
+    "dc_db": -0.008346786293543594,
+    "fc_hz": 253.91999443930874,
+    "peak_db": 0.0,
+    "ripple_db": 0.06415320489870516,
+    "mono_db": 0.0,
+    "a1000_db": -48.912731591256254,
+    "ph_max_deg": 333.3577304791729,
+    "ph_step_deg": 9.744505043272312,
+    "f_scored_hi": 2754.2287033382104,
+    "gd_dc_ms": 1.6216971376724323,
+    "gd_max_ms": 2.428655667456994,
+    "gd_fc_ms": 2.3074737766478615,
+    "irn_uv": 25.410526738765913,
+    "onoise_uv": 30.005447367887516,
+    "i_core_na": 4.614046523731462,
+    "idd_total_na": 5.64380175072544,
+    "p_core_nw": 6.921069785597193,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": []
+  },
+  {
+   "corner": {
+    "process": "mos_tt",
+    "temp": 125.0,
+    "vdd": 1.5,
+    "slug": "tt_125c_1v500"
+   },
+   "status": "FAIL",
+   "values": {
+    "dc_db": -17.932203733110548,
+    "fc_hz": 225.37722425257925,
+    "peak_db": 1.3115227635728388,
+    "ripple_db": 1.3115227635728388,
+    "mono_db": 1.3115227635728388,
+    "a1000_db": -47.18102648111888,
+    "ph_max_deg": 292.98176529283944,
+    "ph_step_deg": 18.380327884318092,
+    "f_scored_hi": 1995.2623149689105,
+    "gd_dc_ms": 1.4043923630847321,
+    "gd_max_ms": 2.6994829595673244,
+    "gd_fc_ms": 1.986672415123695,
+    "irn_uv": 96.64917869564883,
+    "onoise_uv": 17.21139948300676,
+    "i_core_na": 7.922712894496636,
+    "idd_total_na": 9.682573634013487,
+    "p_core_nw": 11.884069341744953,
+    "c_total_pf": 126.00734624832046
+   },
+   "violations": [
+    "S1 biquad-order certificate (max unwrapped phase lag): 293 < 330",
+    "S1 companion: |H| at 1 kHz: -47.18 > -48",
+    "S2 cutoff: 225.4 outside [245, 255]",
+    "S3 passband gain: |-17.93| > 0.2",
+    "S4 peaking: 1.312 > 0.2",
+    "S3 passband flatness to 150 Hz: 1.312 > 0.2",
+    "S5 input-referred noise, 0.5-200 Hz: 96.65 >= 40"
+   ]
+  }
+ ],
+ "reduced": {
+  "summary": {
+   "n_corners": 22,
+   "n_pass": 8,
+   "n_fail": 14,
+   "n_nonconv": 0,
+   "n_error": 0,
+   "n_measured": 22,
+   "all_pass": false,
+   "worst": {
+    "ph_max_deg": {
+     "label": "S1 biquad-order certificate (max unwrapped phase lag)",
+     "value": 185.8429163688077,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 330.0,
+     "op": ">=",
+     "ok": false
+    },
+    "a1000_db": {
+     "label": "S1 companion: |H| at 1 kHz",
+     "value": -37.12644669227114,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": -48.0,
+     "op": "<=",
+     "ok": false
+    },
+    "fc_hz": {
+     "label": "S2 cutoff",
+     "value": 9.753965252546001,
+     "corner": "mos_ss / -40 C / 1.35 V",
+     "corner_slug": "ss_m40c_1v350",
+     "bound": [
+      245.0,
+      255.0
+     ],
+     "op": "in",
+     "ok": false
+    },
+    "dc_db": {
+     "label": "S3 passband gain",
+     "value": -39.922689201560985,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 0.2,
+     "op": "abs<=",
+     "ok": false
+    },
+    "peak_db": {
+     "label": "S4 peaking",
+     "value": 1.8585468933218863,
+     "corner": "mos_sf / +125 C / 1.65 V",
+     "corner_slug": "sf_125c_1v650",
+     "bound": 0.2,
+     "op": "<=",
+     "ok": false
+    },
+    "ripple_db": {
+     "label": "S3 passband flatness to 150 Hz",
+     "value": 33.41222810501096,
+     "corner": "mos_ss / -40 C / 1.35 V",
+     "corner_slug": "ss_m40c_1v350",
+     "bound": 0.2,
+     "op": "<=",
+     "ok": false
+    },
+    "irn_uv": {
+     "label": "S5 input-referred noise, 0.5-200 Hz",
+     "value": 943.8186089726432,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 40.0,
+     "op": "<",
+     "ok": false
+    },
+    "p_core_nw": {
+     "label": "S6 filter-core power",
+     "value": 13.158339738991598,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 50.0,
+     "op": "<",
+     "ok": true
+    }
+   },
+   "span": {
+    "fc_hz": {
+     "min": 9.753965252546001,
+     "min_corner": "mos_ss / -40 C / 1.35 V",
+     "max": 255.66066896559806,
+     "max_corner": "mos_ff / -40 C / 1.65 V",
+     "span": 26.21094727591581,
+     "delta": 245.90670371305205
+    },
+    "irn_uv": {
+     "min": 25.210099249187717,
+     "min_corner": "mos_ff / -40 C / 1.65 V",
+     "max": 943.8186089726432,
+     "max_corner": "mos_ff / +125 C / 1.65 V",
+     "span": 37.43811556009854,
+     "delta": 918.6085097234555
+    },
+    "p_core_nw": {
+     "min": 0.5217387996760149,
+     "min_corner": "mos_ss / -40 C / 1.35 V",
+     "max": 13.158339738991598,
+     "max_corner": "mos_ff / +125 C / 1.65 V",
+     "span": 25.220167154834098,
+     "delta": 12.636600939315583
+    }
+   },
+   "failing": [
+    {
+     "corner": "mos_ss / -40 C / 1.35 V",
+     "slug": "ss_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 191.1 < 330",
+      "S2 cutoff: 9.754 outside [245, 255]",
+      "S3 passband gain: |-8.803| > 0.2",
+      "S3 passband flatness to 150 Hz: 33.41 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 602.5 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / +125 C / 1.35 V",
+     "slug": "ss_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 327.4 < 330",
+      "S2 cutoff: 168.9 outside [245, 255]",
+      "S3 passband gain: |-1.012| > 0.2",
+      "S3 passband flatness to 150 Hz: 1.616 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 50.5 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / +125 C / 1.65 V",
+     "slug": "ss_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 293.1 < 330",
+      "S1 companion: |H| at 1 kHz: -46.97 > -48",
+      "S2 cutoff: 229.6 outside [245, 255]",
+      "S3 passband gain: |-18.19| > 0.2",
+      "S4 peaking: 1.477 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.477 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 98.43 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ff / -40 C / 1.65 V",
+     "slug": "ff_m40c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S2 cutoff: 255.7 outside [245, 255]"
+     ]
+    },
+    {
+     "corner": "mos_ff / +125 C / 1.35 V",
+     "slug": "ff_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 291 < 330",
+      "S1 companion: |H| at 1 kHz: -47.37 > -48",
+      "S2 cutoff: 219.5 outside [245, 255]",
+      "S3 passband gain: |-17.84| > 0.2",
+      "S4 peaking: 1.064 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.064 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 97.12 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "slug": "ff_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 185.8 < 330",
+      "S1 companion: |H| at 1 kHz: -37.13 > -48",
+      "S2 cutoff: 238.4 outside [245, 255]",
+      "S3 passband gain: |-39.92| > 0.2",
+      "S4 peaking: 1.643 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.643 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 943.8 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_sf / -40 C / 1.35 V",
+     "slug": "sf_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 305.9 < 330",
+      "S2 cutoff: 208.6 outside [245, 255]",
+      "S3 passband gain: |-0.8459| > 0.2",
+      "S4 peaking: 0.2983 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.2983 > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_sf / +125 C / 1.35 V",
+     "slug": "sf_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 315.8 < 330",
+      "S2 cutoff: 215.4 outside [245, 255]",
+      "S3 passband gain: |-8.962| > 0.2",
+      "S4 peaking: 0.6651 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.6651 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 55.68 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_sf / +125 C / 1.65 V",
+     "slug": "sf_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 206.6 < 330",
+      "S1 companion: |H| at 1 kHz: -39.62 > -48",
+      "S3 passband gain: |-35.53| > 0.2",
+      "S4 peaking: 1.859 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.765 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 576.4 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / -40 C / 1.35 V",
+     "slug": "fs_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 216.3 < 330",
+      "S2 cutoff: 21.13 outside [245, 255]",
+      "S3 passband gain: |-7.396| > 0.2",
+      "S3 passband flatness to 150 Hz: 23.77 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 212.7 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / +125 C / 1.35 V",
+     "slug": "fs_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 325.5 < 330",
+      "S2 cutoff: 160 outside [245, 255]",
+      "S3 passband gain: |-1.456| > 0.2",
+      "S3 passband flatness to 150 Hz: 1.995 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 56.13 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / +125 C / 1.65 V",
+     "slug": "fs_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 258.5 < 330",
+      "S1 companion: |H| at 1 kHz: -46.25 > -48",
+      "S2 cutoff: 221.4 outside [245, 255]",
+      "S3 passband gain: |-25.8| > 0.2",
+      "S4 peaking: 1.445 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.445 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 207.3 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / +27 C / 1.35 V",
+     "slug": "ss_27c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 289.2 < 330",
+      "S2 cutoff: 204.7 outside [245, 255]",
+      "S3 passband gain: |-1.574| > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_fs / +27 C / 1.35 V",
+     "slug": "fs_27c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 323.3 < 330",
+      "S2 cutoff: 242.2 outside [245, 255]",
+      "S3 passband gain: |-0.2582| > 0.2"
+     ]
+    }
+   ]
+  },
+  "rows": [
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 27.0,
+     "vdd": 1.5,
+     "slug": "tt_27c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.010616004931024157,
+     "fc_hz": 250.03370757189134,
+     "peak_db": 0.0066878253570511964,
+     "ripple_db": 0.047307389892918335,
+     "mono_db": 0.0066878253570511964,
+     "a1000_db": -49.5384679568549,
+     "ph_max_deg": 332.9670786594618,
+     "ph_step_deg": 9.708536099492107,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6435166818479694,
+     "gd_max_ms": 2.4679692309392127,
+     "gd_fc_ms": 2.3413526593736287,
+     "irn_uv": 29.286650678618436,
+     "onoise_uv": 34.405047763097,
+     "i_core_na": 5.956082421951101,
+     "idd_total_na": 7.281796514111746,
+     "p_core_nw": 8.934123632926651,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "ss_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -8.80269001184176,
+     "fc_hz": 9.753965252546001,
+     "peak_db": 0.0,
+     "ripple_db": 33.41222810501096,
+     "mono_db": 0.0,
+     "a1000_db": -77.89297691851982,
+     "ph_max_deg": 191.1049530899695,
+     "ph_step_deg": 9.53318670308414,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 19.29862816996382,
+     "gd_max_ms": 19.29862816996382,
+     "gd_fc_ms": 12.283840983909505,
+     "irn_uv": 602.4778980496363,
+     "onoise_uv": 15.566505261839264,
+     "i_core_na": 0.3864731849451962,
+     "idd_total_na": 1.4157380269720554,
+     "p_core_nw": 0.5217387996760149,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 191.1 < 330",
+     "S2 cutoff: 9.754 outside [245, 255]",
+     "S3 passband gain: |-8.803| > 0.2",
+     "S3 passband flatness to 150 Hz: 33.41 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 602.5 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "ss_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.006662768190121572,
+     "fc_hz": 252.54019669335307,
+     "peak_db": 0.0,
+     "ripple_db": 0.1302418431728012,
+     "mono_db": 0.0,
+     "a1000_db": -49.15191413994827,
+     "ph_max_deg": 333.71122517949107,
+     "ph_step_deg": 9.785306481668812,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.6406222356380682,
+     "gd_max_ms": 2.4365552319140886,
+     "gd_fc_ms": 2.3297913278071722,
+     "irn_uv": 25.62238475928253,
+     "onoise_uv": 30.10444452741027,
+     "i_core_na": 4.619764318727138,
+     "idd_total_na": 5.6496025328977355,
+     "p_core_nw": 7.622611125899778,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "ss_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -1.0124077499169044,
+     "fc_hz": 168.8816414985097,
+     "peak_db": 0.0069131994370932315,
+     "ripple_db": 1.6163049014157422,
+     "mono_db": 0.0069131994370932315,
+     "a1000_db": -56.13810428180321,
+     "ph_max_deg": 327.36342991849114,
+     "ph_step_deg": 7.286723872975898,
+     "f_scored_hi": 1995.2623149689105,
+     "gd_dc_ms": 2.095566383324058,
+     "gd_max_ms": 2.648053069147754,
+     "gd_fc_ms": 2.516005394146328,
+     "irn_uv": 50.5001598059202,
+     "onoise_uv": 44.686487666535804,
+     "i_core_na": 7.904966166129597,
+     "idd_total_na": 9.663916717715757,
+     "p_core_nw": 10.671704324274957,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 327.4 < 330",
+     "S2 cutoff: 168.9 outside [245, 255]",
+     "S3 passband gain: |-1.012| > 0.2",
+     "S3 passband flatness to 150 Hz: 1.616 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 50.5 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "ss_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -18.193906558924485,
+     "fc_hz": 229.57081352767065,
+     "peak_db": 1.477307026852639,
+     "ripple_db": 1.477307026852639,
+     "mono_db": 1.477307026852639,
+     "a1000_db": -46.97349762276018,
+     "ph_max_deg": 293.1202329942434,
+     "ph_step_deg": 101.85067335654887,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.3805276789949996,
+     "gd_max_ms": 2.7520819252466153,
+     "gd_fc_ms": 1.9681693195665326,
+     "irn_uv": 98.42885200593992,
+     "onoise_uv": 17.194403527507504,
+     "i_core_na": 7.917915768475665,
+     "idd_total_na": 9.677333122678276,
+     "p_core_nw": 13.064561017984847,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 293.1 < 330",
+     "S1 companion: |H| at 1 kHz: -46.97 > -48",
+     "S2 cutoff: 229.6 outside [245, 255]",
+     "S3 passband gain: |-18.19| > 0.2",
+     "S4 peaking: 1.477 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.477 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 98.43 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "ff_m40c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.023581498670496654,
+     "fc_hz": 250.94074005781752,
+     "peak_db": 0.03601576749190713,
+     "ripple_db": 0.03601576749190713,
+     "mono_db": 0.03601576749190713,
+     "a1000_db": -49.659072978796,
+     "ph_max_deg": 332.34874589142026,
+     "ph_step_deg": 9.816915115488257,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6400055799568756,
+     "gd_max_ms": 2.5049397431249862,
+     "gd_fc_ms": 2.357193475732141,
+     "irn_uv": 25.257615544439393,
+     "onoise_uv": 29.732455991480194,
+     "i_core_na": 4.462720565789976,
+     "idd_total_na": 5.492353031353625,
+     "p_core_nw": 6.024672763816468,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "ff_m40c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.011815722766439999,
+     "fc_hz": 255.66066896559806,
+     "peak_db": 0.027027925609183198,
+     "ripple_db": 0.027027925609183198,
+     "mono_db": 0.027027925609183198,
+     "a1000_db": -48.55586229785632,
+     "ph_max_deg": 332.87921674723503,
+     "ph_step_deg": 9.679907375856033,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.599352014294611,
+     "gd_max_ms": 2.409076413038544,
+     "gd_fc_ms": 2.2759802089036354,
+     "irn_uv": 25.210099249187717,
+     "onoise_uv": 29.924657098210428,
+     "i_core_na": 4.6283526013077365,
+     "idd_total_na": 5.658477596035886,
+     "p_core_nw": 7.636781792157764,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S2 cutoff: 255.7 outside [245, 255]"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "ff_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -17.836880476999735,
+     "fc_hz": 219.535759059228,
+     "peak_db": 1.0642419673521673,
+     "ripple_db": 1.0642419673521673,
+     "mono_db": 1.0642419673521673,
+     "a1000_db": -47.373283115422154,
+     "ph_max_deg": 291.02826165768874,
+     "ph_step_deg": 61.672015150682455,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.439074302239173,
+     "gd_max_ms": 2.621637616079222,
+     "gd_fc_ms": 2.0012500267646356,
+     "irn_uv": 97.12224780283044,
+     "onoise_uv": 17.194868833615306,
+     "i_core_na": 7.965313028831191,
+     "idd_total_na": 9.729827052244532,
+     "p_core_nw": 10.753172588922109,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 291 < 330",
+     "S1 companion: |H| at 1 kHz: -47.37 > -48",
+     "S2 cutoff: 219.5 outside [245, 255]",
+     "S3 passband gain: |-17.84| > 0.2",
+     "S4 peaking: 1.064 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.064 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 97.12 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "ff_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -39.922689201560985,
+     "fc_hz": 238.44417296669195,
+     "peak_db": 1.6428030045682647,
+     "ripple_db": 1.6428030045682647,
+     "mono_db": 1.6428030045682647,
+     "a1000_db": -37.12644669227114,
+     "ph_max_deg": 185.8429163688077,
+     "ph_step_deg": 60.848993462633075,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 0.9779761226189143,
+     "gd_max_ms": 2.273513161815826,
+     "gd_fc_ms": 1.4251809376319597,
+     "irn_uv": 943.8186089726432,
+     "onoise_uv": 14.816621446885664,
+     "i_core_na": 7.974751356964606,
+     "idd_total_na": 9.73972292509202,
+     "p_core_nw": 13.158339738991598,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 185.8 < 330",
+     "S1 companion: |H| at 1 kHz: -37.13 > -48",
+     "S2 cutoff: 238.4 outside [245, 255]",
+     "S3 passband gain: |-39.92| > 0.2",
+     "S4 peaking: 1.643 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.643 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 943.8 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "sf_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.8458524950076483,
+     "fc_hz": 208.60692908807812,
+     "peak_db": 0.2982665058006573,
+     "ripple_db": 0.2982665058006573,
+     "mono_db": 0.3223635773642186,
+     "a1000_db": -57.86636923882266,
+     "ph_max_deg": 305.9341533696987,
+     "ph_step_deg": 10.826041404414156,
+     "f_scored_hi": 2187.761623949587,
+     "gd_dc_ms": 1.9940886891269267,
+     "gd_max_ms": 3.4660073851136843,
+     "gd_fc_ms": 3.0126658685738934,
+     "irn_uv": 26.122128084559453,
+     "onoise_uv": 26.43375023658391,
+     "i_core_na": 3.3988866323858016,
+     "idd_total_na": 4.428446132893156,
+     "p_core_nw": 4.588496953720833,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 305.9 < 330",
+     "S2 cutoff: 208.6 outside [245, 255]",
+     "S3 passband gain: |-0.8459| > 0.2",
+     "S4 peaking: 0.2983 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.2983 > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "sf_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.015032918610518154,
+     "fc_hz": 254.59564990392627,
+     "peak_db": 0.015472469606079472,
+     "ripple_db": 0.023451633436095395,
+     "mono_db": 0.015472469606079472,
+     "a1000_db": -48.755156031221105,
+     "ph_max_deg": 333.1863352704511,
+     "ph_step_deg": 9.705571480226098,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.610229077642876,
+     "gd_max_ms": 2.4221753578124483,
+     "gd_fc_ms": 2.2923084098217177,
+     "irn_uv": 25.316483626765752,
+     "onoise_uv": 29.966633577019998,
+     "i_core_na": 4.625614666367074,
+     "idd_total_na": 5.655555190833497,
+     "p_core_nw": 7.632264199505672,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "sf_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -8.962003739436835,
+     "fc_hz": 215.37431217806588,
+     "peak_db": 0.6650800503833025,
+     "ripple_db": 0.6650800503833025,
+     "mono_db": 0.6650800503833025,
+     "a1000_db": -50.007008327488556,
+     "ph_max_deg": 315.83856504861745,
+     "ph_step_deg": 21.91639630928364,
+     "f_scored_hi": 2089.296130854072,
+     "gd_dc_ms": 1.6079382319161226,
+     "gd_max_ms": 2.6368943702278873,
+     "gd_fc_ms": 2.20352299549227,
+     "irn_uv": 55.6795688153848,
+     "onoise_uv": 24.179944106975924,
+     "i_core_na": 7.915446909863368,
+     "idd_total_na": 9.674666127992904,
+     "p_core_nw": 10.685853328315547,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 315.8 < 330",
+     "S2 cutoff: 215.4 outside [245, 255]",
+     "S3 passband gain: |-8.962| > 0.2",
+     "S4 peaking: 0.6651 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.6651 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 55.68 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "sf_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -35.52822704366581,
+     "fc_hz": 250.43628382680487,
+     "peak_db": 1.8585468933218863,
+     "ripple_db": 1.7653245234569042,
+     "mono_db": 1.8585468933218863,
+     "a1000_db": -39.6203833107294,
+     "ph_max_deg": 206.63451134638862,
+     "ph_step_deg": 83.49236741154301,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.0245987659467608,
+     "gd_max_ms": 2.412419123187511,
+     "gd_fc_ms": 1.5192031202459433,
+     "irn_uv": 576.365745083023,
+     "onoise_uv": 15.008570565098044,
+     "i_core_na": 7.925264679113494,
+     "idd_total_na": 9.68494781653502,
+     "p_core_nw": 13.076686720537264,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 206.6 < 330",
+     "S1 companion: |H| at 1 kHz: -39.62 > -48",
+     "S3 passband gain: |-35.53| > 0.2",
+     "S4 peaking: 1.859 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.765 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 576.4 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "fs_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -7.395875620741615,
+     "fc_hz": 21.13387897889692,
+     "peak_db": 0.0,
+     "ripple_db": 23.76971302082314,
+     "mono_db": 0.0,
+     "a1000_db": -70.74814033433029,
+     "ph_max_deg": 216.2892572551373,
+     "ph_step_deg": 16.270889860524022,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 9.453372985755534,
+     "gd_max_ms": 9.453372985755534,
+     "gd_fc_ms": 6.293244605868912,
+     "irn_uv": 212.66562096490546,
+     "onoise_uv": 15.892444740948658,
+     "i_core_na": 0.8575622718300164,
+     "idd_total_na": 1.8870349136402862,
+     "p_core_nw": 1.1577090669705223,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 216.3 < 330",
+     "S2 cutoff: 21.13 outside [245, 255]",
+     "S3 passband gain: |-7.396| > 0.2",
+     "S3 passband flatness to 150 Hz: 23.77 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 212.7 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "fs_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.005541735787999335,
+     "fc_hz": 253.65455582561734,
+     "peak_db": 0.0,
+     "ripple_db": 0.11708341919567625,
+     "mono_db": 0.0,
+     "a1000_db": -48.92525156910138,
+     "ph_max_deg": 333.57442900192586,
+     "ph_step_deg": 9.756204494117071,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.629303456385222,
+     "gd_max_ms": 2.4194897358957403,
+     "gd_fc_ms": 2.3111156298663658,
+     "irn_uv": 25.507107074068927,
+     "onoise_uv": 30.04074870100316,
+     "i_core_na": 4.623274224242247,
+     "idd_total_na": 5.653274977585728,
+     "p_core_nw": 7.628402469999707,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "fs_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -1.4561035201718797,
+     "fc_hz": 160.02550938651626,
+     "peak_db": 0.03376004711722369,
+     "ripple_db": 1.9953554315582165,
+     "mono_db": 0.03376004711722369,
+     "a1000_db": -57.1256615261284,
+     "ph_max_deg": 325.5208909852579,
+     "ph_step_deg": 13.795522266728256,
+     "f_scored_hi": 1905.4607179632765,
+     "gd_dc_ms": 2.150936351125983,
+     "gd_max_ms": 2.7560557012412423,
+     "gd_fc_ms": 2.5681701961891865,
+     "irn_uv": 56.133589616208425,
+     "onoise_uv": 45.938081651399685,
+     "i_core_na": 7.925195643577942,
+     "idd_total_na": 9.686039529662184,
+     "p_core_nw": 10.699014118830222,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 325.5 < 330",
+     "S2 cutoff: 160 outside [245, 255]",
+     "S3 passband gain: |-1.456| > 0.2",
+     "S3 passband flatness to 150 Hz: 1.995 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 56.13 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "fs_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -25.79947346057616,
+     "fc_hz": 221.3724841091206,
+     "peak_db": 1.4450306524805683,
+     "ripple_db": 1.4450306524805683,
+     "mono_db": 1.4450306524805683,
+     "a1000_db": -46.253437280666915,
+     "ph_max_deg": 258.5434424719425,
+     "ph_step_deg": 83.19106476782125,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.3212753560820458,
+     "gd_max_ms": 2.6805375636667175,
+     "gd_fc_ms": 1.8868563408597554,
+     "irn_uv": 207.3131776081131,
+     "onoise_uv": 15.711244743868749,
+     "i_core_na": 7.936722355259353,
+     "idd_total_na": 9.698024625442997,
+     "p_core_nw": 13.095591886177932,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 258.5 < 330",
+     "S1 companion: |H| at 1 kHz: -46.25 > -48",
+     "S2 cutoff: 221.4 outside [245, 255]",
+     "S3 passband gain: |-25.8| > 0.2",
+     "S4 peaking: 1.445 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.445 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 207.3 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "tt_27c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.013000488263877525,
+     "fc_hz": 249.4736905041948,
+     "peak_db": 0.006561148325022109,
+     "ripple_db": 0.04648777727447134,
+     "mono_db": 0.006561148325022109,
+     "a1000_db": -49.65800798344342,
+     "ph_max_deg": 332.84294004223517,
+     "ph_step_deg": 9.72980798402773,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6480170754997876,
+     "gd_max_ms": 2.4787768118756834,
+     "gd_fc_ms": 2.3498018586277234,
+     "irn_uv": 29.2921141327715,
+     "onoise_uv": 34.37500380505996,
+     "i_core_na": 5.933162972576716,
+     "idd_total_na": 7.258724277498529,
+     "p_core_nw": 8.009770012978567,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "ss_27c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -1.5739159613797882,
+     "fc_hz": 204.66636220677842,
+     "peak_db": 0.12120797089213786,
+     "ripple_db": 0.12474608199817316,
+     "mono_db": 0.24595405289031103,
+     "a1000_db": -56.61346847865815,
+     "ph_max_deg": 289.16610367446225,
+     "ph_step_deg": 10.528517185772415,
+     "f_scored_hi": 2187.761623949587,
+     "gd_dc_ms": 2.0030316787263582,
+     "gd_max_ms": 3.420472317941077,
+     "gd_fc_ms": 2.9956234983165646,
+     "irn_uv": 30.984830996492118,
+     "onoise_uv": 28.58932038462769,
+     "i_core_na": 4.497582749049993,
+     "idd_total_na": 5.823050157206158,
+     "p_core_nw": 6.071736711217491,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 289.2 < 330",
+     "S2 cutoff: 204.7 outside [245, 255]",
+     "S3 passband gain: |-1.574| > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "ff_27c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.020109431532831935,
+     "fc_hz": 250.64386246468098,
+     "peak_db": 0.046965396172546664,
+     "ripple_db": 0.046965396172546664,
+     "mono_db": 0.046965396172546664,
+     "a1000_db": -49.33482153344835,
+     "ph_max_deg": 332.1270111613511,
+     "ph_step_deg": 9.632919731758022,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6268961080823243,
+     "gd_max_ms": 2.458268290713217,
+     "gd_fc_ms": 2.317699132251227,
+     "irn_uv": 29.14488084372978,
+     "onoise_uv": 34.33359725420966,
+     "i_core_na": 5.955725180081509,
+     "idd_total_na": 7.281447436341358,
+     "p_core_nw": 8.040228993110038,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "sf_27c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.022677966494827704,
+     "fc_hz": 249.8921682225293,
+     "peak_db": 0.03326211671982144,
+     "ripple_db": 0.03326211671982144,
+     "mono_db": 0.03326211671982144,
+     "a1000_db": -49.519812941307634,
+     "ph_max_deg": 332.6187567704524,
+     "ph_step_deg": 9.682456217317196,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.63706710731109,
+     "gd_max_ms": 2.47364120700537,
+     "gd_fc_ms": 2.3345602057429633,
+     "irn_uv": 29.203173394998768,
+     "onoise_uv": 34.33068542524576,
+     "i_core_na": 5.950978702543901,
+     "idd_total_na": 7.276504903280862,
+     "p_core_nw": 8.033821248434267,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "fs_27c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.2582157663648515,
+     "fc_hz": 242.20753640770602,
+     "peak_db": 0.0,
+     "ripple_db": 0.11300048105448324,
+     "mono_db": 0.0,
+     "a1000_db": -50.998796296796726,
+     "ph_max_deg": 323.3433844590967,
+     "ph_step_deg": 9.884244063938667,
+     "f_scored_hi": 2511.88643150962,
+     "gd_dc_ms": 1.7084975319995568,
+     "gd_max_ms": 2.5999091439467237,
+     "gd_fc_ms": 2.4573491172596693,
+     "irn_uv": 29.577435497104215,
+     "onoise_uv": 33.29268368707193,
+     "i_core_na": 5.663158463656832,
+     "idd_total_na": 6.98878188721205,
+     "p_core_nw": 7.6452639259367245,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 323.3 < 330",
+     "S2 cutoff: 242.2 outside [245, 255]",
+     "S3 passband gain: |-0.2582| > 0.2"
+    ]
+   }
+  ]
+ },
+ "full": {
+  "summary": {
+   "n_corners": 45,
+   "n_pass": 20,
+   "n_fail": 25,
+   "n_nonconv": 0,
+   "n_error": 0,
+   "n_measured": 45,
+   "all_pass": false,
+   "worst": {
+    "ph_max_deg": {
+     "label": "S1 biquad-order certificate (max unwrapped phase lag)",
+     "value": 185.8429163688077,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 330.0,
+     "op": ">=",
+     "ok": false
+    },
+    "a1000_db": {
+     "label": "S1 companion: |H| at 1 kHz",
+     "value": -37.12644669227114,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": -48.0,
+     "op": "<=",
+     "ok": false
+    },
+    "fc_hz": {
+     "label": "S2 cutoff",
+     "value": 9.753965252546001,
+     "corner": "mos_ss / -40 C / 1.35 V",
+     "corner_slug": "ss_m40c_1v350",
+     "bound": [
+      245.0,
+      255.0
+     ],
+     "op": "in",
+     "ok": false
+    },
+    "dc_db": {
+     "label": "S3 passband gain",
+     "value": -39.922689201560985,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 0.2,
+     "op": "abs<=",
+     "ok": false
+    },
+    "peak_db": {
+     "label": "S4 peaking",
+     "value": 4.487150626845562,
+     "corner": "mos_tt / -40 C / 1.35 V",
+     "corner_slug": "tt_m40c_1v350",
+     "bound": 0.2,
+     "op": "<=",
+     "ok": false
+    },
+    "ripple_db": {
+     "label": "S3 passband flatness to 150 Hz",
+     "value": 33.41222810501096,
+     "corner": "mos_ss / -40 C / 1.35 V",
+     "corner_slug": "ss_m40c_1v350",
+     "bound": 0.2,
+     "op": "<=",
+     "ok": false
+    },
+    "irn_uv": {
+     "label": "S5 input-referred noise, 0.5-200 Hz",
+     "value": 943.8186089726432,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 40.0,
+     "op": "<",
+     "ok": false
+    },
+    "p_core_nw": {
+     "label": "S6 filter-core power",
+     "value": 13.158339738991598,
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "corner_slug": "ff_125c_1v650",
+     "bound": 50.0,
+     "op": "<",
+     "ok": true
+    }
+   },
+   "span": {
+    "fc_hz": {
+     "min": 9.753965252546001,
+     "min_corner": "mos_ss / -40 C / 1.35 V",
+     "max": 274.1189037309991,
+     "max_corner": "mos_ff / +27 C / 1.65 V",
+     "span": 28.103329941579194,
+     "delta": 264.3649384784531
+    },
+    "irn_uv": {
+     "min": 25.210099249187717,
+     "min_corner": "mos_ff / -40 C / 1.65 V",
+     "max": 943.8186089726432,
+     "max_corner": "mos_ff / +125 C / 1.65 V",
+     "span": 37.43811556009854,
+     "delta": 918.6085097234555
+    },
+    "p_core_nw": {
+     "min": 0.5217387996760149,
+     "min_corner": "mos_ss / -40 C / 1.35 V",
+     "max": 13.158339738991598,
+     "max_corner": "mos_ff / +125 C / 1.65 V",
+     "span": 25.220167154834098,
+     "delta": 12.636600939315583
+    }
+   },
+   "failing": [
+    {
+     "corner": "mos_tt / -40 C / 1.35 V",
+     "slug": "tt_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 252.5 < 330",
+      "S2 cutoff: 64.73 outside [245, 255]",
+      "S3 passband gain: |-3.409| > 0.2",
+      "S4 peaking: 4.487 > 0.2",
+      "S3 passband flatness to 150 Hz: 25.61 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 223.4 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_tt / +125 C / 1.35 V",
+     "slug": "tt_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 323.8 < 330",
+      "S2 cutoff: 180.9 outside [245, 255]",
+      "S3 passband gain: |-3.394| > 0.2",
+      "S3 passband flatness to 150 Hz: 0.9059 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 52.83 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_tt / +125 C / 1.50 V",
+     "slug": "tt_125c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 293 < 330",
+      "S1 companion: |H| at 1 kHz: -47.18 > -48",
+      "S2 cutoff: 225.4 outside [245, 255]",
+      "S3 passband gain: |-17.93| > 0.2",
+      "S4 peaking: 1.312 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.312 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 96.65 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_tt / +125 C / 1.65 V",
+     "slug": "tt_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 230.2 < 330",
+      "S1 companion: |H| at 1 kHz: -43.43 > -48",
+      "S2 cutoff: 236 outside [245, 255]",
+      "S3 passband gain: |-31.07| > 0.2",
+      "S4 peaking: 1.668 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.661 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 357 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / -40 C / 1.35 V",
+     "slug": "ss_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 191.1 < 330",
+      "S2 cutoff: 9.754 outside [245, 255]",
+      "S3 passband gain: |-8.803| > 0.2",
+      "S3 passband flatness to 150 Hz: 33.41 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 602.5 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / -40 C / 1.50 V",
+     "slug": "ss_m40c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 310.3 < 330",
+      "S2 cutoff: 207.5 outside [245, 255]",
+      "S3 passband gain: |-0.6883| > 0.2",
+      "S4 peaking: 0.2051 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.2051 > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_ss / +27 C / 1.35 V",
+     "slug": "ss_27c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 289.2 < 330",
+      "S2 cutoff: 204.7 outside [245, 255]",
+      "S3 passband gain: |-1.574| > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_ss / +125 C / 1.35 V",
+     "slug": "ss_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 327.4 < 330",
+      "S2 cutoff: 168.9 outside [245, 255]",
+      "S3 passband gain: |-1.012| > 0.2",
+      "S3 passband flatness to 150 Hz: 1.616 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 50.5 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / +125 C / 1.50 V",
+     "slug": "ss_125c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 324.9 < 330",
+      "S2 cutoff: 185.7 outside [245, 255]",
+      "S3 passband gain: |-3.531| > 0.2",
+      "S3 passband flatness to 150 Hz: 0.6646 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 51.67 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ss / +125 C / 1.65 V",
+     "slug": "ss_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 293.1 < 330",
+      "S1 companion: |H| at 1 kHz: -46.97 > -48",
+      "S2 cutoff: 229.6 outside [245, 255]",
+      "S3 passband gain: |-18.19| > 0.2",
+      "S4 peaking: 1.477 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.477 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 98.43 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ff / -40 C / 1.50 V",
+     "slug": "ff_m40c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S2 cutoff: 255.5 outside [245, 255]"
+     ]
+    },
+    {
+     "corner": "mos_ff / -40 C / 1.65 V",
+     "slug": "ff_m40c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S2 cutoff: 255.7 outside [245, 255]"
+     ]
+    },
+    {
+     "corner": "mos_ff / +27 C / 1.65 V",
+     "slug": "ff_27c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 328.6 < 330",
+      "S1 companion: |H| at 1 kHz: -46.96 > -48",
+      "S2 cutoff: 274.1 outside [245, 255]",
+      "S3 passband gain: |-3.44| > 0.2",
+      "S4 peaking: 1.062 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.8096 > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_ff / +125 C / 1.35 V",
+     "slug": "ff_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 291 < 330",
+      "S1 companion: |H| at 1 kHz: -47.37 > -48",
+      "S2 cutoff: 219.5 outside [245, 255]",
+      "S3 passband gain: |-17.84| > 0.2",
+      "S4 peaking: 1.064 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.064 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 97.12 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ff / +125 C / 1.50 V",
+     "slug": "ff_125c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 228.3 < 330",
+      "S1 companion: |H| at 1 kHz: -43.56 > -48",
+      "S2 cutoff: 230.4 outside [245, 255]",
+      "S3 passband gain: |-31.2| > 0.2",
+      "S4 peaking: 1.383 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.383 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 361.8 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_ff / +125 C / 1.65 V",
+     "slug": "ff_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 185.8 < 330",
+      "S1 companion: |H| at 1 kHz: -37.13 > -48",
+      "S2 cutoff: 238.4 outside [245, 255]",
+      "S3 passband gain: |-39.92| > 0.2",
+      "S4 peaking: 1.643 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.643 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 943.8 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_sf / -40 C / 1.35 V",
+     "slug": "sf_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 305.9 < 330",
+      "S2 cutoff: 208.6 outside [245, 255]",
+      "S3 passband gain: |-0.8459| > 0.2",
+      "S4 peaking: 0.2983 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.2983 > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_sf / +125 C / 1.35 V",
+     "slug": "sf_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 315.8 < 330",
+      "S2 cutoff: 215.4 outside [245, 255]",
+      "S3 passband gain: |-8.962| > 0.2",
+      "S4 peaking: 0.6651 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.6651 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 55.68 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_sf / +125 C / 1.50 V",
+     "slug": "sf_125c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 262.4 < 330",
+      "S1 companion: |H| at 1 kHz: -44.26 > -48",
+      "S2 cutoff: 243.3 outside [245, 255]",
+      "S3 passband gain: |-24.71| > 0.2",
+      "S4 peaking: 1.603 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.567 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 178.6 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_sf / +125 C / 1.65 V",
+     "slug": "sf_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 206.6 < 330",
+      "S1 companion: |H| at 1 kHz: -39.62 > -48",
+      "S3 passband gain: |-35.53| > 0.2",
+      "S4 peaking: 1.859 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.765 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 576.4 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / -40 C / 1.35 V",
+     "slug": "fs_m40c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 216.3 < 330",
+      "S2 cutoff: 21.13 outside [245, 255]",
+      "S3 passband gain: |-7.396| > 0.2",
+      "S3 passband flatness to 150 Hz: 23.77 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 212.7 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / +27 C / 1.35 V",
+     "slug": "fs_27c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 323.3 < 330",
+      "S2 cutoff: 242.2 outside [245, 255]",
+      "S3 passband gain: |-0.2582| > 0.2"
+     ]
+    },
+    {
+     "corner": "mos_fs / +125 C / 1.35 V",
+     "slug": "fs_125c_1v350",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 325.5 < 330",
+      "S2 cutoff: 160 outside [245, 255]",
+      "S3 passband gain: |-1.456| > 0.2",
+      "S3 passband flatness to 150 Hz: 1.995 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 56.13 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / +125 C / 1.50 V",
+     "slug": "fs_125c_1v500",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 313.1 < 330",
+      "S2 cutoff: 199.8 outside [245, 255]",
+      "S3 passband gain: |-10.49| > 0.2",
+      "S4 peaking: 0.7824 > 0.2",
+      "S3 passband flatness to 150 Hz: 0.7824 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 65.99 >= 40"
+     ]
+    },
+    {
+     "corner": "mos_fs / +125 C / 1.65 V",
+     "slug": "fs_125c_1v650",
+     "status": "FAIL",
+     "violations": [
+      "S1 biquad-order certificate (max unwrapped phase lag): 258.5 < 330",
+      "S1 companion: |H| at 1 kHz: -46.25 > -48",
+      "S2 cutoff: 221.4 outside [245, 255]",
+      "S3 passband gain: |-25.8| > 0.2",
+      "S4 peaking: 1.445 > 0.2",
+      "S3 passband flatness to 150 Hz: 1.445 > 0.2",
+      "S5 input-referred noise, 0.5-200 Hz: 207.3 >= 40"
+     ]
+    }
+   ]
+  },
+  "rows": [
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "tt_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -3.4088916106556315,
+     "fc_hz": 64.73419288839274,
+     "peak_db": 4.487150626845562,
+     "ripple_db": 25.61240510916891,
+     "mono_db": 4.487150626845562,
+     "a1000_db": -74.00188861239486,
+     "ph_max_deg": 252.5380460942679,
+     "ph_step_deg": 27.599100794201746,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 3.902552935542365,
+     "gd_max_ms": 14.034357450403782,
+     "gd_fc_ms": 5.7117993594653305,
+     "irn_uv": 223.4237813298951,
+     "onoise_uv": 20.608253031685365,
+     "i_core_na": 1.8038183425061902,
+     "idd_total_na": 2.8334040045454163,
+     "p_core_nw": 2.435154762383357,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 252.5 < 330",
+     "S2 cutoff: 64.73 outside [245, 255]",
+     "S3 passband gain: |-3.409| > 0.2",
+     "S4 peaking: 4.487 > 0.2",
+     "S3 passband flatness to 150 Hz: 25.61 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 223.4 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": -40.0,
+     "vdd": 1.5,
+     "slug": "tt_m40c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.008346786293543594,
+     "fc_hz": 253.91999443930874,
+     "peak_db": 0.0,
+     "ripple_db": 0.06415320489870516,
+     "mono_db": 0.0,
+     "a1000_db": -48.912731591256254,
+     "ph_max_deg": 333.3577304791729,
+     "ph_step_deg": 9.744505043272312,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.6216971376724323,
+     "gd_max_ms": 2.428655667456994,
+     "gd_fc_ms": 2.3074737766478615,
+     "irn_uv": 25.410526738765913,
+     "onoise_uv": 30.005447367887516,
+     "i_core_na": 4.614046523731462,
+     "idd_total_na": 5.64380175072544,
+     "p_core_nw": 6.921069785597193,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "tt_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.00736153701476015,
+     "fc_hz": 254.2605404624189,
+     "peak_db": 0.0,
+     "ripple_db": 0.06531934338255298,
+     "mono_db": 0.0,
+     "a1000_db": -48.834219683011526,
+     "ph_max_deg": 333.41861246745503,
+     "ph_step_deg": 9.73566251311442,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.618837930135679,
+     "gd_max_ms": 2.422218177165189,
+     "gd_fc_ms": 2.301731759529041,
+     "irn_uv": 25.406403186231504,
+     "onoise_uv": 30.018917343556655,
+     "i_core_na": 4.62505977689476,
+     "idd_total_na": 5.655085550066102,
+     "p_core_nw": 7.631348631876354,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "tt_27c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.013000488263877525,
+     "fc_hz": 249.4736905041948,
+     "peak_db": 0.006561148325022109,
+     "ripple_db": 0.04648777727447134,
+     "mono_db": 0.006561148325022109,
+     "a1000_db": -49.65800798344342,
+     "ph_max_deg": 332.84294004223517,
+     "ph_step_deg": 9.72980798402773,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6480170754997876,
+     "gd_max_ms": 2.4787768118756834,
+     "gd_fc_ms": 2.3498018586277234,
+     "irn_uv": 29.2921141327715,
+     "onoise_uv": 34.37500380505996,
+     "i_core_na": 5.933162972576716,
+     "idd_total_na": 7.258724277498529,
+     "p_core_nw": 8.009770012978567,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 27.0,
+     "vdd": 1.5,
+     "slug": "tt_27c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.010616004931024157,
+     "fc_hz": 250.03370757189134,
+     "peak_db": 0.0066878253570511964,
+     "ripple_db": 0.047307389892918335,
+     "mono_db": 0.0066878253570511964,
+     "a1000_db": -49.5384679568549,
+     "ph_max_deg": 332.9670786594618,
+     "ph_step_deg": 9.708536099492107,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6435166818479694,
+     "gd_max_ms": 2.4679692309392127,
+     "gd_fc_ms": 2.3413526593736287,
+     "irn_uv": 29.286650678618436,
+     "onoise_uv": 34.405047763097,
+     "i_core_na": 5.956082421951101,
+     "idd_total_na": 7.281796514111746,
+     "p_core_nw": 8.934123632926651,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 27.0,
+     "vdd": 1.65,
+     "slug": "tt_27c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.011466094296495848,
+     "fc_hz": 250.15967837418327,
+     "peak_db": 0.006393900131971987,
+     "ripple_db": 0.048004635439738846,
+     "mono_db": 0.006393900131971987,
+     "a1000_db": -49.512267438298196,
+     "ph_max_deg": 332.9898666271005,
+     "ph_step_deg": 9.704327258426872,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6426134793247178,
+     "gd_max_ms": 2.4656418050898674,
+     "gd_fc_ms": 2.3396271614802924,
+     "irn_uv": 29.286238432538894,
+     "onoise_uv": 34.40648692556326,
+     "i_core_na": 5.960357177240717,
+     "idd_total_na": 7.286271464096876,
+     "p_core_nw": 9.834589342447183,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "tt_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -3.3936977102998815,
+     "fc_hz": 180.89925308515046,
+     "peak_db": 0.1384117307544157,
+     "ripple_db": 0.9058799749686539,
+     "mono_db": 0.1384117307544157,
+     "a1000_db": -54.552290187621736,
+     "ph_max_deg": 323.78585857392284,
+     "ph_step_deg": 16.177317417100028,
+     "f_scored_hi": 1995.2623149689105,
+     "gd_dc_ms": 1.9406509987816307,
+     "gd_max_ms": 2.673196726625922,
+     "gd_fc_ms": 2.448430786340145,
+     "irn_uv": 52.8335718487647,
+     "onoise_uv": 37.34389962610675,
+     "i_core_na": 7.916860821600001,
+     "idd_total_na": 9.676491400306233,
+     "p_core_nw": 10.687762109160003,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 323.8 < 330",
+     "S2 cutoff: 180.9 outside [245, 255]",
+     "S3 passband gain: |-3.394| > 0.2",
+     "S3 passband flatness to 150 Hz: 0.9059 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 52.83 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 125.0,
+     "vdd": 1.5,
+     "slug": "tt_125c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -17.932203733110548,
+     "fc_hz": 225.37722425257925,
+     "peak_db": 1.3115227635728388,
+     "ripple_db": 1.3115227635728388,
+     "mono_db": 1.3115227635728388,
+     "a1000_db": -47.18102648111888,
+     "ph_max_deg": 292.98176529283944,
+     "ph_step_deg": 18.380327884318092,
+     "f_scored_hi": 1995.2623149689105,
+     "gd_dc_ms": 1.4043923630847321,
+     "gd_max_ms": 2.6994829595673244,
+     "gd_fc_ms": 1.986672415123695,
+     "irn_uv": 96.64917869564883,
+     "onoise_uv": 17.21139948300676,
+     "i_core_na": 7.922712894496636,
+     "idd_total_na": 9.682573634013487,
+     "p_core_nw": 11.884069341744953,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 293 < 330",
+     "S1 companion: |H| at 1 kHz: -47.18 > -48",
+     "S2 cutoff: 225.4 outside [245, 255]",
+     "S3 passband gain: |-17.93| > 0.2",
+     "S4 peaking: 1.312 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.312 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 96.65 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_tt",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "tt_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -31.07282306601558,
+     "fc_hz": 235.9881542122827,
+     "peak_db": 1.6676244293024531,
+     "ripple_db": 1.6614651064554309,
+     "mono_db": 1.6676244293024531,
+     "a1000_db": -43.42979637098681,
+     "ph_max_deg": 230.22898127715624,
+     "ph_step_deg": 83.27355140336002,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.16960651996156,
+     "gd_max_ms": 2.5594165562932876,
+     "gd_fc_ms": 1.7094743152175103,
+     "irn_uv": 356.9876213063613,
+     "onoise_uv": 15.254439820293562,
+     "i_core_na": 7.927365569375907,
+     "idd_total_na": 9.68745673698765,
+     "p_core_nw": 13.080153189470247,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 230.2 < 330",
+     "S1 companion: |H| at 1 kHz: -43.43 > -48",
+     "S2 cutoff: 236 outside [245, 255]",
+     "S3 passband gain: |-31.07| > 0.2",
+     "S4 peaking: 1.668 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.661 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 357 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "ss_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -8.80269001184176,
+     "fc_hz": 9.753965252546001,
+     "peak_db": 0.0,
+     "ripple_db": 33.41222810501096,
+     "mono_db": 0.0,
+     "a1000_db": -77.89297691851982,
+     "ph_max_deg": 191.1049530899695,
+     "ph_step_deg": 9.53318670308414,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 19.29862816996382,
+     "gd_max_ms": 19.29862816996382,
+     "gd_fc_ms": 12.283840983909505,
+     "irn_uv": 602.4778980496363,
+     "onoise_uv": 15.566505261839264,
+     "i_core_na": 0.3864731849451962,
+     "idd_total_na": 1.4157380269720554,
+     "p_core_nw": 0.5217387996760149,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 191.1 < 330",
+     "S2 cutoff: 9.754 outside [245, 255]",
+     "S3 passband gain: |-8.803| > 0.2",
+     "S3 passband flatness to 150 Hz: 33.41 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 602.5 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": -40.0,
+     "vdd": 1.5,
+     "slug": "ss_m40c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.6882661548846609,
+     "fc_hz": 207.49968969637024,
+     "peak_db": 0.2050715822481889,
+     "ripple_db": 0.2050715822481889,
+     "mono_db": 0.2536471334001761,
+     "a1000_db": -58.539813057558376,
+     "ph_max_deg": 310.26849851830855,
+     "ph_step_deg": 10.986244869855597,
+     "f_scored_hi": 2187.761623949587,
+     "gd_dc_ms": 2.036861733323749,
+     "gd_max_ms": 3.5102704948655368,
+     "gd_fc_ms": 3.0868595365873595,
+     "irn_uv": 26.345323147310392,
+     "onoise_uv": 26.980700578667864,
+     "i_core_na": 3.3804429135947744,
+     "idd_total_na": 4.410013749815143,
+     "p_core_nw": 5.070664370392162,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 310.3 < 330",
+     "S2 cutoff: 207.5 outside [245, 255]",
+     "S3 passband gain: |-0.6883| > 0.2",
+     "S4 peaking: 0.2051 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.2051 > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "ss_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.006662768190121572,
+     "fc_hz": 252.54019669335307,
+     "peak_db": 0.0,
+     "ripple_db": 0.1302418431728012,
+     "mono_db": 0.0,
+     "a1000_db": -49.15191413994827,
+     "ph_max_deg": 333.71122517949107,
+     "ph_step_deg": 9.785306481668812,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.6406222356380682,
+     "gd_max_ms": 2.4365552319140886,
+     "gd_fc_ms": 2.3297913278071722,
+     "irn_uv": 25.62238475928253,
+     "onoise_uv": 30.10444452741027,
+     "i_core_na": 4.619764318727138,
+     "idd_total_na": 5.6496025328977355,
+     "p_core_nw": 7.622611125899778,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "ss_27c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -1.5739159613797882,
+     "fc_hz": 204.66636220677842,
+     "peak_db": 0.12120797089213786,
+     "ripple_db": 0.12474608199817316,
+     "mono_db": 0.24595405289031103,
+     "a1000_db": -56.61346847865815,
+     "ph_max_deg": 289.16610367446225,
+     "ph_step_deg": 10.528517185772415,
+     "f_scored_hi": 2187.761623949587,
+     "gd_dc_ms": 2.0030316787263582,
+     "gd_max_ms": 3.420472317941077,
+     "gd_fc_ms": 2.9956234983165646,
+     "irn_uv": 30.984830996492118,
+     "onoise_uv": 28.58932038462769,
+     "i_core_na": 4.497582749049993,
+     "idd_total_na": 5.823050157206158,
+     "p_core_nw": 6.071736711217491,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 289.2 < 330",
+     "S2 cutoff: 204.7 outside [245, 255]",
+     "S3 passband gain: |-1.574| > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 27.0,
+     "vdd": 1.5,
+     "slug": "ss_27c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.008587086203657657,
+     "fc_hz": 248.37307165542927,
+     "peak_db": 0.0,
+     "ripple_db": 0.10449418617437553,
+     "mono_db": 0.0,
+     "a1000_db": -49.84979925911315,
+     "ph_max_deg": 333.3241409377203,
+     "ph_step_deg": 9.7729550161053,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6642720367845778,
+     "gd_max_ms": 2.485447117566257,
+     "gd_fc_ms": 2.368970379180508,
+     "irn_uv": 29.50221745818352,
+     "onoise_uv": 34.496776656912644,
+     "i_core_na": 5.951004373975746,
+     "idd_total_na": 7.2766727275953995,
+     "p_core_nw": 8.926506560963618,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 27.0,
+     "vdd": 1.65,
+     "slug": "ss_27c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.008048717313197982,
+     "fc_hz": 248.55307538339179,
+     "peak_db": 0.0,
+     "ripple_db": 0.10513208014025997,
+     "mono_db": 0.0,
+     "a1000_db": -49.81050121623883,
+     "ph_max_deg": 333.3721353639075,
+     "ph_step_deg": 9.766276749550656,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.662847338318184,
+     "gd_max_ms": 2.481838263274881,
+     "gd_fc_ms": 2.3661966984306404,
+     "irn_uv": 29.500483264845407,
+     "onoise_uv": 34.50509367274876,
+     "i_core_na": 5.957671478403001,
+     "idd_total_na": 7.283547753429595,
+     "p_core_nw": 9.830157939364952,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "ss_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -1.0124077499169044,
+     "fc_hz": 168.8816414985097,
+     "peak_db": 0.0069131994370932315,
+     "ripple_db": 1.6163049014157422,
+     "mono_db": 0.0069131994370932315,
+     "a1000_db": -56.13810428180321,
+     "ph_max_deg": 327.36342991849114,
+     "ph_step_deg": 7.286723872975898,
+     "f_scored_hi": 1995.2623149689105,
+     "gd_dc_ms": 2.095566383324058,
+     "gd_max_ms": 2.648053069147754,
+     "gd_fc_ms": 2.516005394146328,
+     "irn_uv": 50.5001598059202,
+     "onoise_uv": 44.686487666535804,
+     "i_core_na": 7.904966166129597,
+     "idd_total_na": 9.663916717715757,
+     "p_core_nw": 10.671704324274957,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 327.4 < 330",
+     "S2 cutoff: 168.9 outside [245, 255]",
+     "S3 passband gain: |-1.012| > 0.2",
+     "S3 passband flatness to 150 Hz: 1.616 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 50.5 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 125.0,
+     "vdd": 1.5,
+     "slug": "ss_125c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -3.5314923341353395,
+     "fc_hz": 185.749037073566,
+     "peak_db": 0.18104001095371647,
+     "ripple_db": 0.6645708432956456,
+     "mono_db": 0.18104001095371647,
+     "a1000_db": -54.32200351369586,
+     "ph_max_deg": 324.89826424672754,
+     "ph_step_deg": 7.574722180309038,
+     "f_scored_hi": 1995.2623149689105,
+     "gd_dc_ms": 1.9110313988681542,
+     "gd_max_ms": 2.6930081585838197,
+     "gd_fc_ms": 2.455897021777385,
+     "irn_uv": 51.668907902010936,
+     "onoise_uv": 36.567580754216266,
+     "i_core_na": 7.9125061553665095,
+     "idd_total_na": 9.671689822010974,
+     "p_core_nw": 11.868759233049765,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 324.9 < 330",
+     "S2 cutoff: 185.7 outside [245, 255]",
+     "S3 passband gain: |-3.531| > 0.2",
+     "S3 passband flatness to 150 Hz: 0.6646 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 51.67 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ss",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "ss_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -18.193906558924485,
+     "fc_hz": 229.57081352767065,
+     "peak_db": 1.477307026852639,
+     "ripple_db": 1.477307026852639,
+     "mono_db": 1.477307026852639,
+     "a1000_db": -46.97349762276018,
+     "ph_max_deg": 293.1202329942434,
+     "ph_step_deg": 101.85067335654887,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.3805276789949996,
+     "gd_max_ms": 2.7520819252466153,
+     "gd_fc_ms": 1.9681693195665326,
+     "irn_uv": 98.42885200593992,
+     "onoise_uv": 17.194403527507504,
+     "i_core_na": 7.917915768475665,
+     "idd_total_na": 9.677333122678276,
+     "p_core_nw": 13.064561017984847,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 293.1 < 330",
+     "S1 companion: |H| at 1 kHz: -46.97 > -48",
+     "S2 cutoff: 229.6 outside [245, 255]",
+     "S3 passband gain: |-18.19| > 0.2",
+     "S4 peaking: 1.477 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.477 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 98.43 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "ff_m40c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.023581498670496654,
+     "fc_hz": 250.94074005781752,
+     "peak_db": 0.03601576749190713,
+     "ripple_db": 0.03601576749190713,
+     "mono_db": 0.03601576749190713,
+     "a1000_db": -49.659072978796,
+     "ph_max_deg": 332.34874589142026,
+     "ph_step_deg": 9.816915115488257,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6400055799568756,
+     "gd_max_ms": 2.5049397431249862,
+     "gd_fc_ms": 2.357193475732141,
+     "irn_uv": 25.257615544439393,
+     "onoise_uv": 29.732455991480194,
+     "i_core_na": 4.462720565789976,
+     "idd_total_na": 5.492353031353625,
+     "p_core_nw": 6.024672763816468,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": -40.0,
+     "vdd": 1.5,
+     "slug": "ff_m40c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.011785819146795273,
+     "fc_hz": 255.51234890075472,
+     "peak_db": 0.027504887634608934,
+     "ripple_db": 0.027504887634608934,
+     "mono_db": 0.027504887634608934,
+     "a1000_db": -48.58983743300261,
+     "ph_max_deg": 332.8531043561518,
+     "ph_step_deg": 9.683850990198408,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.600525387065152,
+     "gd_max_ms": 2.411817643435562,
+     "gd_fc_ms": 2.2783606634806572,
+     "irn_uv": 25.21112790562572,
+     "onoise_uv": 29.919966429361875,
+     "i_core_na": 4.623802921977514,
+     "idd_total_na": 5.6537183508446285,
+     "p_core_nw": 6.9357043829662715,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S2 cutoff: 255.5 outside [245, 255]"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "ff_m40c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.011815722766439999,
+     "fc_hz": 255.66066896559806,
+     "peak_db": 0.027027925609183198,
+     "ripple_db": 0.027027925609183198,
+     "mono_db": 0.027027925609183198,
+     "a1000_db": -48.55586229785632,
+     "ph_max_deg": 332.87921674723503,
+     "ph_step_deg": 9.679907375856033,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.599352014294611,
+     "gd_max_ms": 2.409076413038544,
+     "gd_fc_ms": 2.2759802089036354,
+     "irn_uv": 25.210099249187717,
+     "onoise_uv": 29.924657098210428,
+     "i_core_na": 4.6283526013077365,
+     "idd_total_na": 5.658477596035886,
+     "p_core_nw": 7.636781792157764,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S2 cutoff: 255.7 outside [245, 255]"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "ff_27c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.020109431532831935,
+     "fc_hz": 250.64386246468098,
+     "peak_db": 0.046965396172546664,
+     "ripple_db": 0.046965396172546664,
+     "mono_db": 0.046965396172546664,
+     "a1000_db": -49.33482153344835,
+     "ph_max_deg": 332.1270111613511,
+     "ph_step_deg": 9.632919731758022,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6268961080823243,
+     "gd_max_ms": 2.458268290713217,
+     "gd_fc_ms": 2.317699132251227,
+     "irn_uv": 29.14488084372978,
+     "onoise_uv": 34.33359725420966,
+     "i_core_na": 5.955725180081509,
+     "idd_total_na": 7.281447436341358,
+     "p_core_nw": 8.040228993110038,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 27.0,
+     "vdd": 1.5,
+     "slug": "ff_27c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.020716789711326067,
+     "fc_hz": 250.7913711304397,
+     "peak_db": 0.04650525849620307,
+     "ripple_db": 0.04650525849620307,
+     "mono_db": 0.04650525849620307,
+     "a1000_db": -49.30482250144761,
+     "ph_max_deg": 332.1596562248144,
+     "ph_step_deg": 9.628306547005735,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6258470228162458,
+     "gd_max_ms": 2.4557062503698344,
+     "gd_fc_ms": 2.3157478770578646,
+     "irn_uv": 29.144122956078263,
+     "onoise_uv": 34.33678934693379,
+     "i_core_na": 5.960684295642603,
+     "idd_total_na": 7.286609664028516,
+     "p_core_nw": 8.941026443463905,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 27.0,
+     "vdd": 1.65,
+     "slug": "ff_27c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -3.440036818264669,
+     "fc_hz": 274.1189037309991,
+     "peak_db": 1.061798252819544,
+     "ripple_db": 0.8096346147813338,
+     "mono_db": 1.061798252819544,
+     "a1000_db": -46.957159285882824,
+     "ph_max_deg": 328.59893517812907,
+     "ph_step_deg": 10.36384306625635,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.4257481599445878,
+     "gd_max_ms": 2.6461459777001872,
+     "gd_fc_ms": 2.1273776482921076,
+     "irn_uv": 30.739480872188487,
+     "onoise_uv": 26.82032577640176,
+     "i_core_na": 5.964225063891763,
+     "idd_total_na": 7.290350364976521,
+     "p_core_nw": 9.840971355421408,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 328.6 < 330",
+     "S1 companion: |H| at 1 kHz: -46.96 > -48",
+     "S2 cutoff: 274.1 outside [245, 255]",
+     "S3 passband gain: |-3.44| > 0.2",
+     "S4 peaking: 1.062 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.8096 > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "ff_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -17.836880476999735,
+     "fc_hz": 219.535759059228,
+     "peak_db": 1.0642419673521673,
+     "ripple_db": 1.0642419673521673,
+     "mono_db": 1.0642419673521673,
+     "a1000_db": -47.373283115422154,
+     "ph_max_deg": 291.02826165768874,
+     "ph_step_deg": 61.672015150682455,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.439074302239173,
+     "gd_max_ms": 2.621637616079222,
+     "gd_fc_ms": 2.0012500267646356,
+     "irn_uv": 97.12224780283044,
+     "onoise_uv": 17.194868833615306,
+     "i_core_na": 7.965313028831191,
+     "idd_total_na": 9.729827052244532,
+     "p_core_nw": 10.753172588922109,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 291 < 330",
+     "S1 companion: |H| at 1 kHz: -47.37 > -48",
+     "S2 cutoff: 219.5 outside [245, 255]",
+     "S3 passband gain: |-17.84| > 0.2",
+     "S4 peaking: 1.064 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.064 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 97.12 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 125.0,
+     "vdd": 1.5,
+     "slug": "ff_125c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -31.20251195377684,
+     "fc_hz": 230.44779802797873,
+     "peak_db": 1.3834557842001374,
+     "ripple_db": 1.3834557842001374,
+     "mono_db": 1.3834557842001374,
+     "a1000_db": -43.56468488680851,
+     "ph_max_deg": 228.26138921439622,
+     "ph_step_deg": 62.43590959932907,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.2001629205825899,
+     "gd_max_ms": 2.467700620584091,
+     "gd_fc_ms": 1.7278875863613583,
+     "irn_uv": 361.77238875504474,
+     "onoise_uv": 15.109653293102308,
+     "i_core_na": 7.970271982202209,
+     "idd_total_na": 9.735014681383811,
+     "p_core_nw": 11.955407973303313,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 228.3 < 330",
+     "S1 companion: |H| at 1 kHz: -43.56 > -48",
+     "S2 cutoff: 230.4 outside [245, 255]",
+     "S3 passband gain: |-31.2| > 0.2",
+     "S4 peaking: 1.383 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.383 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 361.8 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_ff",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "ff_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -39.922689201560985,
+     "fc_hz": 238.44417296669195,
+     "peak_db": 1.6428030045682647,
+     "ripple_db": 1.6428030045682647,
+     "mono_db": 1.6428030045682647,
+     "a1000_db": -37.12644669227114,
+     "ph_max_deg": 185.8429163688077,
+     "ph_step_deg": 60.848993462633075,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 0.9779761226189143,
+     "gd_max_ms": 2.273513161815826,
+     "gd_fc_ms": 1.4251809376319597,
+     "irn_uv": 943.8186089726432,
+     "onoise_uv": 14.816621446885664,
+     "i_core_na": 7.974751356964606,
+     "idd_total_na": 9.73972292509202,
+     "p_core_nw": 13.158339738991598,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 185.8 < 330",
+     "S1 companion: |H| at 1 kHz: -37.13 > -48",
+     "S2 cutoff: 238.4 outside [245, 255]",
+     "S3 passband gain: |-39.92| > 0.2",
+     "S4 peaking: 1.643 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.643 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 943.8 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "sf_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.8458524950076483,
+     "fc_hz": 208.60692908807812,
+     "peak_db": 0.2982665058006573,
+     "ripple_db": 0.2982665058006573,
+     "mono_db": 0.3223635773642186,
+     "a1000_db": -57.86636923882266,
+     "ph_max_deg": 305.9341533696987,
+     "ph_step_deg": 10.826041404414156,
+     "f_scored_hi": 2187.761623949587,
+     "gd_dc_ms": 1.9940886891269267,
+     "gd_max_ms": 3.4660073851136843,
+     "gd_fc_ms": 3.0126658685738934,
+     "irn_uv": 26.122128084559453,
+     "onoise_uv": 26.43375023658391,
+     "i_core_na": 3.3988866323858016,
+     "idd_total_na": 4.428446132893156,
+     "p_core_nw": 4.588496953720833,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 305.9 < 330",
+     "S2 cutoff: 208.6 outside [245, 255]",
+     "S3 passband gain: |-0.8459| > 0.2",
+     "S4 peaking: 0.2983 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.2983 > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": -40.0,
+     "vdd": 1.5,
+     "slug": "sf_m40c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.015421480351906793,
+     "fc_hz": 254.42897615350006,
+     "peak_db": 0.01580788613918665,
+     "ripple_db": 0.0226551490032486,
+     "mono_db": 0.01580788613918665,
+     "a1000_db": -48.79491097739248,
+     "ph_max_deg": 333.14826881193,
+     "ph_step_deg": 9.710188240371167,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6116223951602884,
+     "gd_max_ms": 2.425420884005689,
+     "gd_fc_ms": 2.2951761635242196,
+     "irn_uv": 25.317555091713253,
+     "onoise_uv": 29.95954078330625,
+     "i_core_na": 4.62028826364556,
+     "idd_total_na": 5.650040405837278,
+     "p_core_nw": 6.93043239546834,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "sf_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.015032918610518154,
+     "fc_hz": 254.59564990392627,
+     "peak_db": 0.015472469606079472,
+     "ripple_db": 0.023451633436095395,
+     "mono_db": 0.015472469606079472,
+     "a1000_db": -48.755156031221105,
+     "ph_max_deg": 333.1863352704511,
+     "ph_step_deg": 9.705571480226098,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.610229077642876,
+     "gd_max_ms": 2.4221753578124483,
+     "gd_fc_ms": 2.2923084098217177,
+     "irn_uv": 25.316483626765752,
+     "onoise_uv": 29.966633577019998,
+     "i_core_na": 4.625614666367074,
+     "idd_total_na": 5.655555190833497,
+     "p_core_nw": 7.632264199505672,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "sf_27c_1v350"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.022677966494827704,
+     "fc_hz": 249.8921682225293,
+     "peak_db": 0.03326211671982144,
+     "ripple_db": 0.03326211671982144,
+     "mono_db": 0.03326211671982144,
+     "a1000_db": -49.519812941307634,
+     "ph_max_deg": 332.6187567704524,
+     "ph_step_deg": 9.682456217317196,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.63706710731109,
+     "gd_max_ms": 2.47364120700537,
+     "gd_fc_ms": 2.3345602057429633,
+     "irn_uv": 29.203173394998768,
+     "onoise_uv": 34.33068542524576,
+     "i_core_na": 5.950978702543901,
+     "idd_total_na": 7.276504903280862,
+     "p_core_nw": 8.033821248434267,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 27.0,
+     "vdd": 1.5,
+     "slug": "sf_27c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.022393841837104883,
+     "fc_hz": 250.07167252948597,
+     "peak_db": 0.032844746928017546,
+     "ripple_db": 0.032844746928017546,
+     "mono_db": 0.032844746928017546,
+     "a1000_db": -49.481506944663884,
+     "ph_max_deg": 332.66722776309024,
+     "ph_step_deg": 9.676160479578556,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6357124308240887,
+     "gd_max_ms": 2.470234256276009,
+     "gd_fc_ms": 2.3319552986156102,
+     "irn_uv": 29.20210973022805,
+     "onoise_uv": 34.338499548695594,
+     "i_core_na": 5.9574578969682745,
+     "idd_total_na": 7.283161093877761,
+     "p_core_nw": 8.936186845452411,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 27.0,
+     "vdd": 1.65,
+     "slug": "sf_27c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.15738743761832544,
+     "fc_hz": 251.44958484937783,
+     "peak_db": 0.05949916912534586,
+     "ripple_db": 0.05949916912534586,
+     "mono_db": 0.05949916912534586,
+     "a1000_db": -49.35438857555663,
+     "ph_max_deg": 332.5680543557666,
+     "ph_step_deg": 9.700013745741842,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6250410551190653,
+     "gd_max_ms": 2.476140661073694,
+     "gd_fc_ms": 2.3255765503009735,
+     "irn_uv": 29.230214582706715,
+     "onoise_uv": 33.990495593495325,
+     "i_core_na": 5.961809339249059,
+     "idd_total_na": 7.287766090555833,
+     "p_core_nw": 9.836985409760945,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "sf_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -8.962003739436835,
+     "fc_hz": 215.37431217806588,
+     "peak_db": 0.6650800503833025,
+     "ripple_db": 0.6650800503833025,
+     "mono_db": 0.6650800503833025,
+     "a1000_db": -50.007008327488556,
+     "ph_max_deg": 315.83856504861745,
+     "ph_step_deg": 21.91639630928364,
+     "f_scored_hi": 2089.296130854072,
+     "gd_dc_ms": 1.6079382319161226,
+     "gd_max_ms": 2.6368943702278873,
+     "gd_fc_ms": 2.20352299549227,
+     "irn_uv": 55.6795688153848,
+     "onoise_uv": 24.179944106975924,
+     "i_core_na": 7.915446909863368,
+     "idd_total_na": 9.674666127992904,
+     "p_core_nw": 10.685853328315547,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 315.8 < 330",
+     "S2 cutoff: 215.4 outside [245, 255]",
+     "S3 passband gain: |-8.962| > 0.2",
+     "S4 peaking: 0.6651 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.6651 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 55.68 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 125.0,
+     "vdd": 1.5,
+     "slug": "sf_125c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -24.70714155615221,
+     "fc_hz": 243.2759989724249,
+     "peak_db": 1.6030803829830234,
+     "ripple_db": 1.5671774084256818,
+     "mono_db": 1.6030803829830234,
+     "a1000_db": -44.26192171342614,
+     "ph_max_deg": 262.40121795618455,
+     "ph_step_deg": 89.37427969302802,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.2298172119953277,
+     "gd_max_ms": 2.579085764993504,
+     "gd_fc_ms": 1.7797103060757444,
+     "irn_uv": 178.57915343948608,
+     "onoise_uv": 15.61925897336327,
+     "i_core_na": 7.920719588587342,
+     "idd_total_na": 9.680170243759008,
+     "p_core_nw": 11.881079382881012,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 262.4 < 330",
+     "S1 companion: |H| at 1 kHz: -44.26 > -48",
+     "S2 cutoff: 243.3 outside [245, 255]",
+     "S3 passband gain: |-24.71| > 0.2",
+     "S4 peaking: 1.603 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.567 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 178.6 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_sf",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "sf_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -35.52822704366581,
+     "fc_hz": 250.43628382680487,
+     "peak_db": 1.8585468933218863,
+     "ripple_db": 1.7653245234569042,
+     "mono_db": 1.8585468933218863,
+     "a1000_db": -39.6203833107294,
+     "ph_max_deg": 206.63451134638862,
+     "ph_step_deg": 83.49236741154301,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.0245987659467608,
+     "gd_max_ms": 2.412419123187511,
+     "gd_fc_ms": 1.5192031202459433,
+     "irn_uv": 576.365745083023,
+     "onoise_uv": 15.008570565098044,
+     "i_core_na": 7.925264679113494,
+     "idd_total_na": 9.68494781653502,
+     "p_core_nw": 13.076686720537264,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 206.6 < 330",
+     "S1 companion: |H| at 1 kHz: -39.62 > -48",
+     "S3 passband gain: |-35.53| > 0.2",
+     "S4 peaking: 1.859 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.765 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 576.4 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": -40.0,
+     "vdd": 1.35,
+     "slug": "fs_m40c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -7.395875620741615,
+     "fc_hz": 21.13387897889692,
+     "peak_db": 0.0,
+     "ripple_db": 23.76971302082314,
+     "mono_db": 0.0,
+     "a1000_db": -70.74814033433029,
+     "ph_max_deg": 216.2892572551373,
+     "ph_step_deg": 16.270889860524022,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 9.453372985755534,
+     "gd_max_ms": 9.453372985755534,
+     "gd_fc_ms": 6.293244605868912,
+     "irn_uv": 212.66562096490546,
+     "onoise_uv": 15.892444740948658,
+     "i_core_na": 0.8575622718300164,
+     "idd_total_na": 1.8870349136402862,
+     "p_core_nw": 1.1577090669705223,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 216.3 < 330",
+     "S2 cutoff: 21.13 outside [245, 255]",
+     "S3 passband gain: |-7.396| > 0.2",
+     "S3 passband flatness to 150 Hz: 23.77 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 212.7 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": -40.0,
+     "vdd": 1.5,
+     "slug": "fs_m40c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.013924929787389425,
+     "fc_hz": 248.6763317034553,
+     "peak_db": 0.0,
+     "ripple_db": 0.1014104049433341,
+     "mono_db": 0.0,
+     "a1000_db": -50.07534410883305,
+     "ph_max_deg": 333.2122036241397,
+     "ph_step_deg": 9.903986188161582,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6725236194359265,
+     "gd_max_ms": 2.519249389690122,
+     "gd_fc_ms": 2.397007641258717,
+     "irn_uv": 25.552203632124115,
+     "onoise_uv": 29.85373585109009,
+     "i_core_na": 4.449724912950793,
+     "idd_total_na": 5.479601560118303,
+     "p_core_nw": 6.67458736942619,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": -40.0,
+     "vdd": 1.65,
+     "slug": "fs_m40c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.005541735787999335,
+     "fc_hz": 253.65455582561734,
+     "peak_db": 0.0,
+     "ripple_db": 0.11708341919567625,
+     "mono_db": 0.0,
+     "a1000_db": -48.92525156910138,
+     "ph_max_deg": 333.57442900192586,
+     "ph_step_deg": 9.756204494117071,
+     "f_scored_hi": 2754.2287033382104,
+     "gd_dc_ms": 1.629303456385222,
+     "gd_max_ms": 2.4194897358957403,
+     "gd_fc_ms": 2.3111156298663658,
+     "irn_uv": 25.507107074068927,
+     "onoise_uv": 30.04074870100316,
+     "i_core_na": 4.623274224242247,
+     "idd_total_na": 5.653274977585728,
+     "p_core_nw": 7.628402469999707,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 27.0,
+     "vdd": 1.35,
+     "slug": "fs_27c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -0.2582157663648515,
+     "fc_hz": 242.20753640770602,
+     "peak_db": 0.0,
+     "ripple_db": 0.11300048105448324,
+     "mono_db": 0.0,
+     "a1000_db": -50.998796296796726,
+     "ph_max_deg": 323.3433844590967,
+     "ph_step_deg": 9.884244063938667,
+     "f_scored_hi": 2511.88643150962,
+     "gd_dc_ms": 1.7084975319995568,
+     "gd_max_ms": 2.5999091439467237,
+     "gd_fc_ms": 2.4573491172596693,
+     "irn_uv": 29.577435497104215,
+     "onoise_uv": 33.29268368707193,
+     "i_core_na": 5.663158463656832,
+     "idd_total_na": 6.98878188721205,
+     "p_core_nw": 7.6452639259367245,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 323.3 < 330",
+     "S2 cutoff: 242.2 outside [245, 255]",
+     "S3 passband gain: |-0.2582| > 0.2"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 27.0,
+     "vdd": 1.5,
+     "slug": "fs_27c_1v500"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.00774453169053615,
+     "fc_hz": 249.4903236265721,
+     "peak_db": 0.0,
+     "ripple_db": 0.09014490868319514,
+     "mono_db": 0.0,
+     "a1000_db": -49.63573493844608,
+     "ph_max_deg": 333.1538063893469,
+     "ph_step_deg": 9.73517632550434,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6531727448594749,
+     "gd_max_ms": 2.467762462035665,
+     "gd_fc_ms": 2.351613095888027,
+     "irn_uv": 29.383661071468563,
+     "onoise_uv": 34.43429489572653,
+     "i_core_na": 5.955610526569577,
+     "idd_total_na": 7.281470733656911,
+     "p_core_nw": 8.933415789854367,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 27.0,
+     "vdd": 1.65,
+     "slug": "fs_27c_1v650"
+    },
+    "status": "PASS",
+    "values": {
+     "dc_db": -0.00779236105118648,
+     "fc_hz": 249.610063277128,
+     "peak_db": 0.0,
+     "ripple_db": 0.09068975410612319,
+     "mono_db": 0.0,
+     "a1000_db": -49.60870983397548,
+     "ph_max_deg": 333.18614846214,
+     "ph_step_deg": 9.732905320980024,
+     "f_scored_hi": 2630.2679918954236,
+     "gd_dc_ms": 1.6522295198118595,
+     "gd_max_ms": 2.4652788056080883,
+     "gd_fc_ms": 2.349734673098247,
+     "irn_uv": 29.38353816366869,
+     "onoise_uv": 34.439212767043145,
+     "i_core_na": 5.960098556882936,
+     "idd_total_na": 7.286111800537451,
+     "p_core_nw": 9.834162618856844,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": []
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 125.0,
+     "vdd": 1.35,
+     "slug": "fs_125c_1v350"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -1.4561035201718797,
+     "fc_hz": 160.02550938651626,
+     "peak_db": 0.03376004711722369,
+     "ripple_db": 1.9953554315582165,
+     "mono_db": 0.03376004711722369,
+     "a1000_db": -57.1256615261284,
+     "ph_max_deg": 325.5208909852579,
+     "ph_step_deg": 13.795522266728256,
+     "f_scored_hi": 1905.4607179632765,
+     "gd_dc_ms": 2.150936351125983,
+     "gd_max_ms": 2.7560557012412423,
+     "gd_fc_ms": 2.5681701961891865,
+     "irn_uv": 56.133589616208425,
+     "onoise_uv": 45.938081651399685,
+     "i_core_na": 7.925195643577942,
+     "idd_total_na": 9.686039529662184,
+     "p_core_nw": 10.699014118830222,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 325.5 < 330",
+     "S2 cutoff: 160 outside [245, 255]",
+     "S3 passband gain: |-1.456| > 0.2",
+     "S3 passband flatness to 150 Hz: 1.995 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 56.13 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 125.0,
+     "vdd": 1.5,
+     "slug": "fs_125c_1v500"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -10.491920489871848,
+     "fc_hz": 199.7921830808782,
+     "peak_db": 0.782429247731045,
+     "ripple_db": 0.782429247731045,
+     "mono_db": 0.782429247731045,
+     "a1000_db": -51.50143905830832,
+     "ph_max_deg": 313.07762768511634,
+     "ph_step_deg": 13.593947404445203,
+     "f_scored_hi": 1905.4607179632765,
+     "gd_dc_ms": 1.668258058730282,
+     "gd_max_ms": 2.7984056051255335,
+     "gd_fc_ms": 2.269256921672355,
+     "irn_uv": 65.99212076180417,
+     "onoise_uv": 23.579129956496935,
+     "i_core_na": 7.931848393502303,
+     "idd_total_na": 9.692921679756425,
+     "p_core_nw": 11.897772590253455,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 313.1 < 330",
+     "S2 cutoff: 199.8 outside [245, 255]",
+     "S3 passband gain: |-10.49| > 0.2",
+     "S4 peaking: 0.7824 > 0.2",
+     "S3 passband flatness to 150 Hz: 0.7824 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 65.99 >= 40"
+    ]
+   },
+   {
+    "corner": {
+     "process": "mos_fs",
+     "temp": 125.0,
+     "vdd": 1.65,
+     "slug": "fs_125c_1v650"
+    },
+    "status": "FAIL",
+    "values": {
+     "dc_db": -25.79947346057616,
+     "fc_hz": 221.3724841091206,
+     "peak_db": 1.4450306524805683,
+     "ripple_db": 1.4450306524805683,
+     "mono_db": 1.4450306524805683,
+     "a1000_db": -46.253437280666915,
+     "ph_max_deg": 258.5434424719425,
+     "ph_step_deg": 83.19106476782125,
+     "f_scored_hi": 100000.00000000218,
+     "gd_dc_ms": 1.3212753560820458,
+     "gd_max_ms": 2.6805375636667175,
+     "gd_fc_ms": 1.8868563408597554,
+     "irn_uv": 207.3131776081131,
+     "onoise_uv": 15.711244743868749,
+     "i_core_na": 7.936722355259353,
+     "idd_total_na": 9.698024625442997,
+     "p_core_nw": 13.095591886177932,
+     "c_total_pf": 126.00734624832046
+    },
+    "violations": [
+     "S1 biquad-order certificate (max unwrapped phase lag): 258.5 < 330",
+     "S1 companion: |H| at 1 kHz: -46.25 > -48",
+     "S2 cutoff: 221.4 outside [245, 255]",
+     "S3 passband gain: |-25.8| > 0.2",
+     "S4 peaking: 1.445 > 0.2",
+     "S3 passband flatness to 150 Hz: 1.445 > 0.2",
+     "S5 input-referred noise, 0.5-200 Hz: 207.3 >= 40"
+    ]
+   }
+  ]
+ }
+}
