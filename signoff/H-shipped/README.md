@@ -14,17 +14,17 @@ Sizing from round `reuse/cp_0p16_2p5`. Same topology as every other candidate (b
 
 | line | requirement | measured | |
 |---|---|---|---|
-| S1 phase | ph_max ≥ 330° | **341.42°** | PASS |
-| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.55 dB** | PASS |
+| S1 phase | ph_max ≥ 330° | **341.30°** | PASS |
+| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.38 dB** | PASS |
 | S2 cutoff | fc 245–255 Hz | **249.99 Hz** | PASS |
-| S3 dc | |dc| ≤ 0.2 dB | **-0.0209 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0691 dB** | PASS |
-| S4 peaking | peak ≤ 0.2 dB | **+0.0068 dB** | PASS |
-| S5 irn | IRN < 40 µVrms | **28.07 µV** | PASS |
-| S6 power | P < 50 nW | **14.45 nW** | PASS |
-| S7 thd | THD ≤ −40 dB | **-56.46 dB** | PASS |
+| S3 dc | |dc| ≤ 0.2 dB | **-0.0206 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0929 dB** | PASS |
+| S4 peaking | peak ≤ 0.2 dB | **+0.0003 dB** | PASS |
+| S5 irn | IRN < 40 µVrms | **27.87 µV** | PASS |
+| S6 power | P < 50 nW | **14.50 nW** | PASS |
+| S7 thd | THD ≤ −40 dB | **-56.18 dB** | PASS |
 
-`mono_db` = **0.0068 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **366.3 pF** (reported, never specced).
+`mono_db` = **0.0003 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **366.3 pF** (reported, never specced).
 
 **All nine lines: PASS.**
 
@@ -41,6 +41,23 @@ Sizing from round `reuse/cp_0p16_2p5`. Same topology as every other candidate (b
 ### Input-referred noise density
 
 ![noise](H-shipped_noise.png)
+
+<!-- robustness-dynamics:begin -->
+## Robustness & dynamics
+
+Nominal (mos_tt, 27 C, VDD 1.5 V): fc 249.99 Hz - dc -0.0206 dB - group delay tau(0) 1.659 ms, tau_max 2.462 ms (at-fc 2.355 ms)
+
+| artifact | what |
+|---|---|
+| [`op_lpf_core_H.md`](op_lpf_core_H.md) | measured operating point: per-device ID, gm/ID, gm/gds, **Vds, Vdsat** and saturation margin; the same numbers are stamped on the schematic sheet |
+| [`mc.md`](mc.md) | mismatch Monte-Carlo, n = 100: all-pass yield **95.0 %**, with per-line yields and sigmas for fc, dc gain and **group delay** |
+| [`pvt.md`](pvt.md) | PVT screen (ss/ff/sf/fs x -40/27/125 C x 1.35/1.5/1.65 V): **1/22 corners clean** — the family's documented supply sensitivity |
+| `asbuilt/core_tb_gd.sp` | runnable single-file group-delay bench (tau computed in-deck) — drawn as [`lpf_tb_H_gd.sch`](lpf_tb_H_gd.sch) |
+| `asbuilt/core_tb_mc.sp` | runnable single-seed mismatch sample (edit `.option seed=`) — drawn as [`lpf_tb_H_mc.sch`](lpf_tb_H_mc.sch) |
+
+The core schematic [`lpf_core_H.sch`](lpf_core_H.sch) carries the op
+annotation on-sheet (render: `lpf_core_H.png`).
+<!-- robustness-dynamics:end -->
 
 ## Files
 

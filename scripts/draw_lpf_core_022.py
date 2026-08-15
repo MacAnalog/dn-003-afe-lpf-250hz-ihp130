@@ -44,8 +44,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-ASB = HERE.parent / "asbuilt"
+# This emitter moved from signoff/schematic/ into scripts/; its outputs stay
+# with the schematics it maintains, and its inputs stay the certified decks.
+HERE = Path(__file__).resolve().parents[1] / "signoff" / "schematic"
+ASB = Path(__file__).resolve().parents[1] / "signoff" / "asbuilt"
 CELL = "lpf_core_022"
 PR = "sg13g2_pr"
 HDR = "v {xschem version=3.4.4 file_version=1.2}\nG {}\nK {}\nV {}\nS {}\nE {}\n"
@@ -441,6 +443,10 @@ def core_sch(dut: dict) -> Sch:
     s.text("dc ladder per half, top to bottom: vdd - m14 - voutp - m0 - net4 - "
            "mst - vout_1 - m2 - net2 - m9 - gnd, with m4 shunting vout_1 to gnd. "
            "No CMFB: c12/c19 set the differential poles.", 0, 190, 0.25)
+    from datetime import datetime, timezone
+    s.text(datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_lpf_core_022.py"),
+        0, 220, 0.2)
     s.comp("devices/title.sym", 0, 260, 0, 0,
            f'name=l1 author="{CELL} -- drawn from signoff/asbuilt"')
     return s
@@ -575,26 +581,49 @@ def tb_sch(tb: dict, analysis: str) -> Sch:
     s.comp("devices/code_shown.sym", 200, 1000, 0, 0,
            'name=CTRL only_toplevel=false value="'
            + "\n".join(tb["control"]).replace('"', '\\"') + '"')
-    what = ("op + ac + noise" if analysis == "acnoise"
-            else "coherent strobed transient (THD)")
+    what = {"acnoise": "op + ac + noise",
+            "thd": "coherent strobed transient (THD)",
+            "gd": "group delay, tau computed in-deck",
+            "mc": "one seeded mismatch MC sample"}[analysis]
+    note = {"gd": "The .control computes tau(f) = -dphi/dw in-deck and saves "
+                  "the PSP op-vars, so the PDK live annotator fills from this "
+                  "bench's sim.raw.",
+            "mc": "Mismatch corner with one seeded draw: edit .option seed= "
+                  "per sample; the n=100 distribution runner is lab.mc."
+            }.get(analysis)
+    if note:
+        s.text(note, 200, 105, 0.3)
     s.text(f"{CELL} sign-off testbench -- {what}", 200, 40, 0.5)
     s.text("balun gains +-0.5 so the vsig amplitude IS the differential input.",
            200, 75, 0.3)
     s.text("vflt is a 0 V series probe carrying the CORE current only. The bias "
            "reference sits AHEAD of it, so S6 excludes the reference by "
            "construction rather than by subtraction.", 200, 760, 0.3)
-    s.comp("devices/title.sym", 200, 1260, 0, 0,
+    from datetime import datetime, timezone
+    # below the tallest .control block (the gd bench's), not the shortest
+    s.text(datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_lpf_core_022.py"),
+        200, 1450, 0.2)
+    s.comp("devices/title.sym", 200, 1490, 0, 0,
            f'name=l1 author="{CELL} testbench -- {analysis}"')
     return s
 
 
 # ------------------------------------------------------------------------ main
 def main() -> int:
-    s = core_sch(core_body(ASB / "022-reuse-final.sp"))
-    (HERE / f"{CELL}.sch").write_text(s.render())
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--tb-only", action="store_true",
+                    help="redraw symbol + testbench sheets but leave the core "
+                         ".sch alone (it may carry op annotations)")
+    a = ap.parse_args()
+    if not a.tb_only:
+        s = core_sch(core_body(ASB / "022-reuse-final.sp"))
+        (HERE / f"{CELL}.sch").write_text(s.render())
+        print(f"{CELL}.sch: {s.stats()}")
     (HERE / f"{CELL}.sym").write_text(core_sym())
-    print(f"{CELL}.sch: {s.stats()}")
-    for tag, f in (("acnoise", "lpf_tb_022"), ("thd", "lpf_tb_022_thd")):
+    for tag, f in (("acnoise", "lpf_tb_022"), ("thd", "lpf_tb_022_thd"),
+                   ("gd", "lpf_tb_022_gd"), ("mc", "lpf_tb_022_mc")):
         t = tb_sch(parse_deck(ASB / f"022-reuse-final_tb_{tag}.sp"), tag)
         (HERE / f"{f}.sch").write_text(t.render())
         print(f"{f}.sch: {t.stats()}")

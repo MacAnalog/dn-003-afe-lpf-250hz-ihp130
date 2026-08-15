@@ -14,15 +14,15 @@ Sizing from round `lv065_bias/sb3`. Same topology as every other candidate (bran
 
 | line | requirement | measured | |
 |---|---|---|---|
-| S1 phase | ph_max ≥ 330° | **332.83°** | PASS |
-| S1 stopband | |H|@1 kHz ≤ −48 dB | **-49.78 dB** | PASS |
-| S2 cutoff | fc 245–255 Hz | **249.85 Hz** | PASS |
-| S3 dc | |dc| ≤ 0.2 dB | **-0.0133 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0538 dB** | PASS |
+| S1 phase | ph_max ≥ 330° | **333.04°** | PASS |
+| S1 stopband | |H|@1 kHz ≤ −48 dB | **-50.17 dB** | PASS |
+| S2 cutoff | fc 245–255 Hz | **248.14 Hz** | PASS |
+| S3 dc | |dc| ≤ 0.2 dB | **-0.0127 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0667 dB** | PASS |
 | S4 peaking | peak ≤ 0.2 dB | **+0.0000 dB** | PASS |
-| S5 irn | IRN < 40 µVrms | **28.54 µV** | PASS |
-| S6 power | P < 50 nW | **6.46 nW** | PASS |
-| S7 thd | THD ≤ −40 dB | **-42.39 dB** | PASS |
+| S5 irn | IRN < 40 µVrms | **28.56 µV** | PASS |
+| S6 power | P < 50 nW | **6.38 nW** | PASS |
+| S7 thd | THD ≤ −40 dB | **-41.69 dB** | PASS |
 
 `mono_db` = **0.0000 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **164.0 pF** (reported, never specced).
 
@@ -41,6 +41,23 @@ Sizing from round `lv065_bias/sb3`. Same topology as every other candidate (bran
 ### Input-referred noise density
 
 ![noise](C-lownoise_noise.png)
+
+<!-- robustness-dynamics:begin -->
+## Robustness & dynamics
+
+Nominal (mos_tt, 27 C, VDD 1.5 V): fc 248.14 Hz - dc -0.0127 dB - group delay tau(0) 1.658 ms, tau_max 2.500 ms (at-fc 2.366 ms)
+
+| artifact | what |
+|---|---|
+| [`op_lpf_core_C.md`](op_lpf_core_C.md) | measured operating point: per-device ID, gm/ID, gm/gds, **Vds, Vdsat** and saturation margin; the same numbers are stamped on the schematic sheet |
+| [`mc.md`](mc.md) | mismatch Monte-Carlo, n = 100: all-pass yield **75.0 %**, with per-line yields and sigmas for fc, dc gain and **group delay** |
+| [`pvt.md`](pvt.md) | PVT screen (ss/ff/sf/fs x -40/27/125 C x 1.35/1.5/1.65 V): **1/22 corners clean** — the family's documented supply sensitivity |
+| `asbuilt/core_tb_gd.sp` | runnable single-file group-delay bench (tau computed in-deck) — drawn as [`lpf_tb_C_gd.sch`](lpf_tb_C_gd.sch) |
+| `asbuilt/core_tb_mc.sp` | runnable single-seed mismatch sample (edit `.option seed=`) — drawn as [`lpf_tb_C_mc.sch`](lpf_tb_C_mc.sch) |
+
+The core schematic [`lpf_core_C.sch`](lpf_core_C.sch) carries the op
+annotation on-sheet (render: `lpf_core_C.png`).
+<!-- robustness-dynamics:end -->
 
 ## Files
 

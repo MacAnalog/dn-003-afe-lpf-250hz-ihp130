@@ -6,20 +6,25 @@ flavours and capacitor values. Every one **passes all nine spec lines**, and
 every one has been through both identity gates: its schematic netlists to its
 as-built netlist, and that netlist simulates to the numbers below.
 
+Every sizing is **layout-legal** (5 nm grid, PDK minimum widths, ≤10 µm
+on-grid gate fingers — `lab.grid.legalize`, fc restored where the min-width
+projection moved it by `lab.retune.restore_fc`), and old-vs-new netlists are
+circuitgraph-verified connectivity-identical with unchanged device models.
+
 Ranked by the stated priority: **noise, power and capacitance first, THD
 second** — subject to the response still being a flat low-pass.
 
 | cell | IRN µV | P nW | C pF | THD dB | ph° | fc Hz | ripple | peak | `mono_db` | vicm |
 |---|---|---|---|---|---|---|---|---|---|---|
-| [**`A-minarea`](A-minarea/) | **39.70** | **4.15** | **104.4** | -41.69 | 339.8 | 249.86 | 0.0545 | +0.0000 | 0.0000 | 0.2 |
-| [**`B-balanced`](B-balanced/) | **29.38** | **6.01** | **152.9** | -41.90 | 332.2 | 249.85 | 0.0545 | +0.0000 | 0.0000 | 0.65 |
-| [**`C-lownoise`](C-lownoise/) | **28.54** | **6.46** | **164.0** | -42.39 | 332.8 | 249.85 | 0.0538 | +0.0000 | 0.0000 | 0.65 |
-| [**`D-thdjump`](D-thdjump/) | **29.34** | **7.31** | **187.9** | -52.29 | 331.6 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
-| [**`E-combo`](E-combo/) | **27.27** | **8.88** | **220.0** | -54.88 | 334.6 | 249.87 | 0.0544 | +0.0016 | 0.0016 | 0.32 |
-| [**`F-minnoise`](F-minnoise/) | **26.24** | **12.63** | **305.0** | -58.52 | 336.4 | 249.96 | 0.0556 | +0.0089 | 0.0089 | 0.32 |
-| [**`G-maxthd`](G-maxthd/) | **26.81** | **14.32** | **348.2** | -70.98 | 343.5 | 249.88 | 0.0541 | +0.0029 | 0.0029 | 0.32 |
-| [**`E1-prev`](E1-prev/) | **28.33** | **8.98** | **229.3** | -52.64 | 333.5 | 249.86 | 0.0532 | +0.0000 | 0.0000 | 0.65 |
-| [**`H-shipped`](H-shipped/) | **28.07** | **14.45** | **366.3** | -56.46 | 341.4 | 249.99 | 0.0691 | +0.0068 | 0.0068 | 0.65 |
+| [**`A-minarea`](A-minarea/) | **39.70** | **4.15** | **104.4** | -41.68 | 339.8 | 249.86 | 0.0545 | +0.0000 | 0.0000 | 0.2 |
+| [**`B-balanced`](B-balanced/) | **29.38** | **6.01** | **152.9** | -41.94 | 332.2 | 250.01 | 0.0590 | +0.0000 | 0.0000 | 0.65 |
+| [**`C-lownoise`](C-lownoise/) | **28.56** | **6.38** | **164.0** | -41.69 | 333.0 | 248.14 | 0.0667 | +0.0000 | 0.0000 | 0.65 |
+| [**`D-thdjump`](D-thdjump/) | **28.81** | **7.47** | **187.9** | -52.48 | 330.7 | 250.00 | 0.1604 | +0.0000 | 0.0000 | 0.65 |
+| [**`E-combo`](E-combo/) | **27.27** | **8.88** | **220.0** | -54.88 | 334.6 | 249.88 | 0.0546 | +0.0015 | 0.0015 | 0.32 |
+| [**`F-minnoise`](F-minnoise/) | **26.24** | **12.63** | **305.0** | -58.52 | 336.4 | 249.95 | 0.0546 | +0.0093 | 0.0093 | 0.32 |
+| [**`G-maxthd`](G-maxthd/) | **26.81** | **14.32** | **348.2** | -70.98 | 343.5 | 249.88 | 0.0542 | +0.0029 | 0.0029 | 0.32 |
+| [**`E1-prev`](E1-prev/) | **28.21** | **9.01** | **229.3** | -52.60 | 333.3 | 250.00 | 0.1119 | +0.0000 | 0.0000 | 0.65 |
+| [**`H-shipped`](H-shipped/) | **27.87** | **14.50** | **366.3** | -56.18 | 341.3 | 249.99 | 0.0929 | +0.0003 | 0.0003 | 0.65 |
 
 *spec:* IRN < 40 · P < 50 nW · C reported only · THD ≤ −40 · ph ≥ 330 (ideal-4-pole ceiling **350.5**) · fc 245–255 · ripple ≤ 0.2 · peak ≤ 0.2.
 
@@ -52,13 +57,41 @@ well inside the ±0.2 dB window.
 Per-cell plots (passband, Bode, noise density) are in each design's own
 directory, embedded in its `README.md`.
 
+## Robustness & dynamics — per cell
+
+Mismatch MC is n = 100 over the PDK's own statistical model; group delay is
+the report-only soft metric (tau = −dφ/dω over the phase certificate's band);
+the PVT screen is ss/ff/sf/fs (+ tt anchors) × −40/27/125 °C × 1.35/1.5/1.65 V.
+Per-cell details: `<cell>/mc.md`, `<cell>/pvt.md`, `<cell>/op_lpf_core_*.md`
+(measured Vds/Vdsat per device, also stamped on each core schematic).
+
+| cell | MC all-pass yield | σ(fc) Hz | τ(0) ms | τ_max ms | PVT clean |
+|---|---|---|---|---|---|
+| [`A-minarea`](A-minarea/) | **45.0 %** | 5.070 | 1.653 | 2.477 | 1/22 |
+| [`B-balanced`](B-balanced/) | **70.0 %** | 3.319 | 1.639 | 2.463 | 1/22 |
+| [`C-lownoise`](C-lownoise/) | **75.0 %** | 2.707 | 1.658 | 2.500 | 1/22 |
+| [`D-thdjump`](D-thdjump/) | **75.0 %** | 2.140 | 1.623 | 2.372 | 1/22 |
+| [`E-combo`](E-combo/) | **92.0 %** | 2.761 | 1.652 | 2.475 | 1/22 |
+| [`F-minnoise`](F-minnoise/) | **93.0 %** | 2.753 | 1.659 | 2.483 | 1/22 |
+| [`G-maxthd`](G-maxthd/) | **90.0 %** | 2.997 | 1.661 | 2.483 | 1/22 |
+| [`E1-prev`](E1-prev/) | **96.0 %** | 2.199 | 1.641 | 2.431 | 2/22 |
+| [`H-shipped`](H-shipped/) | **95.0 %** | 2.350 | 1.659 | 2.462 | 1/22 |
+
+Yield is the family's bias-area lever made visible (see
+doc/journal/bias-area-buys-yield-phase-pays.md): the min-area corner pays for
+its 4.15 nW in mismatch yield, while the shipped-class sizings hold 90–96 %.
+Every cell's supply sensitivity is the same threshold-referenced mechanism —
+PVT clean counts of 1–2/22 are the documented limitation, not per-cell news.
+
 ## Flat-response check
 
 All nine are maximally flat low-pass responses, not merely inside the bounds.
 `mono_db` is the worst *rise* of |H| below the corner — **0 means the response
-never climbs anywhere**. The largest value in the set is 0.0089 dB, i.e. ~22×
+never climbs anywhere**. The largest value in the set is 0.0093 dB, i.e. ~21×
 inside the 0.2 dB flatness bound and ~2 000× below a visible bump. Peaking is
-at most +0.0090 dB. Cutoff is within 0.13 Hz of 250 on every cell.
+at most +0.0093 dB. Cutoff is within 1.9 Hz of 250 on every cell (a 2 % box;
+the widest offset is `C-lownoise` at 248.14 Hz, whose sizing needed no
+min-width projection and therefore kept its original — legal — geometry).
 
 ## Which to take to layout
 
@@ -117,6 +150,9 @@ uv run python scripts/draw_xschem.py check signoff/$C/asbuilt/core.sp signoff/$C
 uv run python scripts/draw_xschem.py sim   signoff/$C/asbuilt/core.sp signoff/$C --name lpf_core_E \
     --design signoff/$C/design.json
 ```
+
+The `sim` gate compares the drawing's own simulation against the cell's
+`scorecard.json` (fc, dc, IRN, THD…), not just against the spec box.
 
 ## What none of them fix
 

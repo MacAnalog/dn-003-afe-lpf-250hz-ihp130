@@ -16,15 +16,15 @@ Sizing from round `combo/cb_0p3_0p16_4`. Same topology as every other candidate 
 |---|---|---|---|
 | S1 phase | ph_max ≥ 330° | **334.63°** | PASS |
 | S1 stopband | |H|@1 kHz ≤ −48 dB | **-48.92 dB** | PASS |
-| S2 cutoff | fc 245–255 Hz | **249.87 Hz** | PASS |
+| S2 cutoff | fc 245–255 Hz | **249.88 Hz** | PASS |
 | S3 dc | |dc| ≤ 0.2 dB | **-0.0207 dB** | PASS |
-| S3 flatness | ripple ≤ 0.2 dB | **0.0544 dB** | PASS |
-| S4 peaking | peak ≤ 0.2 dB | **+0.0016 dB** | PASS |
+| S3 flatness | ripple ≤ 0.2 dB | **0.0546 dB** | PASS |
+| S4 peaking | peak ≤ 0.2 dB | **+0.0015 dB** | PASS |
 | S5 irn | IRN < 40 µVrms | **27.27 µV** | PASS |
 | S6 power | P < 50 nW | **8.88 nW** | PASS |
 | S7 thd | THD ≤ −40 dB | **-54.88 dB** | PASS |
 
-`mono_db` = **0.0016 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **220.0 pF** (reported, never specced).
+`mono_db` = **0.0015 dB** — the worst *rise* of |H| below the corner; 0 means the response never climbs. Total drawn capacitance **220.0 pF** (reported, never specced).
 
 **All nine lines: PASS.**
 
@@ -41,6 +41,23 @@ Sizing from round `combo/cb_0p3_0p16_4`. Same topology as every other candidate 
 ### Input-referred noise density
 
 ![noise](E-combo_noise.png)
+
+<!-- robustness-dynamics:begin -->
+## Robustness & dynamics
+
+Nominal (mos_tt, 27 C, VDD 1.5 V): fc 249.88 Hz - dc -0.0207 dB - group delay tau(0) 1.652 ms, tau_max 2.475 ms (at-fc 2.346 ms)
+
+| artifact | what |
+|---|---|
+| [`op_lpf_core_E.md`](op_lpf_core_E.md) | measured operating point: per-device ID, gm/ID, gm/gds, **Vds, Vdsat** and saturation margin; the same numbers are stamped on the schematic sheet |
+| [`mc.md`](mc.md) | mismatch Monte-Carlo, n = 100: all-pass yield **92.0 %**, with per-line yields and sigmas for fc, dc gain and **group delay** |
+| [`pvt.md`](pvt.md) | PVT screen (ss/ff/sf/fs x -40/27/125 C x 1.35/1.5/1.65 V): **1/22 corners clean** — the family's documented supply sensitivity |
+| `asbuilt/core_tb_gd.sp` | runnable single-file group-delay bench (tau computed in-deck) — drawn as [`lpf_tb_E_gd.sch`](lpf_tb_E_gd.sch) |
+| `asbuilt/core_tb_mc.sp` | runnable single-seed mismatch sample (edit `.option seed=`) — drawn as [`lpf_tb_E_mc.sch`](lpf_tb_E_mc.sch) |
+
+The core schematic [`lpf_core_E.sch`](lpf_core_E.sch) carries the op
+annotation on-sheet (render: `lpf_core_E.png`).
+<!-- robustness-dynamics:end -->
 
 ## Files
 

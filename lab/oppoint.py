@@ -25,9 +25,11 @@ from . import ngspice as ng
 from .deck import _bias, _core, _libs, _stim_ac
 from .dut import INSTANCES, Design, subckt
 
-# What we pull per device.  `vdsat` is PSP's saturation voltage; the region call
-# below compares |Vds| against it plus a weak-inversion floor.
-PARAMS = ("ids", "gm", "gmb", "gds", "vgs", "vds", "vth", "cgg")
+# What we pull per device.  `vdss` IS exposed by the PSP103 OSDI build (an
+# earlier note here claimed otherwise -- measured 2026-08-14: it reads fine) and
+# is PSP's saturation voltage V_DSAT; the region call below compares |Vds|
+# against it and the weak-inversion floor.
+PARAMS = ("ids", "gm", "gmb", "gds", "vgs", "vds", "vth", "vdss", "cgg")
 
 # Below ~4 kT/q a subthreshold device is not really saturated whatever the model
 # reports, because its drain current still depends on Vds through DIBL.
@@ -64,13 +66,20 @@ class DevOp:
         return abs(self.vals.get("vds", float("nan")))
 
     @property
+    def vdsat(self) -> float:
+        """PSP's saturation voltage (`vdss` op-var), absolute value."""
+        return abs(self.vals.get("vdss", float("nan")))
+
+    @property
     def saturated(self) -> bool:
-        """PSP103's OSDI build exposes no `vdsat`, so saturation is judged the
-        way weak inversion actually behaves: a subthreshold device is saturated
-        once |Vds| clears a few kT/q, and its gm/gds says whether that is
-        really true.  A device at gm/gds of order 1 is in triode however its
-        |Vds| reads."""
-        return self.vds >= VDS_FLOOR and self.gm_gds >= 50
+        """Saturation, judged three ways at once: |Vds| must clear PSP's own
+        V_DSAT (`vdss`) AND the ~4 kT/q weak-inversion floor (below which DIBL
+        still moves the current whatever the model reports), and gm/gds must
+        say the drain is actually isolated -- a device at gm/gds of order 1 is
+        in triode however its |Vds| reads."""
+        vdsat = self.vdsat
+        floor = max(VDS_FLOOR, vdsat if vdsat == vdsat else 0.0)   # NaN-safe
+        return self.vds >= floor and self.gm_gds >= 50
 
     @property
     def region(self) -> str:
@@ -153,12 +162,15 @@ def table(ops: dict, volts: dict, d: Design | None = None,
     """Markdown build/bias sheet -- the table that goes in a scorecard."""
     v_supply = C.VDD if vdd is None else vdd
     rows = ["| role | inst | type | ID (nA) | gm (nS) | gm/ID | gm/gds | "
-            "\\|Vds\\| (mV) | region |",
-            "|---|---|---|---|---|---|---|---|---|"]
+            "\\|Vds\\| (mV) | \\|Vdsat\\| (mV) | margin (mV) | region |",
+            "|---|---|---|---|---|---|---|---|---|---|---|"]
     for role, o in ops.items():
+        vdsat = o.vdsat
+        margin = (o.vds - vdsat) * 1e3 if vdsat == vdsat else float("nan")
         rows.append(
             f"| `{role}` | {o.inst} | {o.model[-4:]} | {o.id_na:.3f} | {o.gm_ns:.2f} | "
             f"{o.gm_id:.1f} | {o.gm_gds:.0f} | {o.vds*1e3:.0f} | "
+            f"{vdsat*1e3:.0f} | {margin:+.0f} | "
             f"{'**' + o.region + '**' if not o.saturated else o.region} |")
     lad = " → ".join(
         f"{n.split('.')[-1]} {volts.get(f'v({n})', float('nan'))*1e3:.0f}"

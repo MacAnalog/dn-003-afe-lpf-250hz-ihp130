@@ -1,38 +1,26 @@
 build_out for lpf_core_022 -- schematic of record
-generated: 2026-08-12 15:38 UTC
+generated: 2026-08-14 20:25 UTC (layout-legal sizing, feat/signoff-grid-legal)
 
 == redraw ==========================================================
 lpf_core_022.sch: 26 components, 98 wire segments, 0 crossings 
 lpf_tb_022.sch: 14 components, 76 wire segments, 2 crossings [(460, 400, 'sig', 'vcm'), (500, 540, 'sig', 'vcm')]
 lpf_tb_022_thd.sch: 14 components, 76 wire segments, 2 crossings [(460, 400, 'sig', 'vcm'), (500, 540, 'sig', 'vcm')]
 
-== GATE 1: drawing netlists to the as-built deck ===================
-GATE 1 -- xschem netlist vs signoff/asbuilt, canonical compare
+== identity gates (signoff/verify.py --cell 022-reuse-final) =======
 
-  lpf_tb_022       core   19 instances  PASS   net bijection: 13 nets, identity
-  lpf_tb_022       bench  11 instances  PASS   net bijection: 11 nets, identity
-  lpf_tb_022_thd   core   19 instances  PASS   net bijection: 13 nets, identity
-  lpf_tb_022_thd   bench  11 instances  PASS   net bijection: 11 nets, identity
-
-GATE 1  drawing == as-built netlist : PASS
-
-== GATE 2: that netlist simulates to the certified scorecard =======
+=== 022-reuse-final ===
 metric          schematic     lab.deck    certified   gates
-fc_hz            249.9948     249.9948     249.9948   ok/ok
-dc_db             -0.0209      -0.0209      -0.0209   ok/ok
-ripple_db          0.0691       0.0691       0.0691   ok/ok
-peak_db            0.0068       0.0068       0.0068   ok/ok
-mono_db            0.0068       0.0068       0.0068   ok/ok
-a1000_db         -49.5535     -49.5535     -49.5535   ok/ok
-ph_max_deg       341.4214     341.4214     341.4214   ok/ok
-irn_uv            28.0665      28.0665      28.0665   ok/ok
-p_core_nw         14.4510      14.4510      14.4510   ok/ok
+fc_hz            249.9939     249.9938     249.9938   ok/ok
+dc_db             -0.0206      -0.0206      -0.0206   ok/ok
+ripple_db          0.0929       0.0929       0.0929   ok/ok
+peak_db            0.0003       0.0003       0.0003   ok/ok
+mono_db            0.0003       0.0003       0.0003   ok/ok
+a1000_db         -49.3806     -49.3806     -49.3806   ok/ok
+ph_max_deg       341.3045     341.3045     341.3045   ok/ok
+irn_uv            27.8663      27.8663      27.8663   ok/ok
+p_core_nw         14.5025      14.5025      14.5025   ok/ok
 c_total_pf       366.2622     366.2622     366.2622   ok/ok
-thd_db            -56.470      -56.463      -56.463   ok/-
+thd_db            -56.182      -56.183      -56.183   ok/-
+GATE 1 drawing == deck: PASS   GATE 2 vs certified card: PASS   violations: none
 
-GATE 1  drawing == deck        : PASS
-GATE 2  matches certified card : PASS
-spec violations from the drawing: none
-
-== repo lint (incl. node scrub) ====================================
-LINT: all harness invariants hold (reference deck, deck rebuild, reference clean, experiments, paper index, journal, spec sync, node scrub, gitignore, context pack)
+ALL GATES: PASS  (1 cell(s))

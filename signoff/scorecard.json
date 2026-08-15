@@ -1,7 +1,7 @@
 {
   "cell": "022-reuse-final",
-  "certified": "2026-08-12",
-  "what": "The originating branch-stacked SSF topology (bridge + current reuse) ported to IHP SG13G2 by device TYPE and SIZE only -- all 42 device connections identical to the drawn topology. Measured in this repo on the frozen definitions in lab.metrics.",
+  "certified": "2026-08-14",
+  "what": "The originating branch-stacked SSF topology (bridge + current reuse) ported to IHP SG13G2 by device TYPE and SIZE only -- all 42 device connections identical to the drawn topology. Measured in this repo on the frozen definitions in lab.metrics. Sizing is layout-legal: 5 nm grid, PDK minimum widths, <=10 um gate fingers (lab.grid.legalize + lab.retune.restore_fc).",
   "topology": "b (branch-stacked + gm_f merge)",
   "lv_roles": [
     "gmf_b",
@@ -13,23 +13,23 @@
   "vicm": 0.65,
   "vocm": 1.3548,
   "scorecard": {
-    "fc_hz": 249.9948,
-    "dc_db": -0.0209,
-    "ripple_db": 0.0691,
-    "peak_db": 0.0068,
-    "mono_db": 0.0068,
-    "a1000_db": -49.5535,
-    "ph_max_deg": 341.4214,
-    "irn_uv": 28.0665,
-    "p_core_nw": 14.451,
+    "fc_hz": 249.9938,
+    "dc_db": -0.0206,
+    "ripple_db": 0.0929,
+    "peak_db": 0.0003,
+    "mono_db": 0.0003,
+    "a1000_db": -49.3806,
+    "ph_max_deg": 341.3045,
+    "irn_uv": 27.8663,
+    "p_core_nw": 14.5025,
     "c_total_pf": 366.2622,
-    "thd_db": -56.463
+    "thd_db": -56.183
   },
-  "thd_db": -56.463,
+  "thd_db": -56.183,
   "yield": {
     "mismatch_all_pass_pct": 95.0,
     "n_samples": 100,
-    "sigma_fc_hz": 2.42,
+    "sigma_fc_hz": 2.35,
     "corners_clean": "1/22",
     "vdd_min_v": 1.5
   },

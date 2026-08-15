@@ -1,21 +1,22 @@
-** sch_path: /sch/lpf_tb_C.sch
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/C-lownoise/lpf_tb_C.sch
 **.subckt lpf_tb_C
-xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_C
-**** begin user architecture code
-
-.lib cornerMOShv.lib mos_tt
-.lib cornerMOSlv.lib mos_tt
-vdd_meas vdd_top 0 1.5
-vflt vdd_top vdd 0
-.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3224 v(voutn)=1.3224
-iref vdd_top vbn 6.624e-10
-xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
-vcm vcm 0 0.65
 vsig sig vcm dc 0 ac 1
+vcm vcm 0 0.65
 evp vinp vcm sig vcm 0.5
 evn vinn vcm sig vcm -0.5
+xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_C
+vflt vdd_top vdd 0
+vdd_meas vdd_top 0 1.5
+iref vdd_top vbn 6.624e-10
+Xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+Xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+Xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
+**** begin user architecture code
+
+.title lpf b -- ac + noise
+.lib cornerMOShv.lib mos_tt
+.lib cornerMOSlv.lib mos_tt
+.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3224 v(voutn)=1.3224
 .temp 27.0
 
 
@@ -35,8 +36,8 @@ write sim.raw
 **.ends
 
 * expanding   symbol:  lpf_core_C.sym # of pins=7
-** sym_path: /sch/lpf_core_C.sym
-** sch_path: /sch/lpf_core_C.sch
+** sym_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/C-lownoise/lpf_core_C.sym
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/C-lownoise/lpf_core_C.sch
 .subckt lpf_core_C vinp vinn voutp voutn vbn vbp vdd
 *.ipin vinp
 *.ipin vinn
@@ -45,18 +46,18 @@ write sim.raw
 *.ipin vdd
 *.ipin vbn
 *.ipin vbp
-Xm2 net2 vinp vout_1 vout_1 sg13_lv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
-Xm5 net3 vinn vout_2 vout_2 sg13_lv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
+Xm2 net2 vinp vout_1 vout_1 sg13_lv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
+Xm5 net3 vinn vout_2 vout_2 sg13_lv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
 Xm4 vout_1 net2 0 0 sg13_hv_nmos w=7.8e-06 l=5.2e-06 ng=1 m=1
 Xm8 vout_2 net3 0 0 sg13_hv_nmos w=7.8e-06 l=5.2e-06 ng=1 m=1
-Xm9 net2 vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-Xm10 net3 vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=1 m=1
-Xmst vout_1 vbn net4 net4 sg13_hv_pmos w=1.6185e-06 l=1.092e-05 ng=1 m=1
-Xmstn vout_2 vbn net1 net1 sg13_hv_pmos w=1.6185e-06 l=1.092e-05 ng=1 m=1
-Xm0 net4 vout_1 voutp voutp sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
-Xm1 net1 vout_2 voutn voutn sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=1 m=1
-Xm14 voutp net4 vdd vdd sg13_hv_pmos w=8.08275e-06 l=1.56e-05 ng=1 m=1
-Xm15 voutn net1 vdd vdd sg13_hv_pmos w=8.08275e-06 l=1.56e-05 ng=1 m=1
+Xm9 net2 vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+Xm10 net3 vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+Xmst vout_1 vbn net4 net4 sg13_hv_pmos w=1.62e-06 l=1.092e-05 ng=1 m=1
+Xmstn vout_2 vbn net1 net1 sg13_hv_pmos w=1.62e-06 l=1.092e-05 ng=1 m=1
+Xm0 net4 vout_1 voutp voutp sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
+Xm1 net1 vout_2 voutn voutn sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
+Xm14 voutp net4 vdd vdd sg13_hv_pmos w=8.085e-06 l=1.56e-05 ng=1 m=1
+Xm15 voutn net1 vdd vdd sg13_hv_pmos w=8.085e-06 l=1.56e-05 ng=1 m=1
 c13 net2 vout_1 6.58174e-12 m=1
 c17 net3 vout_2 6.58174e-12 m=1
 c19 vout_2 vout_1 2.65642e-11 m=1

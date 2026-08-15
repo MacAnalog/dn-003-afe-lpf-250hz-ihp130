@@ -1,20 +1,21 @@
-** sch_path: /sch/lpf_tb_A.sch
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/A-minarea/lpf_tb_A.sch
 **.subckt lpf_tb_A
-xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_A
-**** begin user architecture code
-
-.lib cornerMOShv.lib mos_tt
-vdd_meas vdd_top 0 1.5
-vflt vdd_top vdd 0
-.nodeset v(xdut.vout_1)=1.1 v(xdut.vout_2)=1.1 v(voutp)=1.1 v(voutn)=1.1
-iref vdd_top vbn 4.416e-10
-xmbn vbn vbn 0 0 sg13_hv_nmos w=5e-06 l=8e-06 ng=1 m=1
-xmbp vbp vbn 0 0 sg13_hv_nmos w=5e-06 l=8e-06 ng=1 m=1
-xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
-vcm vcm 0 0.2
 vsig sig vcm dc 0 ac 1
+vcm vcm 0 0.2
 evp vinp vcm sig vcm 0.5
 evn vinn vcm sig vcm -0.5
+xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_A
+vflt vdd_top vdd 0
+vdd_meas vdd_top 0 1.5
+iref vdd_top vbn 4.416e-10
+Xmbn vbn vbn 0 0 sg13_hv_nmos w=5e-06 l=8e-06 ng=1 m=1
+Xmbp vbp vbn 0 0 sg13_hv_nmos w=5e-06 l=8e-06 ng=1 m=1
+Xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
+**** begin user architecture code
+
+.title lpf b -- ac + noise
+.lib cornerMOShv.lib mos_tt
+.nodeset v(xdut.vout_1)=1.1 v(xdut.vout_2)=1.1 v(voutp)=1.1 v(voutn)=1.1
 .temp 27.0
 
 
@@ -34,8 +35,8 @@ write sim.raw
 **.ends
 
 * expanding   symbol:  lpf_core_A.sym # of pins=7
-** sym_path: /sch/lpf_core_A.sym
-** sch_path: /sch/lpf_core_A.sch
+** sym_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/A-minarea/lpf_core_A.sym
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/A-minarea/lpf_core_A.sch
 .subckt lpf_core_A vinp vinn voutp voutn vbn vbp vdd
 *.ipin vinp
 *.ipin vinn

@@ -89,9 +89,9 @@ C {lpf_core_022.sym} 1200 400 0 0 {name=xdut}
 C {devices/vsource.sym} 1450 140 0 0 {name=vflt value=0 savecurrent=false}
 C {devices/vsource.sym} 2050 140 0 0 {name=vdd_meas value=1.5 savecurrent=false}
 C {devices/isource.sym} 1600 140 0 0 {name=iref value=6.624e-10}
-C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.925e-05 l=3.12e-05 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.925e-05 l=3.12e-05 ng=1 m=1 model=sg13_hv_nmos spiceprefix=X}
-C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.56e-05 l=1.04e-05 ng=1 m=1 model=sg13_hv_pmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
+C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
 C {devices/code_shown.sym} 200 820 0 0 {name=BENCH only_toplevel=false value=".title lpf b -- ac + noise
 .lib cornerMOShv.lib mos_tt
 .lib cornerMOSlv.lib mos_tt
@@ -108,7 +108,7 @@ noise v(voutp,voutn) vsig dec 50 0.1 1000
 setplot noise1
 write sim.raw
 .endc"}
-C {devices/title.sym} 200 1260 0 0 {name=l1 author="lpf_core_022 testbench -- acnoise"}
+C {devices/title.sym} 200 1490 0 0 {name=l1 author="lpf_core_022 testbench -- acnoise"}
 C {devices/gnd.sym} 300 580 0 0 {name=l1_300_580 lab=0}
 C {devices/gnd.sym} 1750 470 0 0 {name=l1_1750_470 lab=0}
 C {devices/gnd.sym} 2050 230 0 0 {name=l1_2050_230 lab=0}
@@ -125,3 +125,4 @@ C {devices/lab_pin.sym} 1420 440 0 1 {name=l5_1420_440 lab=voutn}
 T {lpf_core_022 sign-off testbench -- op + ac + noise} 200 40 0 0 0.5 0.5 {}
 T {balun gains +-0.5 so the vsig amplitude IS the differential input.} 200 75 0 0 0.3 0.3 {}
 T {vflt is a 0 V series probe carrying the CORE current only. The bias reference sits AHEAD of it, so S6 excludes the reference by construction rather than by subtraction.} 200 760 0 0 0.3 0.3 {}
+T {generated 2026-08-15 02:48 UTC by scripts/draw_lpf_core_022.py} 200 1450 0 0 0.2 0.2 {}

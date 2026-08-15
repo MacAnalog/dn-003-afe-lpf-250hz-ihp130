@@ -191,6 +191,112 @@ write sim.raw
 """
 
 
+def _op_saves(d: Design) -> str:
+    """`save` line carrying every device's PSP op-vars alongside `all`.
+
+    This is what makes the op plot in the rawfile feed the IHP PDK's live
+    annotator (`sg13g2_pr/annotate_fet_params.sym` -> `display_fet_params`):
+    the annotator reads `@n.xdut.x<inst>.n<model>[gm]` etc. out of the loaded
+    raw, and those vectors exist only if the deck saved them before the `op`.
+    `all` stays first so the ac sweep in the same run keeps its node vectors
+    (the noise-starving trap of a restrictive save -- see SIGNAL_NETS note --
+    does not bite here because this deck runs no noise analysis).
+    """
+    from .dut import INSTANCES
+    parms = ("ids", "gm", "gds", "gmb", "vgs", "vds", "vth", "vdss", "cgg")
+    out = ["all"]
+    for role, insts in INSTANCES[d.topology].items():
+        for inst in insts:
+            base = f"@n.xdut.x{inst}.n{d.model(role)}"
+            out += [f"{base}[{p}]" for p in parms]
+    return "save " + " ".join(out)
+
+
+def ac_gd(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
+          fstart: float = 0.1, fstop: float = 1e3, dec: int = C.AC_DEC,
+          vdd: float | None = None) -> str:
+    """Group-delay testbench: op + ac, with tau(f) computed IN the deck.
+
+    Self-contained on purpose -- a reviewer runs this one file and reads
+    tau(0), tau_max and fc off the console, no Python required.  `cph()` is
+    ngspice's continuous (unwrapped) phase; deriv() differentiates against the
+    sweep variable (frequency), so gd = -deriv(cph)/2pi is in seconds.  The
+    sweep stops at 1 kHz: past the stopband edge |H| falls into the parasitic
+    feed-through floor where sampled phase aliases and its derivative is
+    fiction (doc/journal/phase-certificate-floor.md).
+    """
+    return f""".title lpf {d.topology} -- group delay (single run)
+{_libs(corner, d)}
+{subckt(d)}
+{_core(d, vdd=vdd)}
+{_bias(d)}
+{_stim_ac(d.vicm)}
+.temp {temp}
+.control
+set filetype=binary
+set appendwrite
+{_op_saves(d)}
+op
+write sim.raw
+ac dec {dec} {fstart:.6g} {fstop:.6g}
+let hdiff = v({C.OUT_P}) - v({C.OUT_N})
+let hdb = db(mag(hdiff))
+let dc_db = hdb[0]
+let ph = cph(hdiff)
+let gd = -deriv(ph) / (2 * pi)
+let gd_dc_ms = gd[0] * 1e3
+let gd_max_ms = vecmax(gd) * 1e3
+let hrel = hdb - dc_db
+meas ac fc_hz when hrel = -3 fall = 1
+print dc_db gd_dc_ms gd_max_ms
+write sim.raw hdiff ph gd frequency
+.endc
+.end
+"""
+
+
+def ac_mc(d: Design, *, seed: int = 1, corner: str = C.CORNER_NOM,
+          temp: float = C.TEMP_NOM, fstart: float = 0.1, fstop: float = 1e3,
+          dec: int = C.AC_DEC, vdd: float | None = None) -> str:
+    """One mismatch Monte-Carlo sample: seeded draw + ac, scored IN the deck.
+
+    The corner is always upgraded to its `_mismatch` twin, and the seed is a
+    NETLIST directive (`.option seed=`) because the draws happen at parse time
+    -- a `set rndseed` inside `.control` changes nothing (see `lab.mc`).  One
+    process per sample: run this deck once per seed, editing `.option seed=`;
+    the distribution machinery (n samples, yield, sigmas) lives in `lab.mc.run`,
+    which builds exactly this deck per sample.
+    """
+    return f""".title lpf {d.topology} -- mismatch MC sample (edit .option seed= per draw)
+{_libs(C.mismatch_corner(corner), d)}
+{C.seed_directive(seed)}
+{subckt(d)}
+{_core(d, vdd=vdd)}
+{_bias(d)}
+{_stim_ac(d.vicm)}
+.temp {temp}
+.control
+set filetype=binary
+set appendwrite
+op
+write sim.raw
+ac dec {dec} {fstart:.6g} {fstop:.6g}
+let hdiff = v({C.OUT_P}) - v({C.OUT_N})
+let hdb = db(mag(hdiff))
+let dc_db = hdb[0]
+let ph = cph(hdiff)
+let gd = -deriv(ph) / (2 * pi)
+let gd_dc_ms = gd[0] * 1e3
+let gd_max_ms = vecmax(gd) * 1e3
+let hrel = hdb - dc_db
+meas ac fc_hz when hrel = -3 fall = 1
+print dc_db gd_dc_ms gd_max_ms
+write sim.raw hdiff ph gd frequency
+.endc
+.end
+"""
+
+
 def op_only(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
             probes: list[str] | None = None, vdd: float | None = None) -> str:
     """Operating point with per-device parameters printed -- the sizing tool.

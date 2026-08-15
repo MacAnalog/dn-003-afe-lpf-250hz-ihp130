@@ -184,6 +184,12 @@ def _save(fig, path) -> Path:
         FIGS.mkdir(parents=True, exist_ok=True)
         p = FIGS / p
     p.parent.mkdir(parents=True, exist_ok=True)
+    # Every generated figure carries its generation time -- a plot whose date
+    # cannot be read is a plot whose staleness cannot be judged.
+    from datetime import datetime, timezone
+    fig.text(0.995, 0.005,
+             datetime.now(timezone.utc).strftime("generated %Y-%m-%d %H:%M UTC"),
+             ha="right", va="bottom", fontsize=6, color="0.45")
     fig.savefig(p, dpi=150, facecolor="white")
     plt.close(fig)
     return p

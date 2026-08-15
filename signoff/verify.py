@@ -61,13 +61,9 @@ def design_of(path: Path) -> Design:
 
 
 def netlist(name: str) -> str:
-    """xschem .sch -> ngspice deck, run in the same container as the simulator."""
-    from lab import config as C
-    subprocess.run(
-        ["docker", "run", "--rm", "-v", f"{SCH}:/sch", "-w", "/sch", C.DOCKER_IMAGE,
-         "sh", "-lc", f"xschem -n -s -q --rcfile /sch/xschemrc /sch/{name}.sch"],
-        check=True, capture_output=True, text=True)
-    return (SCH / f"{name}.spice").read_text() + "\n.end\n"
+    """xschem .sch -> ngspice deck (native if LPF_XSCHEM is set, else docker)."""
+    from lab import xsch
+    return xsch.netlist(SCH, name) + "\n.end\n"
 
 
 def check(cell: str, regen: bool) -> bool:
@@ -78,7 +74,11 @@ def check(cell: str, regen: bool) -> bool:
         # Each drawing has its OWN drawer -- they lay out differently, so
         # regenerating with the wrong one silently replaces a reviewed schematic
         # with a different (still gate-passing) one.
-        subprocess.run([sys.executable, str(REPO / "scripts" / drawer)], check=True)
+        cmd = [sys.executable, str(REPO / "scripts" / drawer)]
+        if drawer == "draw_xschem.py":     # the generic drawer needs its args
+            cmd += ["build", str(HERE / "asbuilt" / f"{cell}.sp"), str(SCH),
+                    "--name", tb.replace("_tb_", "_core_")]
+        subprocess.run(cmd, check=True)
 
     s_sch = M.score_plots(ng.simulate(netlist(tb), f"so_{cell[:6]}"), d)
     s_dck = M.evaluate(d, f"so_{cell[:6]}_ref", record=False)
