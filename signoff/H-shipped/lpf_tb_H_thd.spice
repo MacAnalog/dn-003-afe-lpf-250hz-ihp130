@@ -1,21 +1,22 @@
 ** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/H-shipped/lpf_tb_H_thd.sch
 **.subckt lpf_tb_H_thd
-xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_H
-**** begin user architecture code
-
-.lib cornerMOShv.lib mos_tt
-.lib cornerMOSlv.lib mos_tt
-vdd_meas vdd_top 0 1.5
-vflt vdd_top vdd 0
-.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3548 v(voutn)=1.3548
-iref vdd_top vbn 6.624e-10
-xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
-xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
-xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
-vcm vcm 0 0.65
 vsig sig vcm dc 0 sin(0 0.0875 50) ac 1
+vcm vcm 0 0.65
 evp vinp vcm sig vcm 0.5
 evn vinn vcm sig vcm -0.5
+xdut vinp vinn voutp voutn vbn vbp vdd lpf_core_H
+vflt vdd_top vdd 0
+vdd_meas vdd_top 0 1.5
+iref vdd_top vbn 6.624e-10
+Xmbn vbn vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+Xmbp vbp vbn 0 0 sg13_hv_nmos w=2.925e-05 l=3.12e-05 ng=3 m=1
+Xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=1.56e-05 l=1.04e-05 ng=2 m=1
+**** begin user architecture code
+
+.title lpf b -- thd fin=50 ampl=0.0875
+.lib cornerMOShv.lib mos_tt
+.lib cornerMOSlv.lib mos_tt
+.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3548 v(voutn)=1.3548
 .temp 27.0
 .options reltol=1e-5 abstol=1e-13 vntol=1e-9 chgtol=1e-16 method=gear maxord=2
 

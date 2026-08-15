@@ -85,17 +85,17 @@ C {devices/vsource.sym} 300 300 0 0 {name=vsig value="dc 0 ac 1" savecurrent=fal
 C {devices/vsource.sym} 300 500 0 0 {name=vcm value=0.65 savecurrent=false}
 C {devices/vcvs.sym} 600 240 0 0 {name=evp value=0.5}
 C {devices/vcvs.sym} 600 560 0 0 {name=evn value=-0.5}
-C {lpf_core_E1.sym} 1200 400 0 0 {name=xdut}
+C {lpf_core_022.sym} 1200 400 0 0 {name=xdut}
 C {devices/vsource.sym} 1450 140 0 0 {name=vflt value=0 savecurrent=false}
 C {devices/vsource.sym} 2050 140 0 0 {name=vdd_meas value=1.5 savecurrent=false}
 C {devices/isource.sym} 1600 140 0 0 {name=iref value=6.624e-10}
 C {sg13g2_pr/sg13_hv_nmos.sym} 1550 380 0 0 {name=mbn w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
 C {sg13g2_pr/sg13_hv_nmos.sym} 1900 380 0 0 {name=mbp w=2.925e-05 l=3.12e-05 ng=3 m=1 model=sg13_hv_nmos spiceprefix=X}
 C {sg13g2_pr/sg13_hv_pmos.sym} 1900 180 0 0 {name=mbpd w=1.56e-05 l=1.04e-05 ng=2 m=1 model=sg13_hv_pmos spiceprefix=X}
-C {devices/code_shown.sym} 200 820 0 0 {name=DIRECTIVES only_toplevel=false value=".title lpf b -- group delay (single run)
+C {devices/code_shown.sym} 200 820 0 0 {name=BENCH only_toplevel=false value=".title lpf b -- group delay (single run)
 .lib cornerMOShv.lib mos_tt
 .lib cornerMOSlv.lib mos_tt
-.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3355 v(voutn)=1.3355
+.nodeset v(xdut.vout_1)=0.8181 v(xdut.vout_2)=0.8181 v(voutp)=1.3548 v(voutn)=1.3548
 .temp 27.0"}
 C {devices/code_shown.sym} 200 1000 0 0 {name=CTRL only_toplevel=false value=".control
 set filetype=binary
@@ -116,7 +116,7 @@ meas ac fc_hz when hrel = -3 fall = 1
 print dc_db gd_dc_ms gd_max_ms
 write sim.raw hdiff ph gd frequency
 .endc"}
-C {devices/title.sym} 200 1490 0 0 {name=l1 author="lpf_core_E1 testbench -- gd"}
+C {devices/title.sym} 200 1490 0 0 {name=l1 author="lpf_core_022 testbench -- gd"}
 C {devices/gnd.sym} 300 580 0 0 {name=l1_300_580 lab=0}
 C {devices/gnd.sym} 1750 470 0 0 {name=l1_1750_470 lab=0}
 C {devices/gnd.sym} 2050 230 0 0 {name=l1_2050_230 lab=0}
@@ -130,8 +130,8 @@ C {devices/lab_pin.sym} 1600 700 0 0 {name=l3_1600_700 lab=vbp}
 C {devices/lab_pin.sym} 1320 560 0 1 {name=l3_1320_560 lab=vbn}
 C {devices/lab_pin.sym} 1420 360 0 1 {name=l5_1420_360 lab=voutp}
 C {devices/lab_pin.sym} 1420 440 0 1 {name=l5_1420_440 lab=voutn}
-T {lpf_core_E1 sign-off testbench -- group delay, tau computed in-deck} 200 40 0 0 0.5 0.5 {}
+T {The .control computes tau(f) = -dphi/dw in-deck and saves the PSP op-vars, so the PDK live annotator fills from this bench's sim.raw.} 200 105 0 0 0.3 0.3 {}
+T {lpf_core_022 sign-off testbench -- group delay, tau computed in-deck} 200 40 0 0 0.5 0.5 {}
 T {balun gains +-0.5 so the vsig amplitude IS the differential input.} 200 75 0 0 0.3 0.3 {}
 T {vflt is a 0 V series probe carrying the CORE current only. The bias reference sits AHEAD of it, so S6 excludes the reference by construction rather than by subtraction.} 200 760 0 0 0.3 0.3 {}
-T {The .control computes tau(f) = -dphi/dw in-deck and saves the PSP op-vars, so the PDK live annotator fills from this bench's sim.raw.} 200 105 0 0 0.3 0.3 {}
-T {generated 2026-08-15 02:48 UTC by scripts/draw_xschem.py} 200 1450 0 0 0.2 0.2 {}
+T {generated 2026-08-15 02:48 UTC by scripts/draw_lpf_core_022.py} 200 1450 0 0 0.2 0.2 {}

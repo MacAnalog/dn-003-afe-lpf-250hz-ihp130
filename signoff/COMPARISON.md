@@ -151,6 +151,9 @@ uv run python scripts/draw_xschem.py sim   signoff/$C/asbuilt/core.sp signoff/$C
     --design signoff/$C/design.json
 ```
 
+The `sim` gate compares the drawing's own simulation against the cell's
+`scorecard.json` (fc, dc, IRN, THD…), not just against the spec box.
+
 ## What none of them fix
 
 Every cell here shares the family's two structural limits, both measured and

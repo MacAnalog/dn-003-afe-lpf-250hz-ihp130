@@ -74,7 +74,11 @@ def check(cell: str, regen: bool) -> bool:
         # Each drawing has its OWN drawer -- they lay out differently, so
         # regenerating with the wrong one silently replaces a reviewed schematic
         # with a different (still gate-passing) one.
-        subprocess.run([sys.executable, str(REPO / "scripts" / drawer)], check=True)
+        cmd = [sys.executable, str(REPO / "scripts" / drawer)]
+        if drawer == "draw_xschem.py":     # the generic drawer needs its args
+            cmd += ["build", str(HERE / "asbuilt" / f"{cell}.sp"), str(SCH),
+                    "--name", tb.replace("_tb_", "_core_")]
+        subprocess.run(cmd, check=True)
 
     s_sch = M.score_plots(ng.simulate(netlist(tb), f"so_{cell[:6]}"), d)
     s_dck = M.evaluate(d, f"so_{cell[:6]}_ref", record=False)

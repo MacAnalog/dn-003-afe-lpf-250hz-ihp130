@@ -6,12 +6,22 @@ by hand — but it emits a schematic laid out the way the circuit actually works
 devices on the dc ladder they form, **real routed wires**, the differential
 halves mirrored, and the cross-caps drawn between them.
 
+**Testbenches are drawn too.** Every bench element of the certified deck —
+stimulus, balun VCVS pair, supply + series `vflt` core-current probe, `iref`
+and the three-device bias mirror — is a placed, wired component on the sheet;
+only the non-component lines (`.lib`/`.nodeset`/`.options`/`.temp` and the
+`.control` block) remain as text. A bench element that reached the sheet only
+as text would be a schematic that lies about what it simulates.
+
 | file | what |
 |---|---|
 | `lpf_core_022.sch` | the DUT — stage A left, stage B right, halves mirrored |
 | `lpf_core_022.sym` | its symbol (7 ports, in the order `lab.deck` instantiates) |
-| `lpf_tb_022.sch` | testbench: op + ac + noise, with its `.control` block |
+| `lpf_tb_022.sch` | testbench: op + ac + noise |
 | `lpf_tb_022_thd.sch` | testbench: coherent strobed transient for S7 |
+| `lpf_tb_022_gd.sch` | testbench: group delay, τ(f) computed in-deck (saves the PSP op-vars for the live annotator) |
+| `lpf_tb_022_mc.sch` | testbench: one seeded mismatch-MC sample |
+| `lpf_core_021lv.*`, `lpf_tb_021lv*.sch` | the superseded VDD/2 cell, same four benches (drawn by `scripts/draw_xschem.py`) |
 | `*.png` | renders (visual evidence), produced by `scripts/render_sch.py` — the native xschem has no cairo so its own png export is a silent no-op; the script repairs the SVG export's broken header and rasterizes with cairosvg (doc/journal/xschem-no-cairo-silent-export.md). Core sheets carry the **measured op annotation** (per-device Vds, Vdsat, Id, Vgs, gm/ID, gm/gds — `scripts/annotate_op.py`; text-only, so the identity gates are unaffected). Re-annotate + re-render after any drawer regeneration: the drawers emit clean sheets. |
 | `*.spice` | the netlists xschem produced from the above |
 | `draw_lpf_core_022.py` | the generator |

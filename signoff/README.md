@@ -64,7 +64,11 @@ the reference itself misses.
 | `<cell>/pvt.md` | PVT screen: ss/ff/sf/fs (+ tt) × −40/27/125 °C × 1.35/1.5/1.65 V |
 | `<cell>/asbuilt/core_tb_gd.sp` | runnable group-delay bench, τ(f) computed in-deck; drawn as `lpf_tb_*_gd.sch` |
 
-Schematic renders (`*.png` beside each `.sch`) are produced by
+Every testbench sheet **draws its bench as components** — stimulus, balun
+VCVS pair, supply + series core-current probe, bias reference and mirror,
+placed and wired, with values read verbatim from the certified deck; only the
+directives and the `.control` block remain as text. Schematic renders
+(`*.png` beside each `.sch`) are produced by
 `scripts/render_sch.py`; core sheets carry the op annotation two ways:
 **baked text** (the signoff-measured numbers, visible in every render, with a
 generation timestamp) and the **IHP PDK live annotator**

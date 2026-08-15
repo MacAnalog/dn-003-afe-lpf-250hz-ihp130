@@ -1,6 +1,6 @@
-** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/E-combo/lpf_tb_E_thd.sch
-**.subckt lpf_tb_E_thd
-vsig sig vcm dc 0 sin(0 0.0875 50) ac 1
+** sch_path: /home/noorizad/spicexplorer-workspace/external/agentic-design-250hz-lpf-ihp130/signoff/E-combo/lpf_tb_E_mc.sch
+**.subckt lpf_tb_E_mc
+vsig sig vcm dc 0 ac 1
 vcm vcm 0 0.32
 evp vinp vcm sig vcm 0.5
 evn vinn vcm sig vcm -0.5
@@ -13,19 +13,31 @@ Xmbp vbp vbn 0 0 sg13_hv_nmos w=1e-05 l=1.6e-05 ng=1 m=1
 Xmbpd vbp vbp vdd_top vdd_top sg13_hv_pmos w=8e-06 l=8e-06 ng=1 m=1
 **** begin user architecture code
 
-.title lpf b -- thd fin=50 ampl=0.0875
-.lib cornerMOShv.lib mos_tt
-.lib cornerMOSlv.lib mos_tt
+.title lpf b -- mismatch MC sample (edit .option seed= per draw)
+.lib cornerMOShv.lib mos_tt_mismatch
+.lib cornerMOSlv.lib mos_tt_mismatch
+.option seed=1
 .nodeset v(xdut.vout_1)=0.8095 v(xdut.vout_2)=0.8095 v(voutp)=1.3421 v(voutn)=1.3421
 .temp 27.0
-.options reltol=1e-5 abstol=1e-13 vntol=1e-9 chgtol=1e-16 method=gear maxord=2
 
 
 .control
 set filetype=binary
+set appendwrite
 op
-tran 3.90625e-05 0.56 0.16 3.90625e-05
 write sim.raw
+ac dec 50 0.1 1000
+let hdiff = v(voutp) - v(voutn)
+let hdb = db(mag(hdiff))
+let dc_db = hdb[0]
+let ph = cph(hdiff)
+let gd = -deriv(ph) / (2 * pi)
+let gd_dc_ms = gd[0] * 1e3
+let gd_max_ms = vecmax(gd) * 1e3
+let hrel = hdb - dc_db
+meas ac fc_hz when hrel = -3 fall = 1
+print dc_db gd_dc_ms gd_max_ms
+write sim.raw hdiff ph gd frequency
 .endc
 
 **** end user architecture code

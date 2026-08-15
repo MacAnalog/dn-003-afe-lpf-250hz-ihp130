@@ -64,6 +64,14 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# The testbench sheets DRAW their bench -- sources, balun, supply probe and
+# bias mirror as placed, wired components -- reusing the record cell's proven
+# schematic IR (wire splitting, pin transforms, short/overlap checks) so both
+# drawers keep one wiring idiom.  Only non-component lines (.lib/.nodeset/
+# .options/.temp and the .control block) remain text on the sheet.
+from draw_lpf_core_022 import Sch, parse_deck, pin  # noqa: E402
 
 HDR = "v {xschem version=3.4.4 file_version=1.2}\nG {}\nK {}\nV {}\nS {}\nE {}\n"
 PR = "sg13g2_pr"
@@ -311,101 +319,176 @@ def core_sch(mos: list, caps: list, cell: str) -> str:
 def core_sym(cell: str) -> str:
     """A real box symbol.  THE PIN ORDER IN THIS FILE IS THE SUBCKT PORT ORDER;
     a reordered pin list is a silent miswiring no netlist diff of the cell alone
-    would catch."""
-    pos = {"vinp": (-120, -40, "L"), "vinn": (-120, 40, "L"),
-           "voutp": (120, -40, "R"), "voutn": (120, 40, "R"),
-           "vbn": (-40, 100, "B"), "vbp": (40, 100, "B"), "vdd": (0, -100, "T")}
+    would catch.  The pin GEOMETRY is the record cell's (`draw_lpf_core_022`),
+    so every cell's symbol drops into the same drawn-bench wiring."""
+    pos = {"vinp": (-140, -40), "vinn": (-140, 40), "voutp": (140, -40),
+           "voutn": (140, 40), "vbn": (40, 120), "vbp": (-40, 120),
+           "vdd": (0, -120)}
     out = ['v {xschem version=3.4.4 file_version=1.2}', "G {}",
            'K {type=subcircuit', 'format="@name @pinlist @symname"',
            'template="name=x1"', "}", "V {}", "S {}", "E {}",
            "L 4 -100 -80 100 -80 {}", "L 4 100 -80 100 80 {}",
            "L 4 -100 80 100 80 {}", "L 4 -100 -80 -100 80 {}"]
     for p in PORTS:                       # ORDER MATTERS -- never sort this
-        x, y, side = pos[p]
-        out.append(f"B 5 {x-2.5} {y-2.5} {x+2.5} {y+2.5} {{name={p} dir=inout}}")
-        if side == "L":
-            out += [f"L 4 {x} {y} -100 {y} {{}}",
-                    f"T {{{p}}} -95 {y-7} 0 0 0.25 0.25 {{}}"]
-        elif side == "R":
-            out += [f"L 4 {x} {y} 100 {y} {{}}",
-                    f"T {{{p}}} 95 {y-7} 0 1 0.25 0.25 {{}}"]
-        elif side == "T":
-            out += [f"L 4 {x} {y} {x} -80 {{}}",
-                    f"T {{{p}}} {x-14} -74 0 0 0.25 0.25 {{}}"]
+        x, y = pos[p]
+        if abs(x) == 140:
+            out.append(f"L 4 {100 if x > 0 else -100} {y} {x} {y} {{}}")
+            tx, ty = (x + 12 if x < 0 else x - 52), y - 6
         else:
-            out += [f"L 4 {x} {y} {x} 80 {{}}",
-                    f"T {{{p}}} {x-14} 58 0 0 0.25 0.25 {{}}"]
-    out.append(f"T {{{cell}}} 0 -6 0 1 0.3 0.3 {{}}")
+            out.append(f"L 4 {x} {80 if y > 0 else -80} {x} {y} {{}}")
+            tx, ty = x - 18, (y - 22 if y > 0 else y + 10)
+        # dir must agree with the ipin/opin the .sch declares, or xschem warns
+        d = "out" if p.startswith("vout") else "in"
+        out.append(f"B 5 {x-2.5} {y-2.5} {x+2.5} {y+2.5} {{name={p} dir={d}}}")
+        out.append(f"T {{{p}}} {tx} {ty} 0 0 0.25 0.25 {{}}")
+    out.append(f"T {{{cell}}} -78 -14 0 0 0.4 0.4 {{}}")
+    out.append("T {@name} -100 -100 0 0 0.3 0.3 {}")
+    out.append("T {4th-order SSF LPF, differential} -92 18 0 0 0.2 0.2 {}")
     return "\n".join(out) + "\n"
 
 
 # --------------------------------------------------------------- testbench --
+# The bench is DRAWN: every element line of the certified deck (sources, balun
+# VCVS pair, supply + series core-current probe, bias reference and mirror)
+# becomes a placed, wired component; a bench element that reached the sheet
+# only as text would be a schematic that lies about what it simulates.  Values
+# and nets still come VERBATIM from the deck -- nothing is re-derived -- and
+# the element set is asserted, so a deck whose bench grows a component this
+# layout does not know about fails loudly instead of drawing around it.
+# Layout carried forward from the record cell's reviewed bench sheet
+# (`draw_lpf_core_022.tb_sch`); only the non-component lines (.lib/.nodeset/
+# .options/.temp, .control) remain as text blocks.
 
-def split_tb(path: Path) -> tuple[str, str]:
-    """(bench fragment, control block) lifted VERBATIM from a certified deck.
-
-    Everything xschem itself supplies is dropped: the `.subckt` body (it is the
-    drawn cell) and the `xdut` call (it is the symbol instance).  Nothing is
-    re-derived, so the drawn bench cannot drift from the bench the scorecard was
-    measured on.
-    """
-    bench, ctrl, mode = [], [], "top"
-    for ln in path.read_text().splitlines():
-        s, low = ln.strip(), ln.strip().lower()
-        if low.startswith(".subckt"):
-            mode = "sub"
-            continue
-        if low.startswith(".ends"):
-            mode = "top"
-            continue
-        if mode == "sub":
-            continue
-        if low.startswith(".control"):
-            mode, _ = "ctrl", ctrl.append(s)
-            continue
-        if mode == "ctrl":
-            ctrl.append(s)
-            mode = "top" if low.startswith(".endc") else "ctrl"
-            continue
-        if s and not low.startswith((".title", ".end", "xdut ")):
-            bench.append(s)
-    return "\n".join(bench), "\n".join(ctrl)
+TB_ELS = {"vdd_meas", "vflt", "xdut", "iref", "xmbn", "xmbp", "xmbpd",
+          "vcm", "vsig", "evp", "evn"}
+TB_NOTE = {
+    "acnoise": "",
+    "thd": "",
+    "gd": "The .control computes tau(f) = -dphi/dw in-deck and saves the PSP "
+          "op-vars, so the PDK live annotator fills from this bench's sim.raw.",
+    "mc": "Mismatch corner with one seeded draw: edit .option seed= per "
+          "sample; the n=100 distribution runner is lab.mc.",
+}
 
 
-def tb_sch(cell: str, bench: str, ctrl: str, what: str) -> str:
-    out = [HDR, f"C {{{cell}.sym}} 600 0 0 0 {{name=xdut}}"]
-    stub = [("vinp", -120, -40, -240, -40), ("vinn", -120, 40, -240, 40),
-            ("voutp", 120, -40, 240, -40), ("voutn", 120, 40, 240, 40),
-            ("vdd", 0, -100, 0, -200), ("vbn", -40, 100, -40, 200),
-            ("vbp", 40, 100, 40, 200)]
-    for i, (net, px, py, lx, ly) in enumerate(stub):
-        out.append(f"N {600+px} {py} {600+lx} {ly} {{lab={net}}}")
-        out.append(f"C {{devices/lab_pin.sym}} {600+lx} {ly} 0 "
-                   f"{1 if lx > px else 0} {{name=t{i} lab={net}}}")
-    esc = lambda s: s.replace('"', '\\"')
-    # xschem stores a multi-line property as REAL newlines inside the quotes; a
-    # "\n" escape becomes the letter n and yields ".lib cornerMOShv.lib mos_ttn".
-    # Stacked BELOW the cell, not beside it: the bench text is ~95 characters
-    # wide and xschem's zoom-to-fit sizes the view from symbol boxes, not from
-    # the text inside them, so a block placed to the right renders off-canvas.
-    out.append(f'C {{devices/code_shown.sym}} -260 320 0 0 {{name=BENCH '
-               f'only_toplevel=false value="{esc(bench)}"}}')
-    out.append(f'C {{devices/code_shown.sym}} -260 800 0 0 {{name=CTRL '
-               f'only_toplevel=false value="{esc(ctrl)}"}}')
+def tb_sch(cell: str, tb: dict, what: str, analysis: str) -> Sch:
+    s, e = Sch(), tb["els"]
+    assert set(e) == TB_ELS, \
+        f"bench elements drifted: {sorted(set(e) ^ TB_ELS)} -- teach tb_sch"
+    val = lambda n: e[n]["value"]                              # noqa: E731
+    nets = lambda n: e[n]["nets"]                              # noqa: E731
+
+    # ------------------------------------------------- stimulus + balun
+    s.comp("devices/vsource.sym", 300, 300, 0, 0,
+           f'name=vsig value="{val("vsig")}" savecurrent=false')
+    s.comp("devices/vsource.sym", 300, 500, 0, 0,
+           f'name=vcm value={val("vcm")} savecurrent=false')
+    for nm, y in (("vsig", 300), ("vcm", 500)):
+        for p, net in zip(("p", "m"), nets(nm)):
+            s.node(net, *pin("vsrc", p, 300, y), f"{nm}.{p}")
+    for nm, y in (("evp", 240), ("evn", 560)):
+        s.comp("devices/vcvs.sym", 600, y, 0, 0, f"name={nm} value={val(nm)}")
+        for p, net in zip(("p", "m", "cp", "cm"), nets(nm)):
+            s.node(net, *pin("vcvs", p, 600, y), f"{nm}.{p}")
+    # ------------------------------------------------- device under test
+    s.comp(f"{cell}.sym", 1200, 400, 0, 0, "name=xdut")
+    dutmap = dict(zip(("vinp", "vinn", "voutp", "voutn", "vbn", "vbp", "vdd"),
+                      nets("xdut")))
+    for nm, (dx, dy) in (("vinp", (-140, -40)), ("vinn", (-140, 40)),
+                         ("voutp", (140, -40)), ("voutn", (140, 40)),
+                         ("vbn", (40, 120)), ("vbp", (-40, 120)),
+                         ("vdd", (0, -120))):
+        s.node(dutmap[nm], 1200 + dx, 400 + dy, f"xdut.{nm}")
+    # ---------------------------- supply, core-current probe, bias mirror
+    s.comp("devices/vsource.sym", 1450, 140, 0, 0,
+           f'name=vflt value={val("vflt")} savecurrent=false')
+    s.comp("devices/vsource.sym", 2050, 140, 0, 0,
+           f'name=vdd_meas value={val("vdd_meas")} savecurrent=false')
+    s.comp("devices/isource.sym", 1600, 140, 0, 0,
+           f'name=iref value={val("iref")}')
+    for nm, x in (("vflt", 1450), ("vdd_meas", 2050)):
+        for p, net in zip(("p", "m"), nets(nm)):
+            s.node(net, *pin("vsrc", p, x, 140), f"{nm}.{p}")
+    for p, net in zip(("p", "m"), nets("iref")):
+        s.node(net, *pin("isrc", p, 1600, 140), f"iref.{p}")
+    for nm, x, y in (("xmbn", 1550, 380), ("xmbp", 1900, 380),
+                     ("xmbpd", 1900, 180)):
+        s.mos(nm[1:], e[nm], x, y, 0, e[nm]["nets"])
+    # ------------------------------------------------------------ wiring
+    s.wire("sig", (300, 270), (300, 180), (560, 180), (560, 220))
+    s.wire("sig", (460, 180), (460, 540), (560, 540))
+    s.wire("vcm", (300, 330), (300, 470))
+    s.wire("vcm", (300, 400), (500, 400))
+    s.wire("vcm", (500, 260), (500, 610))
+    s.wire("vcm", (500, 260), (560, 260))
+    s.wire("vcm", (500, 290), (600, 290), (600, 270))
+    s.wire("vcm", (500, 580), (560, 580))
+    s.wire("vcm", (500, 610), (600, 610), (600, 590))
+    s.wire("0", (300, 530), (300, 580))
+    s.wire("vinp", (600, 210), (1060, 210), (1060, 360))
+    s.wire("vinn", (600, 530), (1000, 530), (1000, 440), (1060, 440))
+    s.wire("voutp", (1340, 360), (1420, 360))
+    s.wire("voutn", (1340, 440), (1420, 440))
+    s.wire("vdd_top", (1450, 60), (2050, 60))
+    s.wire("vdd_top", (1450, 60), (1450, 110))
+    s.wire("vdd_top", (1600, 60), (1600, 110))
+    s.wire("vdd_top", (1920, 60), (1920, 180))
+    s.wire("vdd_top", (2050, 60), (2050, 110))
+    s.wire("vdd", (1450, 170), (1450, 220), (1200, 220), (1200, 280))
+    s.wire("vbn", (1600, 170), (1600, 300))
+    s.wire("vbn", (1400, 300), (1750, 300))
+    s.wire("vbn", (1570, 300), (1570, 350))
+    s.wire("vbn", (1500, 300), (1500, 380), (1530, 380))
+    s.wire("vbn", (1750, 300), (1750, 380), (1880, 380))
+    # vbn rises to the mirror in the channel between the DUT box and its output
+    # pins; vbp returns further right than the whole bias block.  Any other
+    # pairing makes the two bias nets cross each other.
+    s.wire("vbn", (1240, 520), (1240, 620), (1320, 620), (1320, 300), (1400, 300))
+    s.wire("vbp", (1850, 250), (1920, 250))
+    s.wire("vbp", (1920, 210), (1920, 350))
+    s.wire("vbp", (1880, 180), (1850, 180), (1850, 250))
+    s.wire("vbp", (1160, 520), (1160, 700), (2120, 700), (2120, 250), (1920, 250))
+    s.wire("0", (1570, 380), (1570, 470))
+    s.wire("0", (1920, 380), (1920, 470))
+    s.wire("0", (1570, 470), (1920, 470))
+    s.wire("0", (2050, 170), (2050, 230))
+    for x, y in ((300, 580), (1750, 470), (2050, 230)):
+        s.label("0", x, y, sym="gnd")
+    # EVERY top-level net gets a visible name.  An unlabelled net still
+    # netlists, but xschem invents `#net<N>` for it -- which is how a bench
+    # silently stops probing what its .control block thinks it probes.
+    for net, x, y in (("sig", 380, 180), ("vcm", 400, 400),
+                      ("vdd_top", 1750, 60), ("vdd", 1320, 220),
+                      ("vinp", 900, 210), ("vinn", 860, 530),
+                      ("vbp", 1600, 700)):
+        s.label(net, x, y)
+    s.label("vbn", 1320, 560, flip=1)   # text away from the DUT box edge
+    for net, y in (("voutp", 360), ("voutn", 440)):
+        s.label(net, 1420, y, flip=1)   # text away from the DUT's pin caption
+    # ------------------------- directives + control, verbatim from as-built
+    direct = [d for d in tb["directives"] if not d.lower().startswith(".end")]
+    s.comp("devices/code_shown.sym", 200, 820, 0, 0,
+           'name=DIRECTIVES only_toplevel=false value="'
+           + "\n".join(direct).replace('"', '\\"') + '"')
+    s.comp("devices/code_shown.sym", 200, 1000, 0, 0,
+           'name=CTRL only_toplevel=false value="'
+           + "\n".join(tb["control"]).replace('"', '\\"') + '"')
+    s.text(f"{cell} sign-off testbench -- {what}", 200, 40, 0.5)
+    s.text("balun gains +-0.5 so the vsig amplitude IS the differential input.",
+           200, 75, 0.3)
+    s.text("vflt is a 0 V series probe carrying the CORE current only. The bias "
+           "reference sits AHEAD of it, so S6 excludes the reference by "
+           "construction rather than by subtraction.", 200, 760, 0.3)
+    if TB_NOTE[analysis]:
+        s.text(TB_NOTE[analysis], 200, 105, 0.3)
     from datetime import datetime, timezone
-    out.append(f"T {{{cell} sign-off testbench -- {what}}} -260 -360 0 0 "
-               f"0.5 0.5 {{}}")
-    out.append("T {" + datetime.now(timezone.utc).strftime(
-        "generated %Y-%m-%d %H:%M UTC by scripts/draw_xschem.py")
-        + "} -260 -270 0 0 0.18 0.18 {}")
-    out.append("T {The bench text below is copied verbatim from "
-               "signoff/asbuilt/ - balun evp/evn at +-0.5 so vsig IS the "
-               "differential input, series vflt carrying the filter-core "
-               "current only, bias reference ahead of that probe so S6 excludes "
-               "it by construction.} -260 -320 0 0 0.25 0.25 {}")
-    out.append(f'C {{devices/title.sym}} -260 1220 0 0 {{name=l1 '
-               f'author="{cell} testbench"}}')
-    return "\n".join(out) + "\n"
+    # below the tallest .control block (the gd bench's), not the shortest
+    s.text(datetime.now(timezone.utc).strftime(
+        "generated %Y-%m-%d %H:%M UTC by scripts/draw_xschem.py"),
+        200, 1450, 0.2)
+    s.comp("devices/title.sym", 200, 1490, 0, 0,
+           f'name=l1 author="{cell} testbench -- {analysis}"')
+    return s
 
 
 # ------------------------------------------------------------------ gate 1 --
@@ -514,6 +597,13 @@ def gate2(outdir: Path, tb: str, design_json: Path, image: str) -> tuple[bool, l
     card = json.loads(design_json.read_text())
     card = card[0] if isinstance(card, list) else card
     g = card.get("design", card)
+    # Certified numbers: a sibling scorecard.json (the packaged candidates)
+    # beats metric keys on the sizing row itself (the record cells).  Without
+    # this, a candidate's gate compares against nothing and passes vacuously.
+    sc = design_json.with_name("scorecard.json")
+    if sc.exists():
+        j = json.loads(sc.read_text())
+        card = {**j.get("scorecard", {}), "thd_db": j.get("thd_db")}
     d = Design(topology=g["topology"],
                devs={r: Dev(**v) for r, v in g["devs"].items()},
                iref=g["iref"], vicm=g["vicm"], vocm=g["vocm"],
@@ -549,6 +639,9 @@ def main() -> int:
     ap.add_argument("--name", required=True)
     ap.add_argument("--design", default="", help="sizing JSON for the sim gate")
     ap.add_argument("--image", default="spicexplorer-spice-base:local")
+    ap.add_argument("--tb-only", action="store_true",
+                    help="redraw symbol + testbench sheets but leave the core "
+                         ".sch alone (it may carry op annotations)")
     a = ap.parse_args()
     ab, out = Path(a.asbuilt).resolve(), Path(a.outdir).resolve()
     mos, caps = read_asbuilt(ab)
@@ -556,20 +649,25 @@ def main() -> int:
 
     if a.cmd == "build":
         out.mkdir(parents=True, exist_ok=True)
-        (out / f"{a.name}.sch").write_text(core_sch(mos, caps, a.name))
+        if not a.tb_only:
+            (out / f"{a.name}.sch").write_text(core_sch(mos, caps, a.name))
         (out / f"{a.name}.sym").write_text(core_sym(a.name))
-        sheets = [("_tb_acnoise", "op + ac + noise", tb),
-                  ("_tb_thd", "coherent strobed transient, S7", tb + "_thd"),
+        sheets = [("_tb_acnoise", "acnoise", "op + ac + noise", tb),
+                  ("_tb_thd", "thd", "coherent strobed transient, S7",
+                   tb + "_thd"),
                   # optional reviewer benches -- drawn only when the deck exists
-                  ("_tb_gd", "group delay, tau computed in-deck", tb + "_gd"),
-                  ("_tb_mc", "one seeded mismatch MC sample", tb + "_mc")]
-        for suffix, what, nm in sheets:
+                  ("_tb_gd", "gd", "group delay, tau computed in-deck",
+                   tb + "_gd"),
+                  ("_tb_mc", "mc", "one seeded mismatch MC sample", tb + "_mc")]
+        for suffix, analysis, what, nm in sheets:
             src = ab.with_name(ab.stem + suffix + ab.suffix)
             if suffix in ("_tb_gd", "_tb_mc") and not src.exists():
                 continue
-            bench, ctrl = split_tb(src)
-            (out / f"{nm}.sch").write_text(tb_sch(a.name, bench, ctrl, what))
-        print(f"drew {a.name}.sch/.sym + {tb}.sch + {tb}_thd.sch into {out}")
+            t = tb_sch(a.name, parse_deck(src), what, analysis)
+            (out / f"{nm}.sch").write_text(t.render())
+            print(f"{nm}.sch: {t.stats()}")
+        print(f"drew {a.name}{'.sym' if a.tb_only else '.sch/.sym'} "
+              f"+ {tb}*.sch into {out}")
         return 0
 
     if a.cmd == "check":
