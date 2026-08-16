@@ -6,7 +6,7 @@ cell's own frozen benches). Curve/sample data that a script produced is kept in
 `data/` so a figure and a table can never drift apart.
 
 **House style** — `scripts/_style.py`, applied by every figure script:
-IEEE column widths (3.5 in single, **7.2 in** double — all seven of these have
+IEEE column widths (3.5 in single, **7.2 in** double — all eight of these have
 three or more panels, so all are double-column), 8 pt body / 9 pt panel titles,
 `constrained_layout=True` so a figure title can never land on a panel title,
 colour paired with dash pattern *and* marker so the curves survive a grayscale
@@ -33,6 +33,7 @@ Two interpreters are in play:
 
 | file | script | what it shows | inputs | sims? |
 |---|---|---|---|---|
+| `group_delay.png/.pdf` | `scripts/fig_group_delay.py` | Group delay τ(f) = −dφ/dω: (a) reference baseline vs pre- vs post-layout it14 at nominal, with the passband delay ripple and τ_dc·fc against the 4th-order Butterworth value 0.416; (b) post − pre in µs; (c) one-axis + MIM corners, pre solid / post dashed; (d) mismatch MC of τ(0.1 Hz) and the peak. See `../results_group_delay.md`. | `decks/reference/design.json`; `signoff/post-pvt/H12-pdk-cap/design.json`; `layout/H12-pdk-cap/asbuilt/core_pex.sp` | **yes** — 25 × `lab.deck.ac_noise` at 100 pts/decade (`LPF_BIAS_ALPHA=1.1` for the temperature rows) + 2 × `lab.mc.run` n=100. `--replot` redraws from `data/group_delay.json`; `--no-mc` skips the MC |
 | `prepost_bode.png/.pdf` | `scripts/fig_prepost_bode.py` | Differential \|H(f)\| and unwrapped phase before layout and after layout rounds 3 and 4, plus the after−before delta. Panel (a) runs down to −137 dB so the **transmission zero and the feed-through floor** are both visible; panel (b) is the two-biquad phase certificate. See the note below on why the phase returns to 0°. | `signoff/post-pvt/H12-pdk-cap/design.json`; PEX it14 = `layout/H12-pdk-cap/asbuilt/core_pex.sp`; PEX it13 = `git show ee6b342:layout/H12-pdk-cap/asbuilt/core_pex.sp` | **yes** — 3 × `lab.deck.ac_noise` at `mos_tt`/27 °C/1.5 V. `--replot` redraws from `data/prepost_bode.json` |
 | `mc_hist.png/.pdf` | `scripts/fig_mc.py` | Mismatch Monte Carlo n = 100, **paired pre- vs post-layout** (same seeds 1–100): `fc`, \|H\|@1 kHz, IRN and dc distributions with the spec limits and the out-of-box counts. | same sizing + it14 PEX; cross-checked against the certified summary in `experiments/023-replica-bias/H12-pdk-cap.json` → `mc` | **yes** — 200 ac+noise processes (17 s + 51 s wall at 14 workers). `--replot` redraws from `data/mc_samples.json` |
 | `pvt_window.png/.pdf` | `scripts/fig_pvt.py` | The PVT operating window at schematic level: (a) supply sweep, (b) temperature sweep, (c) the five process corners with their input-referred noise, (d) the full 45-point grid as a pass/fail map. | `experiments/023-replica-bias/{vsw_H12-pdk-cap.json, tsw_H12-pdk-cap_a1p1_1p5.json, H12-pdk-cap.robust.a1p1.json}` | no |
@@ -71,6 +72,7 @@ Two paper-worthy consequences, both measured here:
 | `data/prepost_bode.json` | `fig_prepost_bode.py` | f, \|H\| dB, phase deg (301 pts) + the full scorecard and violation list for all three DUTs |
 | `data/mc_samples.json` | `fig_mc.py` | every MC draw of both campaigns (seed, usable, ok, violations, 6 metrics), the per-line yields, the stats, and the certified summary it was checked against |
 | `data/postlayout_pvt.json` | `fig_pvt_postlayout.py` | every corner row of both DUTs for all three sets (corner, status, all 18 metric values, violations) + the per-set wall clock |
+| `data/group_delay.json` | `fig_group_delay.py` | f, \|H\|, phase and τ(f) (100 pts/decade, cut at the −100 dB floor) + scorecard for 3 nominal DUTs and 12 corners × {pre, post}; 100 paired MC rows per DUT (`fc_hz`, `gd_dc_ms`, `gd_max_ms`, `gd_fc_ms`) |
 | `data/iteration_trail.csv` | `fig_iterations.py` | the drawn trail as a flat table: id, area, `ph_max`, `fc`, `a1000`, `irn`, `thd`, DRC n, LVS matched, PEX n_c, GDS sha prefix |
 
 ---
@@ -119,8 +121,8 @@ Copied here, the ones a paper would use:
 
 ## Regenerating everything
 
-All seven generated figures are 7.2 in wide at 200 dpi:
-`prepost_bode` 1440×1380 px · `mc_hist` 1440×980 · `pvt_window` 1440×1080 ·
+All eight generated figures are 7.2 in wide at 200 dpi:
+`group_delay` 1440×1920 px · `prepost_bode` 1440×1380 px · `mc_hist` 1440×980 · `pvt_window` 1440×1080 ·
 `thd` 1440×980 · `pvt_postlayout` 1440×1240 · `area_campaign` 1440×1400 ·
 `iteration_trail` 1440×1320.
 

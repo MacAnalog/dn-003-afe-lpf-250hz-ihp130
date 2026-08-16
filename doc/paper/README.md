@@ -11,9 +11,10 @@ produced it, or is named as a gap.
 | `README.md` (this) | storyline, claims, figure/table lists per paper, and the **gap list** |
 | `results_schematic.md` | every schematic-level number, as tables, each citing its source path |
 | `results_layout.md` | every layout-level number: area/iteration, DRC/LVS/PEX, pre→post, budgets, review findings, area campaigns |
+| `results_group_delay.md` | group delay τ(f) = −dφ/dω: reference vs pre- vs post-layout at nominal, over the one-axis + MIM corners, and a paired 100-seed Monte Carlo — tables + `figures/group_delay.png` |
 | `workflow.md` | the method: agent roles, gates, the review DSL, the iteration trail, the optimizer backend, co-optimization, **cost/effort with provenance**, and the human-decision log |
 | `figures/` | the figures, PNG + PDF, with `figures/README.md` naming each one's script and inputs |
-| `scripts/` | the generating scripts — six of them, all reading committed artifacts |
+| `scripts/` | the generating scripts — eight of them, all reading committed artifacts |
 
 **Provenance rule this repo enforces** (`make lint`): no proprietary node,
 foundry, simulator or schematic-editor name appears anywhere. The PDK
@@ -99,6 +100,7 @@ Headline numbers, all measured in this repo:
 | F3 | `figures/static/layout_lpf_core.png` | the layout of record, 228 093.6 µm², DRC 0 / LVS matched | `layout/H12-pdk-cap/lpf_core_layout.png` |
 | F4 | `figures/prepost_bode.png` | pre- vs post-layout \|H\| and phase; panel (b) is the S1 certificate | 3 bench runs, `scripts/fig_prepost_bode.py` |
 | F5 | `figures/area_campaign.png` | 600 optimizer trials: area is bounded by the gate-net capacitance, and the knobs do not reach the white space — the dummy-row *decision* does | `scripts/fig_area_campaign.py` |
+| F6 | `figures/group_delay.png` | group delay: τ_dc·fc = 0.41 (Butterworth-like), layout adds +0.2 % at dc / +0.4 % at the peak — below one mismatch σ; corners scale τ as 1/fc except temperature | 25 bench runs + 200 MC draws, `scripts/fig_group_delay.py` |
 
 If a sixth fits: `figures/mc_hist.png` (yield) or `figures/static/review_annotated.png`
 (all 25 findings drawn on the layout — the strongest single image in the pack).
@@ -110,6 +112,7 @@ If a sixth fits: `figures/mc_hist.png` (yield) or `figures/static/review_annotat
 | T1 | Spec box S1–S8 vs baseline vs delivered cell (one row per line, with the pass/fail definition) | `results_schematic.md` §1 + §2 |
 | T2 | PVT + Monte Carlo summary: 5 process corners, supply and temperature windows, grid coverage, MC yield and σ | `results_schematic.md` §4, §5 |
 | T3 | Layout closure: area, DRC, LVS, PEX element counts, and the pre→post scorecard delta with attribution | `results_layout.md` §2, §5 |
+| T4 | Group delay: τ(dc), peak, τ(fc), passband delay ripple, τ_dc·fc — reference vs pre vs post, corners, MC | `results_group_delay.md` §2 |
 
 ---
 
@@ -249,6 +252,7 @@ Ordered by how likely it is to be asked, with the concrete way to produce it.
 | **G21** | **The run ledger is gitignored and partial** (253 rows, 3 days) — it cannot support a "total simulations" claim. | Use the defensible substitutes in `results_schematic.md` §10. |
 | **G22** | ~~A pre-layout corner column disagrees with the certified sign-off~~ — **resolved 2026-08-16**: `REPORT.md` §5 (A7) ran both DUTs with the constant-current bias law (`LPF_BIAS_ALPHA` unset = 0 → 237.04° / 222.31° pre-layout, reproduced exactly on re-run); `PRELAYOUT.md` uses α = 1.1 (251.7° / 256.0°). REPORT §5's caption corrected. | Quote α = 1.1 rows for schematic PVT; REPORT rows only for the pre→post shift. |
 | **G23** | **Round 4 has not been independently reviewed.** The review of record is round 3; round 4 changed 18 knob defaults and found three illegal `BOUNDS` endpoints. | Run `layout-reviewer` on round 4 — 1 agent episode (~30–40 min of machine time, see `workflow.md` §7.3). |
+| **G24** | ~~No group-delay characterisation~~ — **closed 2026-08-16**: `results_group_delay.md` + `figures/group_delay.png` (nominal ×3 DUTs, 12 corners pre/post, 100-seed paired MC). | — |
 
 ---
 
