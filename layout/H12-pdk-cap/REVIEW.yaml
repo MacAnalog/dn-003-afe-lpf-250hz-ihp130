@@ -1,581 +1,399 @@
 schema: layout-review/1
 cell: lpf_core
-gds: /home/noorizad/.claude/jobs/fca5caa6/tmp/review/build/lpf_core.gds
-gds_sha256: e5cfa1daad8818248f2695ac22b18d633d7723edd71cd2f4f0d76bc888786a9c
+gds: /home/noorizad/.claude/jobs/fca5caa6/tmp/review3/build/lpf_core.gds
+gds_sha256: fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed
 generator:
   path: layout/H12-pdk-cap/gen_H12_pdk_cap.py
-  params: {}
-  sha256: 845785f4a4372ae0d3fa9443bb7ed9d71c8bed17ad8e89707424ba5fad71a223
-verdict: FAIL
+  sha256: 6ae114ad2690935155d07a2b9fbb984e574445f72a4382770e02d99498fce65e
+  params: default LayoutParams (33 knobs, no knob moved)
+verdict: PASS with notes
+round: 3
+kind: independent re-review (round 3)
 reproduced:
-  build: match
+  build: match (two independent reviewer builds, both sha fc59cfd7...0500ed = the designer's claim and = iterations/it13)
   drc:
     passed: true
     n: 0
-    note: PDK KLayout deck, 35 tables + sg13g2_maximal, no_density; no waivers claimed, none needed
+    deck: PDK run_drc.py via signoff.run_drc, --no_density
+    waivers: 0
   lvs:
     passed: true
-    netlist: layout/H12-pdk-cap/asbuilt/core_lvs.sp
-    netlist_sha: 4ce3177c16c239c33c04d3f41c3f705a41b2a400e808b84c72160059fba0f4a5
-    certified_netlist: signoff/post-pvt/H12-pdk-cap/asbuilt/core.sp
-    certified_sha: ef78d6f8d4e28cfbf18dc7abf6bd4066070fdf9f63546d430f16c4d71ffaf3c7
-    note: 'core_lvs.sp regenerated from the generator: byte-identical; diff against to_lvs_reference(core.sp) shows
-      exactly the three declared edits (0->vss + pin, xc1/xc10 terminal swap, two dummy cards) and nothing else'
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+    netlist_path: layout/H12-pdk-cap/asbuilt/core_lvs.sp
+    certified_netlist: signoff/post-pvt/H12-pdk-cap/asbuilt/core.sp sha ef78d6f8d4e28cfbf18dc7abf6bd4066070fdf9f63546d430f16c4d71ffaf3c7
+    provenance: regenerated from the round-3 generator -> byte-identical to the committed file; diff vs to_lvs_reference(core.sp)
+      is EXACTLY the four declared edits (0->vss + pin; xc1/xc10 terminal swap; Cc19 8 -> 4+4 and Cc12 7 -> 4+3 anti-oriented;
+      Mdumn w=336u + Mdump w=24u) and nothing else
+    unchecked_pins:
+    - vbp (F13)
   pex:
-    mode: CC+RC
-    n_c: 78
-    n_r: 6233
-    note: CC 78 C / 0 R and RC 78 C / 6233 R; the designer's RC count of 77 C omits the VSUBS-to-0 element they
-      merge away. My CC netlist matches asbuilt/core_pex.sp on all 64 net pairs to <1e-4 relative.
+    mode: CC and RC
+    n_c: 71
+    n_r: 0
+    rc_n_c: 71
+    rc_n_r: 8609
+    note: reviewer's CC subckt is BYTE-IDENTICAL to the committed asbuilt/core_pex.sp; three CC runs are byte-deterministic,
+      RC is not (F24). No net2-net3 or net4-net1 element exists (F16).
   scorecard:
-    fc_hz:
-      designer: 248.275
-      reviewer: 248.275
     ph_max_deg:
-      designer: 330.732
-      reviewer: 330.732
+      designer: 331.1595
+      reviewer: 331.1595
+    fc_hz:
+      designer: 248.6388
+      reviewer: 248.6388
     a1000_db:
-      designer: -49.263
-      reviewer: -49.263
+      designer: -49.2221
+      reviewer: -49.2221
     ripple_db:
-      designer: 0.0232
-      reviewer: 0.0232
+      designer: 0.0347
+      reviewer: 0.0347
     peak_db:
-      designer: 0.0206
-      reviewer: 0.0206
+      designer: 0.0136
+      reviewer: 0.0136
     dc_db:
       designer: -0.0081
       reviewer: -0.0081
     irn_uv:
-      designer: 29.195
-      reviewer: 29.195
+      designer: 29.1942
+      reviewer: 29.1942
     p_core_nw:
-      designer: 11.913
-      reviewer: 11.913
+      designer: 11.9136
+      reviewer: 11.9136
     thd_db:
-      designer: -49.614
-      reviewer: -49.614
+      designer: -49.7008
+      reviewer: -49.7008
+    hd3_db:
+      designer: -49.8985
+      reviewer: -49.8985
     hd2_db:
-      designer: -88.06
-      reviewer: -88.06
-    ph_max_deg_cap_bcs_iref0p9:
-      designer: null
-      reviewer: 329.299
+      designer: -97.1706
+      reviewer: -97.1706
+    ph_max_deg_corner_A7:
+      designer: 329.751
+      reviewer: 329.7509
+    rc_fc_hz:
+      designer: 248.6793
+      reviewer: 248.6833
+    rc_ph_max_deg:
+      designer: 331.1592
+      reviewer: 331.1592
+  corners: 9-point AXES (pre + post) + 5 cornerCAP points with the iref trim, all re-run on the reviewer's own extraction;
+    every corner that passed pre-layout still passes except A7
+  bounds:
+    knobs: 33
+    endpoints: 66
+    built: 66
+    drc_clean: 66
+    violations: 0
+    dead_knobs: 0
+  symmetry: 'reviewer ran --check-symmetry itself: it01 FAIL (15 rules / 8 layers, character-identical to REPORT section
+    9), it08 / it09 / it10 / it13 PASS'
+  trail:
+    entries: 13
+    gds_sha_match: 13/13 stored GDS hash to their iterations.yaml sha
+    last_entry: it13 gds fc59cfd7...0500ed = the reviewer's rebuild; it13 gen sha 6ae114ad... = the committed generator
+    rebuilt: it09..it13 rebuilt from their own stored gen.py reproduce c0507860 / fc59cfd7 / fc59cfd7 / fc59cfd7 / fc59cfd7
+      exactly
+    table: REPORT section 10 regenerated with `spicexplorer-layout iterations-md` is IDENTICAL to the committed one -- generated,
+      not typed
+    diffs: diff_it08_it09 boxes 33 changed regions in island A (the lane move); diff_it09_it10 boxes 6 Metal1/Metal2/Via1
+      regions on the middle bias row (the drain bar returning); diff_it10_it11, diff_it11_it12 and diff_it12_it13 draw nothing,
+      consistent with their byte-identical GDS
 units: um
 axis:
   x: 0.0
-not_checked:
-- MIM top-plate environment capacitance (kpex cmim_top '<TODO>' crash; extraction runs on the MIM-stripped GDS)
-  - F11
-- 'n-well/p-substrate junction capacitance: no model in kpex''s ihp tech and none in the PSP device cards - F3 is
-  a hand estimate, not a measurement'
-- 'antenna ratios: the IHP KLayout deck has no antenna rule table - F12'
-- 'mismatch Monte Carlo post-layout (pre-layout: 82% all-pass, THD sigma 0.80 dB) - not re-run'
-- the full 45-point PVT grid post-layout; I ran the 9-point AXES set plus the 5 cornerCAP.lib points
-- 'density/fill and sealring: absent by PLAN sec.6, so both pre- and post-layout numbers are fill-free and the comparison
-  is consistent'
-- Magic/netgen second opinion on DRC/LVS
-- the off-cell mirror unit xmbn (out of scope by PLAN sec.6)
-reviewer: layout-reviewer
 findings:
 - id: F1
-  severity: blocker
+  severity: major
   category: objective
-  title: S1 phase fails post-layout at cap_bcs / iref x0.9 — a corner the pre-layout sign-off certified as PASS
+  verdict: open
+  title: S1 still missed at the cap_bcs x0.9 + iref x0.9 corner (329.751 deg vs 330.0) -- blocker but for the approved PLAN
+    R2.8 Q3 decision
   where:
   - kind: box
-    layer: TopMetal1drawing
-    x0: -175.685
-    y0: 110.74
-    x1: -5.15
-    y1: 112.44
-  - kind: box
-    layer: TopMetal1drawing
-    x0: 5.15
-    y0: 110.74
-    x1: 133.555
-    y1: 112.44
-  - kind: net
-    name: net2
-  - kind: net
-    name: net3
-  evidence: 'reviewer re-run of lab.metrics.evaluate on layout/H12-pdk-cap/asbuilt/core_pex.sp with LPF_CAP_CORNER=cap_bcs,
-    iref x0.9: ph_max = 329.299 deg < 330 (S1 violated). Pre-layout the same corner is PRELAYOUT.md sec.5 row ''cap_bcs
-    / 0.9 / ph 331.0 / PASS''; my re-measurement of it gives 331.021. Post-layout loss at that corner = -1.722 deg.
-    Nominal (cap_typ) post-layout margin is 0.732 deg, i.e. below the 1.00 deg pvt margin brief.json/margins_pvt.ph_max
-    was built on. REPORT.md sec.6 predicts this failure but does not measure it; no corner set is run in the report.'
+    layer: Metal5drawing
+    x0: -166.18
+    y0: 110.84
+    x1: 166.18
+    y1: 231.0
+  - kind: point
+    x: -4.9
+    y: 166.44
+  - kind: point
+    x: 4.9
+    y: 166.44
+  evidence: 'reviewer''s own build+extraction+bench: LPF_CAP_CORNER=cap_bcs, iref x0.9 -> ph_max = 329.7509 deg, S1 biquad-order
+    certificate FAIL (limit 330.0). REPORT front page 329.751 reproduces to 4 decimals. round 2: 329.7458 (reviewer 329.7458),
+    round 1: 329.299, PRE-LAYOUT 331.018 PASS. Every other corner that passed pre-layout still passes (9-point AXES + 5
+    cornerCAP points, all re-run on the reviewer''s PEX). Attribution reproduced at fixed axis_gap=12: F16 lane_mid 1.9->4.9
+    = +0.0722 deg at this corner, F17 min_m1->lane_m1 = -0.0568 deg; net +0.005 deg vs round 2.'
   effect:
     metric: ph_max_deg
-    delta: -1.722
+    delta: -0.2491
     unit: deg
     model: what-if
   fix:
-    knob: new feature
-    to: xc13/xc17 sub-arrays adjacent to the axis (xc19 outboard)
-    note: 'no existing knob reaches it - see F5. Measured knob-only attempts: cc13_cols=1 -> ph 329.444 (still FAIL,
-      free); cc19_cols=2 -> net2 worse (53.9 fF); cc19_cols=2+cc13_cols=1 -> net2 46.3 fF at +19% area. Required:
-      net2/net3 <= ~19.6 fF for a bare pass, <= 9.6 fF (the brief pvt budget) measured at ph 330.237 PASS.'
-  expected: net2/net3 <= 9.6 fF each -> ph_max 330.24 deg at cap_bcs/x0.9 (measured what-if), 331.62 nominal
-  verdict: open
+    knob: none (design lane)
+    to: iref trim / C1-C2 re-allocation / shorter L on xm4 / fewer xm9 fingers
+    note: the layout-reachable 0.062 deg the round-2 review identified has been taken (F16) and 0.057 deg deliberately given
+      back (F17); every remaining net2 term is device geometry or island height
+  expected: 330.0 deg at that corner, or the formal re-scope the block owner has already granted (PLAN R2.8 Q3)
 - id: F2
   severity: major
   category: budget
-  title: net2/net3 are 2.2x/2.0x over the balanced nominal C budget and 5.2x/4.7x over the pvt budget
+  verdict: worse
+  title: net2/net3 are 1.42x the brief's balanced C budget -- further over than round 2 (1.24x), disclosed and deliberate
   where:
   - kind: box
+    layer: Metal1drawing
+    x0: -57.01
+    y0: 150.94
+    x1: -4.65
+    y1: 219.64
+  - kind: box
+    layer: Metal1drawing
+    x0: 4.65
+    y0: 150.94
+    x1: 57.01
+    y1: 219.64
+  - kind: box
     layer: TopMetal1drawing
-    x0: -175.685
-    y0: 39.88
-    x1: -5.15
-    y1: 112.44
+    x0: -45.83
+    y0: 17.83
+    x1: -5.9
+    y1: 122.74
   - kind: box
-    layer: MIMdrawing
-    x0: -198.1
-    y0: -2.4
-    x1: -109.44
-    y1: 44.13
-  - kind: box
-    layer: MIMdrawing
-    x0: 109.44
-    y0: -2.4
-    x1: 198.1
-    y1: 44.13
-  - kind: line
-    points:
-    - - -175.685
-      - 111.59
-    - - -6.0
-      - 111.59
-    - - -6.0
-      - 177.0
-  evidence: 'reviewer kpex 2.5D CC on the rebuilt GDS (78 C, 0 R), C to the bench ac grounds (0/vdd/vbn/vbr/rep_x/vinp/vinn):
-    net2 50.04 fF, net3 44.94 fF vs brief.json budget_c_ff 22.8 / budget_c_ff_pvt 9.59. Element-for-element identical
-    to the designer''s asbuilt/core_pex.sp (64 net pairs, max rel. diff < 1e-4). Dominant term: the TopMetal1 haul
-    from the xc13 spine (x=-175.685) to the island-A drop (x=-6), 170.5 um long, at a measured 0.116 fF/um (kpex
-    ihp tech: TopMetal1 area 5.649 aF/um2 + 2 x 37.383 aF/um perimeter = 84 aF/um).'
+    layer: TopMetal1drawing
+    x0: 5.9
+    y0: 17.83
+    x1: 45.83
+    y1: 122.74
+  evidence: 'reviewer kpex CC, C to the bench ac grounds: net2 32.328 fF / net3 32.329 fF vs brief.json budget_c_ff 22.8
+    (pvt 9.59) = 1.42x / 3.37x. Round 2: 28.270 (1.24x); round 1: 50.04. The +4.06 fF is the F17 price: net2''s Metal1 goes
+    4.971 -> 29.542 um2 (perimeter 44 -> 232 um), measured on the rebuilt GDS, which the extraction charges as +3.05 fF
+    substrate and +0.60 fF to vbn. One-sided delta -0.001 fF (budget 45.7) and C between halves 0.0000 fF (budget 11.4)
+    both pass. Every one of the 21 brief cross_coupling budgets passes with >=99% margin.'
   effect:
     metric: ph_max_deg
-    delta: -1.117
+    delta: -0.741
     unit: deg
     model: what-if
   fix:
-    knob: cc13_cols
-    to: 1
-    note: 'free and DRC-clean at identical area: net2 50.04 -> 42.52 fF, net3 44.94 -> 42.11, ph_max 330.732 ->
-      330.872. Not sufficient alone (F1); the structural fix is the bank-A re-order of F5.'
-  expected: net2/net3 <= 22.8 fF (nominal budget) recovers +0.59 deg of ph_max; <= 9.6 fF recovers +0.89 deg
-  verdict: open
+    knob: net23_strap
+    to: min_m1 (recovers 0.050 deg and 3.2 fF, at the cost of BRIEF 2.1)
+    note: the designer's choice -- matching rule over 0.05 deg -- is the right one; closing A4 needs the design lane (see
+      F1)
+  expected: <= 22.8 fF nominal, or an amended A4 that prices BRIEF 2.1
 - id: F3
   severity: major
   category: well
-  title: n-well/p-substrate junction C of the seven signal wells is in neither the extraction nor the device model
+  verdict: deferred
+  title: n-well / p-substrate junction C is still outside every model in the flow (bound -0.108...-0.259 deg)
   where:
+  - kind: box
+    layer: NWelldrawing
+    x0: -28.3
+    y0: 209.89
+    x1: -6.0
+    y1: 222.26
+  - kind: box
+    layer: NWelldrawing
+    x0: 6.0
+    y0: 209.89
+    x1: 28.3
+    y1: 222.26
   - kind: box
     layer: NWelldrawing
     x0: -54.38
-    y0: 200.26
+    y0: 234.26
     x1: -19.46
-    y1: 209.63
+    y1: 243.63
+  - kind: box
+    layer: NWelldrawing
+    x0: -17.46
+    y0: 234.26
+    x1: 17.46
+    y1: 243.63
   - kind: box
     layer: NWelldrawing
     x0: 19.46
-    y0: 200.26
+    y0: 234.26
     x1: 54.38
-    y1: 209.63
-  - kind: pair
-    a:
-      x: -36.9
-      y: 204.9
-    b:
-      x: -36.9
-      y: 194.3
-  - kind: net
-    name: net4
-  - kind: net
-    name: net1
-  evidence: 'klayout_pex_protobuf/ihp-sg13g2_tech.pb.json process_parasitics lists NWell only as an overlap/side-overlap
-    BOTTOM layer (metal-over-well); there is no NWell<->substrate term and no ''substrates'' entry for NWell, so
-    kpex 2.5D cannot produce it. The PSP MOS model''s junction C uses AS/AD/PS/PD (source/drain diffusion) only.
-    Measured well areas from the rebuilt GDS: net4 and net1 327.20 um2 each (P = 88.6 um), rep_x 327.20, vout_1/vout_2
-    275.85, voutp/voutn 141.62. At a depletion-model Cj of 0.05-0.12 fF/um2 at the 0.93 V well bias this is 16-39
-    fF per half on net4/net1, on top of the extracted 77.30/67.27 fF against an 82.8 fF nominal / 34.8 fF pvt budget.'
+    y1: 243.63
+  - kind: box
+    layer: NWelldrawing
+    x0: -22.92
+    y0: 249.63
+    x1: -6.0
+    y1: 258.0
+  - kind: box
+    layer: NWelldrawing
+    x0: 6.0
+    y0: 249.63
+    x1: 22.92
+    y1: 258.0
+  evidence: 'reviewer re-measured the wells on the rebuilt GDS: 8 islands, every one tapped (tap area 12.5-261 um2), mirror-XOR
+    of NWell exactly 0.0000 um2. Lumped-Cj what-if on a copy of the reviewer''s PEX netlist at 0.05 / 0.12 fF/um2 (275.851
+    / 327.200 / 141.620 um2 per island): ph_max 331.0515 / 330.9004.'
   effect:
     metric: ph_max_deg
-    delta: -0.2
+    delta: -0.259
     unit: deg
     model: hand
   fix:
-    knob: new feature
-    to: add a well-junction C model to the post-layout splice (or shrink the net4/net1 wells)
-    note: wells are already at minimum enclosure (well_margin=0.62 = NW.c floor), so the only levers are a smaller
-      xmst/xmstn or an explicit Cj estimate added to the PEX subckt before the benches run. Either way the number
-      must be on the scorecard, not absent from it.
-  expected: net4/net1 true load ~93-116 fF vs an 82.8 fF budget; ph_max ~0.12-0.28 deg worse than the reported 330.732
-  verdict: open
-- id: F4
-  severity: major
-  category: knob
-  title: 13 of the 24 LayoutParams knobs have a DRC-illegal endpoint in BOUNDS (REPORT sec.7 claims none can)
-  where:
-  - kind: box
-    layer: Activdrawing
-    x0: 79.44
-    y0: 148.74
-    x1: 81.44
-    y1: 156.74
-  - kind: box
-    layer: Activdrawing
-    x0: -157.88
-    y0: 116.94
-    x1: -81.44
-    y1: 156.74
-  - kind: box
-    layer: Metal1drawing
-    x0: -2.0
-    y0: 160.0
-    x1: 2.0
-    y1: 190.0
-  - kind: box
-    layer: Activdrawing
-    x0: -162.68
-    y0: 192.26
-    x1: 162.68
-    y1: 196.26
-  evidence: 'reviewer built + DRC''d all 24 knobs at both BOUNDS endpoints (48 builds, PDK KLayout deck). 13 endpoints
-    are dirty: bias_dummy_cols=2 -> 330 (Cnt.j 278, pSD.i 24, Cnt.f 12, Cnt.d 10, Gat.f 6); ring_w=3.0 -> 132 (Gat.c
-    48, Cnt.c 36, Cnt.j 36, pSD.i 12); gmfb_dummy=2 -> 80 (10 rules); bank_gap=6.0 -> 13; row_gap=3.0 -> 12; w_m2=1.0
-    -> 12 (M2.b); dev_gap_x=1.0 -> 6 (TGO.e at +-79.71,148.22); axis_gap=2.0 -> 2 (M1.b); cap_bank_gap=4.0 -> 2
-    (TM1.b); cc19_cols=1 -> 2 (V2.b); cc1_cols=16 -> 2 (CntB.a1, and the cell grows to x=+-834 um); ring_gap=15.0
-    -> 1 (TM1.b); via_pad=4.0 -> 2 (TM1.b). REPORT.md sec.7: ''no legal knob value can produce a violation''. Note
-    four of these are the knob''s declared MINIMUM (dev_gap_x, axis_gap, bank_gap, row_gap, cap_bank_gap).'
-  effect:
-    metric: legal_bounds_endpoints
-    delta: -13
-    unit: of 48
-    model: what-if
-  fix:
-    knob: BOUNDS
-    to: tighten to the measured legal ranges
-    note: or make the generator clamp each knob to its own DRC floor the way it already does for the pmos pitch.
-      An optimizer sampling BOUNDS today produces DRC-dirty trials silently unless DRC gates every trial.
-  expected: every BOUNDS endpoint builds DRC-clean; 35/48 do today
-  verdict: open
-- id: F5
-  severity: major
-  category: knob
-  title: the one fix the report prescribes (xc13/xc17 to the axis) is hard-coded — no knob reaches it
-  where:
-  - kind: box
-    layer: MIMdrawing
-    x0: -104.24
-    y0: -2.4
-    x1: 104.24
-    y1: 104.04
-  - kind: box
-    layer: MIMdrawing
-    x0: -198.1
-    y0: -2.4
-    x1: -109.44
-    y1: 44.13
-  - kind: pair
-    a:
-      x: -153.8
-      y: 20.9
-    b:
-      x: -40.0
-      y: 20.9
-  evidence: 'gen_H12_pdk_cap.py build(): a19 (xc19) is placed at xc=0.0 and a13/a17 at +-(a19.x0 - cap_bank_gap
-    - w13/2); nothing in LayoutParams swaps bank-A order or moves a sub-array to the axis. Measured knob-only alternatives
-    (build + DRC + kpex CC by the reviewer): cc19_cols=2 -> net2 53.88 fF (WORSE, the a19 array becomes 4 rows tall
-    so the vertical spine grows) at +19% area; cc19_cols=2 + cc13_cols=1 -> net2 46.33 fF at +19% area; cc13_cols=1
-    -> net2 42.52 fF at unchanged area. None reaches the ~19.6 fF the S1 corner needs (F1).'
-  effect:
-    metric: ph_max_deg
-    delta: 0.14
-    unit: deg
-    model: what-if
-  fix:
-    knob: new feature
-    to: bankA_order / axis_array knob (which sub-array sits on the axis)
-    note: the same hard-coding hides the b1/b10/b12 order in bank B; PLAN sec.8 lists this floorplan as a rejectable
-      decision, so it should be a knob, not a constant.
-  expected: a knob that puts xc13/xc17 on the axis cuts the net2 haul from 170.5 um to ~60 um = -13 fF = +0.34 deg
-  verdict: open
-- id: F6
-  severity: major
+    knob: new feature (platform)
+    to: Cj(area, perimeter, Vbias) in signoff.postlayout
+    note: deferred by the approved PLAN R2.7; the layout has no lever -- well_margin is at the NW.c floor
+  expected: a Cj term in the splice so the corner set is measured, not bounded
+- id: F22
+  severity: minor
   category: symmetry
-  title: MIM top-plate spine hard-coded to each array's LEFT column, so mirrored cap arrays are not mirror images
+  verdict: open
+  title: NEW -- the F18 configuration relaxations drop the very rule that catches F6 below F6's own magnitude in two knob
+    settings
   where:
   - kind: box
     layer: Metal3drawing
-    x0: -186.085
-    y0: 242.37
-    x1: -1.71
-    y1: 244.37
+    x0: -51.25
+    y0: 497.11
+    x1: 207.24
+    y1: 499.11
   - kind: box
     layer: Metal3drawing
-    x0: 1.71
-    y0: 242.37
-    x1: 31.555
-    y1: 244.37
-  - kind: pair
-    a:
-      x: -185.085
-      y: 250.0
-    b:
-      x: 30.555
-      y: 250.0
+    x0: -207.24
+    y0: 500.61
+    x1: 51.25
+    y1: 502.61
   - kind: box
-    layer: TopMetal1drawing
-    x0: -175.685
-    y0: 39.88
-    x1: -173.985
-    y1: 112.44
+    layer: Metal3drawing
+    x0: -134.26
+    y0: 102.84
+    x1: -0.51
+    y1: 104.84
   - kind: box
-    layer: TopMetal1drawing
-    x0: 131.855
-    y0: 39.88
-    x1: 133.555
-    y1: 112.44
-  evidence: 'gen_H12_pdk_cap.py cap_array(): x_spine = x0 + side/2 regardless of half. Consequence measured on the
-    rebuilt GDS: net4''s Metal3 haul (-186.085 -> -1.710, 184.4 um) vs net1''s (1.710 -> 31.555, 29.8 um), delta
-    154.6 um; net2''s TopMetal1 haul (-175.685 -> -5.15, 170.5 um) vs net3''s (5.15 -> 133.555, 128.4 um), delta
-    42.1 um. Mirror-XOR about x=0 of the rebuilt GDS: Metal3 126.35 um2 (13.1% of all Metal3 in the cell), TopMetal1
-    847.05 um2, Metal1 47.56, Metal2 24.0, Metal4 24.0, Metal5 948.78. Activ/GatPoly/Cont/ThickGateOx/NWell/pSD/nSD/MIM/Vmim
-    XOR is exactly 0 - every device, well, tap and MIM unit IS perfectly mirrored; only the routing is not. Result:
-    Delta(net2,net3) = 5.10 fF, Delta(net4,net1) = 10.04 fF (one-sided budgets 45.7/19.2 and 166/69.5 fF).'
+    layer: Metal3drawing
+    x0: 0.51
+    y0: 102.84
+    x1: 134.26
+    y1: 104.84
+  evidence: 'reviewer ran --check-symmetry on iterations/it01/layout.gds under each relaxing knob. Default: Metal3 half-plane
+    balance budget 4.814 um2, it01 measures 21.0888 -> FAIL (this is F6: round 1''s one-sided net4 Metal3 haul). With cap_spine_side=''left''
+    the same budget becomes 100.000 um2; with bankA_order=''c19_axis'' 48.145 um2 -- 4.7x and 2.3x F6''s own signature,
+    so the F6 defect would NOT fire. Metal5''s XOR budget also goes 104.14 -> 1301.73 in c19_axis, past it01''s 948.78.
+    it01 still FAILs overall in every configuration (15 rules default, 10 / 6 / 13 singly relaxed, 4 with all three stacked),
+    so these are exceptions, not holes -- but the discrimination that F18 was raised to restore is configuration-dependent
+    and that is not stated.'
   effect:
-    metric: C_net2_ff
-    delta: 5.1
-    unit: fF
+    metric: guard-rail discrimination
+    delta: -11
+    unit: rules fired on it01
     model: what-if
   fix:
-    knob: new feature
-    to: x_spine = x0+side/2 on the left half, x1-side/2 on the right half
-    note: one line in cap_array(); it makes net2 the shorter haul instead of the longer one and removes the largest
-      routing XOR term. cc13_cols=1 already collapses Delta(net2,net3) to 0.41 fF as a side effect (measured).
-  expected: Delta(net2,net3) < 0.5 fF, Delta(net4,net1) < 1 fF, net2 -5 fF (+0.13 deg)
+    knob: XOR_BALANCE / budgets_for
+    to: keep an absolute Metal3-balance floor (e.g. 10 um2) in every configuration
+    note: or the mirror-and-swap primitive REPORT section 9 already names as the next step
+  expected: the F6 signature (21.089 um2 of Metal3 balance) rejected at every legal BOUNDS point, not only at the default
+- id: F21
+  severity: minor
+  category: other
   verdict: open
-- id: F7
-  severity: major
-  category: matching
-  title: bias common-centroid array has dummy COLUMNS but no dummy ROWS; xr3 owns both edge rows, xm9/xm10 the interior
-    row
+  title: PLAN's area prediction is still unamended, and round 3 adds a second declared plan deviation (axis_gap 6 -> 12)
   where:
   - kind: box
-    layer: Activdrawing
-    x0: -79.44
-    y0: 116.94
-    x1: 79.44
-    y1: 124.94
-  - kind: box
-    layer: Activdrawing
-    x0: -79.44
-    y0: 132.84
-    x1: 79.44
-    y1: 140.84
-  - kind: box
-    layer: Activdrawing
-    x0: -79.44
-    y0: 148.74
-    x1: 79.44
-    y1: 156.74
-  - kind: box
-    layer: Activdrawing
-    x0: -157.88
-    y0: 116.94
-    x1: -81.44
-    y1: 156.74
-  - kind: box
-    layer: Activdrawing
-    x0: 81.44
-    y0: 116.94
-    x1: 157.88
-    y1: 156.74
-  evidence: 'rows read back from the rebuilt GDS + the extracted per-net shapes: rows at y=116.94 and y=148.74 belong
-    to net vbr (= the four xr3 units), the row at y=132.84 to net2/net3 (= xm9/xm10). LayoutParams has bias_dummy_cols
-    but no bias_dummy_rows; the array''s top and bottom neighbours are the island-A tap bar and the gmf_a row, not
-    dummies. First-order x and y gradients do cancel (centroids coincide), but the numerator of the tightest ratio
-    in the cell sits entirely on edge rows while the denominator sits on the interior row, so the row-edge systematic
-    and any quadratic y-profile add directly to the ratio. brief.json rep_sink_ratio tolerates dvgs_common 0.346
-    mV nominal / 0.178 mV pvt at 3.51 Hz/mV.'
+    layer: Metal3drawing
+    x0: -216.84
+    y0: -10.0
+    x1: 216.84
+    y1: 559.86
+  evidence: 'reviewer''s rebuild: bbox (-216.84,-10.00)..(216.84,559.86) = 247 136.8848 um2 -- IDENTICAL to round 2, so
+    round 3 genuinely costs no area (REPORT section 1 verified). PLAN R2.2''s ''within 1 %'' is still wrong by 7x against
+    round 1''s 230 624 um2 and PLAN.md has not been touched since 2026-08-16 00:19. PLAN section 5 lists axis_gap = 6.0;
+    the layout of record ships 12.0. Flagged in REPORT''s Assumptions, as bank_gap and cap_gap were.'
   effect:
-    metric: fc_hz
-    delta: 1.2
-    unit: Hz (exposure at the tolerated 0.346 mV)
+    metric: area_um2
+    delta: 0.0
+    unit: um2
     model: hand
   fix:
-    knob: new feature
-    to: bias_dummy_rows (>=1), or a 2 rows x 3 cols array so xr3 and xm9/xm10 share edge status
-    note: PLAN sec.2 also claims 'identical S/D/G routing on all six'; source and gate routing are identical, drain
-      routing necessarily is not (rows 0/2 share one bar across the axis, row 1 splits to the LANE_MID lanes). Post-layout
-      fc margin is 3.27 Hz.
-  expected: every array member has a dummy on all four sides; edge/interior status equal for numerator and denominator
-  verdict: open
-- id: F8
-  severity: minor
-  category: symmetry
-  title: xc19/xc12 single-orientation plates (deviation from BRIEF sec.6) cost 14 dB of HD2, not the '~0' REPORT
-    claims
-  where:
-  - kind: box
-    layer: MIMdrawing
-    x0: -104.24
-    y0: -2.4
-    x1: 104.24
-    y1: 104.04
-  - kind: box
-    layer: MIMdrawing
-    x0: -177.375
-    y0: 465.61
-    x1: 177.375
-    y1: 520.06
-  - kind: box
-    layer: Metal5drawing
-    x0: -112.84
-    y0: 17.865
-    x1: -100.84
-    y1: 23.865
-  - kind: box
-    layer: Metal5drawing
-    x0: -208.64
-    y0: 458.01
-    x1: -174.975
-    y1: 472.01
-  evidence: 'reviewer what-if on core_pex.sp: replacing every extracted C on a mirror pair by the pair mean (vout_1<->vout_2,
-    voutp<->voutn only) moves HD2 from -88.06 dB to -98.38 dB; symmetrising all pairs gives -102.29 dB (pre-layout
-    -100.19). Symmetrising only net2/net3 + net4/net1 gives -87.16 dB, i.e. none of the HD2 rise comes from the
-    internal nets and none of it needs the ''single-ended xr1/xr2 drain columns'' REPORT sec.5 also blames. Measured
-    imbalance: vout_1 231.73 vs vout_2 75.93 fF (Delta 155.80), voutp 505.50 vs voutn 352.55 (Delta 152.95). THD
-    is unchanged (-49.614) because it is HD3-dominated, and S7 keeps 9.6 dB of margin.'
-  effect:
-    metric: hd2_db
-    delta: 14.2
-    unit: dB
-    model: what-if
-  fix:
-    knob: new feature
-    to: anti-oriented 4+4 / 4+3 split of xc19 and xc12 as BRIEF sec.6 asks
-    note: it splits each into two LVS devices with swapped terminals, which the generator's own write_lvs_reference
-      already knows how to emit (it does exactly that for xc1/xc10). The PLAN sec.8 item 3 cost estimate ('benefit
-      ~0') was made on the one-sided C budget alone and is contradicted by the HD2 measurement.
-  expected: HD2 back to ~-102 dB; Delta(vout_1,vout_2) and Delta(voutp,voutn) both < 20 fF
-  verdict: open
-- id: F9
-  severity: minor
-  category: knob
-  title: tap_len is a dead optimizer dimension — declared in LayoutParams and BOUNDS, referenced nowhere
-  where:
-  - kind: net
-    name: '(no geometry: the knob draws nothing)'
-  evidence: 'grep: ''p.tap_len'' occurs 0 times in build(); the field is commented ''(reserved)''. Builds at tap_len=1.0
-    and tap_len=20.0 are byte-identical to the default build (sha256 e5cfa1daad8818248f2695ac22b18d633d7723edd71cd2f4f0d76bc888786a9c).'
-  effect:
-    metric: optimizer_dimensions
-    delta: 1
-    unit: wasted
-    model: what-if
-  fix:
-    knob: tap_len
-    to: remove from LayoutParams and BOUNDS (or implement it)
-    note: a knob with no effect costs an optimizer a whole dimension of trials.
-  expected: every LayoutParams field changes the GDS
-  verdict: open
-- id: F10
-  severity: minor
-  category: knob
-  title: the generator's BOUNDS silently narrow two ranges the approved PLAN specifies
-  where:
-  - kind: net
-    name: w_m1 / w_m2
-  evidence: 'PLAN.md sec.5 (approved 2026-08-15): w_m1 0.14-1.0 (''M1.a = 0.14''), w_m2 0.16-1.0. gen_H12_pdk_cap.py
-    BOUNDS: w_m1 (0.16, 1.0), w_m2 (0.20, 1.0). REPORT.md sec.7 reprints the generator''s values, so the discrepancy
-    is invisible unless the PLAN is re-read.'
-  effect:
-    metric: knob_range
-    delta: 0
-    unit: '-'
-    model: hand
-  fix:
-    knob: BOUNDS
-    to: reconcile with PLAN sec.5 (or amend the PLAN)
-    note: the narrowing is in the safe direction but undeclared; the plan is the approved contract.
-  expected: PLAN sec.5 and BOUNDS agree field by field
-  verdict: open
+    knob: none
+    to: amend PLAN R2.2 / section 5
+    note: documentation only; area is not specced for this cell
+  expected: a plan whose area prediction and knob defaults match the layout of record
 - id: F11
   severity: note
   category: pex
-  title: MIM top-plate environment C is not extracted; the net2/net3 budget carries an unquantified 0..15 fF
+  verdict: open
+  title: MIM top plates are still stripped before extraction -- the <= 15 fF bound on net2/net3 is carried, not closed
   where:
   - kind: box
     layer: MIMdrawing
-    x0: -198.1
-    y0: -2.4
-    x1: -109.44
-    y1: 44.13
+    x0: -49.13
+    y0: 15.38
+    x1: -2.6
+    y1: 104.24
   - kind: box
     layer: MIMdrawing
-    x0: 109.44
-    y0: -2.4
-    x1: 198.1
-    y1: 44.13
-  evidence: kpex 0.3.12 cannot run on a cap_cmim (its ihp tech names cmim_top '<TODO>'), so the extraction GDS is
-    the MIM-stripped copy and the top plates are absent. net2 and net3 each carry 3285.4 um2 of TopMetal1 top plate
-    (xc13/xc17). REPORT sec.4/sec.9 bound the omission at <=15 fF (net2/net3) and <=91 fF (net4/net1) with a patched-tech
-    run, stating both are over-counts because the bottom plate 0.04 um below screens the area. The reviewer reproduced
-    the stripped flow (identical result) but could not close the bound. Against a 22.8 fF nominal / 9.59 fF pvt
-    budget the residual uncertainty is of the same order as the budget.
+    x0: 2.6
+    y0: 15.38
+    x1: 49.13
+    y1: 104.24
+  evidence: reviewer reproduced the MIM-stripped flow exactly -- its CC netlist is BYTE-IDENTICAL to the committed asbuilt/core_pex.sp.
+    The xc13/xc17 top plates measure 3 285.36 um2 each (2 units of 1 642.68) and are absent from the extraction; kpex's
+    cmim_top is '<TODO>'.
   effect:
-    metric: C_net2_ff
-    delta: 15
-    unit: fF (upper bound)
+    metric: ph_max_deg
+    delta: -0.39
+    unit: deg
     model: hand
   fix:
-    knob: new feature
-    to: ship a MIM-aware kpex tech (or a tech_json= override in run_pex)
-    note: REPORT Next Steps item 4 already names this platform gap; it belongs on the scorecard's error bar until
-      it is closed.
-  expected: a MIM-aware extraction that keeps the top plates without the <TODO> crash
-  verdict: open
+    knob: new feature (platform)
+    to: tech_json= on run_pex, or a MIM-aware kpex tech
+    note: ''
+  expected: an extraction that keeps the MIM top plates
 - id: F12
   severity: note
   category: leakage
-  title: no antenna rule exists in the IHP KLayout deck; net2/net3 present a 53:1 TopMetal1-to-gate ratio with no
-    jumper
+  verdict: open
+  title: 'net2/net3 TopMetal1 -> xm4 gate antenna ratio 48 : 1, and the executed deck has no antenna rule'
   where:
   - kind: box
     layer: TopMetal1drawing
-    x0: -195.65
-    y0: 0.05
-    x1: -5.0
-    y1: 112.59
+    x0: -45.83
+    y0: 17.83
+    x1: -5.9
+    y1: 122.74
   - kind: box
-    layer: Activdrawing
-    x0: -24.68
-    y0: 166.64
-    x1: -3.62
-    y1: 168.14
-  evidence: 'the executed deck (drc_run log) contains 35 rule tables plus sg13g2_maximal and no antenna table, so
-    DRC cannot flag this. Measured from the rebuilt GDS: net2 TopMetal1 area 3587.97 um2 (3285.4 of it the xc13
-    top plate) driving xm4''s poly gate, gate area 1.5 x 45 = 67.5 um2 -> ratio 53. BRIEF sec.3 forbids an antenna
-    diode on net2/net3 (6.17 pA balanced budget) and PLAN sec.6 says the fix would be a higher-metal jumper - but
-    the haul IS already the top metal, so no jumper is available.'
+    layer: GatPolydrawing
+    x0: -51.34
+    y0: 200.46
+    x1: -6.34
+    y1: 203.89
+  - kind: pair
+    a:
+      x: -25.8
+      y: 70.0
+    b:
+      x: -28.8
+      y: 202.2
+  evidence: 'reviewer measured on the rebuilt GDS: net2 TopMetal1 3 242.344 um2 / xm4 gate 1.5 x 45 = 67.5 um2 = 48.03 :
+    1 (round 2: 48.11). The executed KLayout deck (35 tables + sg13g2_maximal) contains no antenna rule table.'
   effect:
     metric: antenna_ratio
-    delta: 53
-    unit: TopMetal1 area / gate area
+    delta: 48.0
+    unit: ratio
     model: hand
   fix:
     knob: new feature
-    to: break the net2 gate line with a lower-metal segment, or hand it to a chip-level antenna check
-    note: not a DRC failure here because the rule does not exist in this deck; it is a foundry-level gate that must
-      not be silently skipped.
-  expected: a documented antenna number for net2/net3 before tape-out
-  verdict: open
+    to: chip-level antenna check or a lower-metal jumper
+    note: a diode is forbidden by BRIEF section 3 (6.17 pA)
+  expected: a documented antenna number before tape-out
 - id: F13
   severity: note
   category: lvs
-  title: vbp is a labelled Metal1 pad with no extracted net, and LVS still reports a match
+  verdict: open
+  title: vbp is still a dangling labelled pad -- absent from the extracted netlist, yet the deck reports Netlists match
   where:
   - kind: box
     layer: Metal1drawing
@@ -586,121 +404,595 @@ findings:
   - kind: point
     x: 12.0
     y: -9.0
-  evidence: 'the extracted netlist lvs/lpf_core_extracted.cir has 15 nets and no vbp; the certified header is ''.subckt
-    lpf_core vinp vinn voutp voutn vbn vbp vdd''. LVS verdict: matched. Intended (BRIEF sec.9, no device in core.sp
-    references vbp) and the mirror-XOR flags the pad as the only Metal1 asymmetry (8.0 um2 at x=10..14). Recorded
-    because it shows this LVS flow will not catch a pin that a future generator edit drops.'
+  evidence: 'reviewer''s own LVS run: lvs/lpf_core_extracted.cir header is ''.SUBCKT lpf_core vbn vss vout_1 vout_2 net3
+    vbr net2 vinp vinn vdd net4 voutp + rep_x voutn net1''; grep vbp returns 0 lines, and the deck still reports a match.
+    1 of 8 declared pins is unchecked.'
   effect:
-    metric: pins_checked
-    delta: -1
-    unit: of 8
+    metric: pins_unchecked
+    delta: 1
+    unit: pins
     model: hand
   fix:
-    knob: new feature
-    to: assert the extracted pin set against the certified header in the LVS wrapper
-    note: platform-side (spicexplorer_signoff.run_lvs), not a change to this cell.
-  expected: a pin-list assertion in the LVS verdict
-  verdict: open
+    knob: new feature (platform)
+    to: pin-list assertion inside signoff.lvs
+    note: ''
+  expected: the extracted pin set asserted against the certified header
 - id: F14
   severity: note
   category: matching
-  title: the on-axis replicas xr1/xr2 have one orientation against a mirrored signal pair, so orientation-dependent
-    dVt is undivided
+  verdict: deferred
+  title: xr2 (rep_x bridge) is still drawn in one orientation only -- the rep_bridge ratio is not orientation-balanced
   where:
   - kind: device
-    name: xm14
-    x0: -96.73
-    y0: 231.75
-    x1: -33.67
-    y1: 237.75
-  - kind: device
-    name: xr1
-    x0: -31.53
-    y0: 231.75
-    x1: 31.53
-    y1: 237.75
-  - kind: device
-    name: xm15
-    x0: 33.67
-    y0: 231.75
-    x1: 96.73
-    y1: 237.75
-  - kind: device
-    name: xmst
-    x0: -53.76
-    y0: 202.01
-    x1: -20.08
-    y1: 207.01
-  - kind: device
-    name: xr2
-    x0: -16.84
-    y0: 202.01
-    x1: 16.84
-    y1: 207.01
-  - kind: device
-    name: xmstn
-    x0: 20.08
-    y0: 202.01
-    x1: 53.76
-    y1: 207.01
-  evidence: 'gen_H12_pdk_cap.py b.mos(): sign>0 applies dmirror_x, so the right-hand member of every pair is mirrored
-    and the left is not. xr1 and xr2 are drawn with sign=-1 only. The bias array IS orientation-balanced (xr3 =
-    2 unmirrored + 2 mirrored, xm9/xm10 = 1 + 1), the gmf_b and bridge replica ratios are not (xr1 = 1 unmirrored
-    vs xm14/xm15 = 1 + 1). brief.json tolerates dvgs_common 0.838 mV (rep_gmfb_ratio) and 0.835 mV (rep_bridge_ratio);
-    half of any orientation-dependent dVt lands there.'
+    name: xr2/rep_x bridge row
+    x0: -16.79
+    y0: 234.26
+    x1: 16.79
+    y1: 243.63
+  evidence: the regenerated LVS reference still carries Mr1 w=12u l=31u (the xr1 parallel-W fold works) and the xr1_split
+    True/False builds differ in sha, so that half is real. xr2 is still sign=-1 only; its geometric residual is the 7.556
+    um2 of Metal1 XOR at y 234.76..242.21 (see F19).
   effect:
     metric: fc_hz
     delta: 0.8
-    unit: Hz per mV of orientation dVt at 1.56 Hz/mV
+    unit: Hz per mV of rep_bridge offset
     model: hand
   fix:
     knob: new feature
-    to: draw all three members of a replica row in the same orientation (mirror the placement, not the device)
-    note: costs the differential pair its mirrored source/drain symmetry; the brief's dvgs_diff tolerances (8.0
-      mV) are 10x looser than the common ones, so the trade is worth measuring before it is made.
-  expected: the replica ratio's orientation-dependent term either cancelled or measured
-  verdict: open
+    to: xr2_split
+    note: approved deferral, PLAN R2.8 Q4; costs a second n-well on rep_x, the term F3 already cannot model
+  expected: both replica ratios orientation-balanced, or the residual measured
 - id: F15
   severity: note
   category: other
-  title: MIM area 122 253 um2 = 53.0% of the cell and 69.9% of the PDK's per-chip recommendation (designer's flag,
-    confirmed)
+  verdict: open
+  title: MIM is 49.47 % of the cell area and 69.9 % of the PDK's per-chip guidance -- unchanged, block-level
   where:
   - kind: box
     layer: MIMdrawing
-    x0: -213.04
-    y0: 249.97
+    x0: -160.97
+    y0: -2.4
+    x1: -54.33
+    y1: 104.24
+  - kind: box
+    layer: MIMdrawing
+    x0: 54.33
+    y0: -2.4
+    x1: 160.97
+    y1: 104.24
+  - kind: box
+    layer: MIMdrawing
+    x0: -213.64
+    y0: 285.97
     x1: -2.6
-    y1: 460.41
+    y1: 497.01
   - kind: box
     layer: MIMdrawing
     x0: 2.6
-    y0: 249.97
-    x1: 213.04
-    y1: 460.41
+    y0: 285.97
+    x1: 213.64
+    y1: 497.01
   - kind: box
     layer: MIMdrawing
-    x0: -177.375
-    y0: 465.61
-    x1: 177.375
-    y1: 520.06
-  - kind: box
-    layer: MIMdrawing
-    x0: -104.24
-    y0: -2.4
-    x1: 104.24
-    y1: 104.04
-  evidence: merged MIM (36/0) area on the rebuilt GDS = 122 253.49 um2 in 51 units; cell area 432.48 x 533.26 =
-    230 624.28 um2. MIM.gR is present in the executed deck and does not fire. 122 253 / 174 800 = 69.9% of the per-chip
-    recommendation, so a second instance of this cell would exceed it. Confirms REPORT sec.1.
+    x0: -177.97
+    y0: 502.21
+    x1: 177.97
+    y1: 556.66
+  evidence: reviewer measured merged MIM (36/0) = 122 253.49 um2 in 51 units against a cell of 433.68 x 569.86 = 247 136.88
+    um2 -> 49.47 %, and 69.9 % of the PDK's 174 800 um2/chip guidance. MIM.gR is in the executed deck and does not fire.
+    Rounds 2 and 3 changed MIM area by exactly 0.
   effect:
-    metric: mim_area_um2
-    delta: 122253.49
-    unit: um2 (69.9% of the chip recommendation)
+    metric: area_fraction
+    delta: 49.47
+    unit: '%'
+    model: hand
+  fix:
+    knob: none
+    to: block-level decision
+    note: total C is set by design.json
+  expected: block owner acknowledges before a second instance is placed
+- id: F19
+  severity: note
+  category: symmetry
+  verdict: fixed
+  title: the Metal1 mirror exception is correctly re-attributed to xr2 -- the attribution is fixed, the 7.556 um2 of geometry
+    is not (= F14)
+  where:
+  - kind: box
+    layer: Metal1drawing
+    x0: -16.79
+    y0: 240.91
+    x1: -0.19
+    y1: 242.21
+  - kind: box
+    layer: Metal1drawing
+    x0: 0.19
+    y0: 240.91
+    x1: 16.79
+    y1: 242.21
+  - kind: box
+    layer: Metal1drawing
+    x0: -16.79
+    y0: 234.76
+    x1: -16.59
+    y1: 236.11
+  - kind: box
+    layer: Metal1drawing
+    x0: 16.59
+    y0: 234.76
+    x1: 16.79
+    y1: 236.11
+  evidence: 'reviewer measured the six Metal1 XOR polygons on the rebuilt GDS: 2 x 8.0000 um2 at (+/-10..+/-14, -10..-8)
+    = the vbp pad, and 2 x 3.5240 um2 at y 240.91..242.21 plus 2 x 0.2540 um2 at y 234.76..236.11 -- all four in the bridge
+    row (rep_x / xr2, NWell y 234.26..243.63), none in the gmf_b row where xr1 is. REPORT section 8''s coordinates are exact.
+    Round 2''s generator comment and REPORT both said xr1; both are corrected.'
+  effect:
+    metric: Metal1 mirror XOR
+    delta: 23.556
+    unit: um2
     model: hand
   fix:
     knob: new feature
-    to: block-level decision (the total C is a schematic choice, not a layout one)
-    note: 'outside the layout lane: the cell''s 183.8 pF is set by design.json.'
-  expected: block owner acknowledges the chip-level MIM budget before a second instance is placed
+    to: xr2_split
+    note: residual falls to 16.0 um2 (the vbp pad alone)
+  expected: the declared Metal1 exception names xr2 -- met
+- id: F23
+  severity: note
+  category: other
   verdict: open
+  title: 'NEW -- scorecard_post.json says all_pass: true while the same file records an S1 corner violation eight keys above'
+  evidence: 'layout/H12-pdk-cap/scorecard_post.json: ''passes'' and ''violations: []'' are the NOMINAL bench (which the
+    reviewer reproduces exactly), ''corner_miss'' carries ph_max 329.751 against a 330.0 limit, and the last key is ''all_pass:
+    true''. Nothing in the file scopes all_pass to nominal. An optimizer or dashboard keying on it reads a clean pass on
+    a cell whose S1 is broken at a certified corner.'
+  effect:
+    metric: machine-readable honesty
+    delta: 1
+    unit: key
+    model: hand
+  fix:
+    knob: none
+    to: 'rename to all_pass_nominal, or add corner_pass: false'
+    note: the prose front page is faultless -- this is only the machine-readable half
+  expected: a scorecard whose top-level boolean cannot contradict its own corner table
+- id: F24
+  severity: note
+  category: pex
+  verdict: open
+  title: NEW -- the RC cross-check quotes a precision finer than kpex's own mesh repeatability
+  evidence: 'reviewer ran kpex three times on the same MIM-stripped GDS. CC is byte-deterministic across three runs (the
+    designer''s CC-naming half of the gotcha did NOT reproduce); RC is not -- two RC runs differ in 17 221 lines of net.$n.m
+    sub-node naming while the 71 C cards and all device cards are byte-identical. Measured on three RC meshes: fc = 248.6366
+    / 248.6763 / 248.6833 Hz, a 0.047 Hz spread -- LARGER than the 0.041 Hz CC-RC delta REPORT section 4 quotes as the evidence
+    that wire R is a don''t-care. All three converged without a .nodeset; the pathological shorted-DC mesh the designer
+    hit was not reproduced in three draws.'
+  effect:
+    metric: fc_hz
+    delta: 0.047
+    unit: Hz (mesh-to-mesh scatter)
+    model: what-if
+  fix:
+    knob: new feature (platform)
+    to: a sorted-card-set comparator + an op-sanity gate next to run_pex
+    note: the conclusion (R is a don't-care below ~15 MOhm) stands; the quoted resolution does not
+  expected: an RC cross-check reported to its own repeatability, and a mesh that cannot silently short the op
+- id: F25
+  severity: note
+  category: budget
+  verdict: open
+  title: NEW -- the new between-halves budget column is populated for two of the four differential pairs
+  where:
+  - kind: box
+    layer: Metal2drawing
+    x0: -28.3
+    y0: 209.89
+    x1: 28.3
+    y1: 222.26
+  - kind: box
+    layer: Metal3drawing
+    x0: -22.92
+    y0: 249.63
+    x1: 22.92
+    y1: 258.0
+  evidence: REPORT section 6 adds brief.json's budget_c_diff_ff -- the column whose absence let F16 sit uncounted -- but
+    prints '--' for vout_1/vout_2 and voutp/voutn. brief.json defines it for both (1 680 fF and 460 fF) and the reviewer
+    measures C(vout_1,vout_2) = 4.5576 fF and C(voutp,voutn) = 7.4474 fF. Both pass with 99.7 % and 98.4 % margin, so this
+    is completeness, not a breach -- but it is the same class of omission the column exists to end.
+  effect:
+    metric: budget lines missing
+    delta: 2
+    unit: rows
+    model: hand
+  fix:
+    knob: none
+    to: print budget_c_diff_ff for every pair brief.json defines it for
+    note: ''
+  expected: a between-halves column with no blank cells where the brief has a number
+- id: F16
+  severity: note
+  category: coupling
+  verdict: fixed
+  title: FIXED -- lane_mid is a knob and C(net2,net3) is 0.0000 fF (the element is gone from the extraction)
+  where:
+  - kind: pair
+    a:
+      x: -4.9
+      y: 166.44
+    b:
+      x: 4.9
+      y: 166.44
+  - kind: box
+    layer: Metal5drawing
+    x0: -10.0
+    y0: 120.74
+    x1: -4.71
+    y1: 211.33
+  - kind: box
+    layer: Metal5drawing
+    x0: 4.71
+    y0: 120.74
+    x1: 10.0
+    y1: 211.33
+  evidence: 'reviewer''s own kpex CC on the rebuilt GDS: 71 C elements (round 2: 78) and NO net2-net3 card at all; the Metal5
+    spine labels sit at x = -4.900 and +4.900 (round 2: +/-1.900), i.e. 9.8 um apart instead of 3.8. C(net4,net1) is likewise
+    absent (round 2: 0.0257 fF). Isolated at fixed axis_gap=12 and fixed strap, the reviewer measures lane_mid 1.9 -> 4.9
+    = ph_max 331.1465 -> 331.2093 nominal (+0.063) and 329.7355 -> 329.8077 at the A7 corner (+0.072). Area 247 136.8848
+    um2 unchanged, DRC 0 at both BOUNDS endpoints.'
+  effect:
+    metric: ph_max_deg
+    delta: 0.072
+    unit: deg at corner A7
+    model: what-if
+  fix:
+    knob: lane_mid
+    to: 4.9
+    note: clamped to axis_gap/2 - 1.1; BOUNDS (1.9, 4.9), both endpoints DRC-clean
+  expected: C(net2,net3) = 0 and the differential load counted in the budget -- met
+- id: F17
+  severity: note
+  category: matching
+  verdict: fixed
+  title: FIXED -- all six rep_sink members are routed identically again; the 0.050 deg cost is disclosed and reproduces
+    exactly
+  where:
+  - kind: box
+    layer: Metal1drawing
+    x0: -160.88
+    y0: 131.44
+    x1: 160.88
+    y1: 143.04
+  - kind: box
+    layer: Metal1drawing
+    x0: -160.88
+    y0: 147.34
+    x1: 160.88
+    y1: 158.94
+  - kind: box
+    layer: Metal1drawing
+    x0: -160.88
+    y0: 163.24
+    x1: 160.88
+    y1: 174.84
+  evidence: 'reviewer measured per-device-window Metal1 on the rebuilt GDS and XOR''d the xm9/xm10 units against the xr3
+    units of both neighbouring rows after a pure row translation: 0.0324 um2 in 4 polygons (four 0.09 x 0.09 um corner slivers
+    at the lane via pad) against a 140.4637 um2 per-device Metal1 -- 0.023 %. Round 2''s row delta was 21.17 um2. Activ
+    / GatPoly / Cont are identical to 4 decimals on all three rows. The residual Metal2 +0.0342 and Metal5 +0.0342 um2 on
+    the live row is the connection to the net2/net3 lane itself, which only xm9/xm10 have. Disclosed cost verified independently
+    at fixed lane_mid=4.9: min_m1 -> lane_m1 = 331.2093 -> 331.1595 nominal (-0.0498, REPORT says -0.050) and 329.8077 ->
+    329.7509 at A7 (-0.0568, REPORT says -0.057). The min_m1 build''s sha c0507860... is byte-identical to iterations/it09.'
+  effect:
+    metric: ph_max_deg
+    delta: -0.0568
+    unit: deg at corner A7
+    model: what-if
+  fix:
+    knob: net23_strap
+    to: lane_m1
+    note: min_m1 kept as a knob; both endpoints DRC-clean
+  expected: identical S/D/G routing on all six units (BRIEF 2.1) -- met to 0.03 um2
+- id: F18
+  severity: note
+  category: symmetry
+  verdict: fixed
+  title: FIXED -- the symmetry guard-rail now FAILS on the round-1 GDS it was installed to reject (15 rules, 8 layers)
+  where:
+  - kind: box
+    layer: Metal5drawing
+    x0: -216.84
+    y0: -10.0
+    x1: 216.84
+    y1: 559.86
+  evidence: 'reviewer ran ''gen_H12_pdk_cap.py --check-symmetry'' itself on five stored GDS files. it01 (round 1, the layout
+    F6 was raised against): FAIL on 15 rules across 8 layers -- Metal1 XOR 47.556>40.91, Metal2 XOR 24.0>2.00 and balance
+    -4.0>1.34, Metal3 balance 21.0888>4.81, Metal4 balance -4.0>1.00, Metal5 XOR 948.78>104.14, TopMetal1 XOR 847.048>71.85,
+    Via1/Via2 XOR 1.9494>0.50 and balance -0.3249>0.20-0.22, Via3/Via4 balance -0.3249>0.20, TopVia1 XOR 1.4112>1.17 and
+    balance -0.3528>0.20 -- character-for-character the output REPORT section 9 quotes. it08 (round 2), it09, it10 and it13
+    all PASS. Round 2''s table passed it01 on every routing layer.'
+  effect:
+    metric: rules fired on it01
+    delta: 15
+    unit: rules
+    model: what-if
+  fix:
+    knob: XOR_BUDGET / XOR_BALANCE
+    to: calibrated against two anchors
+    note: see F22 for the configuration-dependent residual
+  expected: the assertion FAILS on it01 -- met
+- id: F20
+  severity: note
+  category: symmetry
+  verdict: fixed
+  title: FIXED -- Metal4 and all five via layers are in the symmetry table, with a half-plane balance rule for the saturated
+    ones
+  where:
+  - kind: box
+    layer: Via3drawing
+    x0: 49.745
+    y0: 497.605
+    x1: 50.755
+    y1: 498.205
+  - kind: box
+    layer: Via4drawing
+    x0: -50.755
+    y0: 497.605
+    x1: -49.745
+    y1: 498.205
+  - kind: box
+    layer: TopVia1drawing
+    x0: -82.25
+    y0: 106.13
+    x1: -81.83
+    y1: 106.55
+  - kind: box
+    layer: TopVia1drawing
+    x0: 81.83
+    y0: 106.13
+    x1: 82.25
+    y1: 106.55
+  - kind: box
+    layer: Metal4drawing
+    x0: -83.04
+    y0: 105.34
+    x1: -81.04
+    y1: 107.34
+  - kind: box
+    layer: Metal4drawing
+    x0: 81.04
+    y0: 105.34
+    x1: 83.04
+    y1: 107.34
+  evidence: 'reviewer''s own mirror-XOR on the rebuilt GDS reproduces REPORT section 8 to 4 decimals: Via1 0.0000/3.357,
+    Via2 0.1444/2.960, Via3 3.8988/4.115, Via4 3.8988/4.115, TopVia1 1.4112/1.411, Metal4 48.0000/48.866 -- and the half-plane
+    balance is EXACTLY 0.0000 um2 on all eight balance layers. The saturation explanation checks out: the Via3/Via4 XOR
+    is 108 polygons of 0.0361 um2 each, i.e. every via of the F8 swapped pair, at different y on the two halves.'
+  effect:
+    metric: asymmetric layers unreported
+    delta: -6
+    unit: layers
+    model: hand
+  fix:
+    knob: XOR_BUDGET / XOR_BALANCE
+    to: Metal4 + Via1..Via4 + TopVia1 added
+    note: ''
+  expected: every drawn layer in the symmetry table with a measured number and a budget -- met
+- id: F4
+  severity: note
+  category: knob
+  verdict: fixed
+  title: FIXED -- 66/66 BOUNDS endpoints build and DRC clean, 0 violations, 33/33 knobs live (verified in full)
+  where:
+  - kind: net
+    name: LayoutParams / BOUNDS (33 knobs)
+  evidence: 'reviewer independently built and DRC''d ALL 33 knobs at BOTH endpoints (66 builds, own build dirs, own run_drc):
+    66/66 build ok, 66/66 DRC PASS, 0 violations, and no knob leaves the GDS byte-identical at both ends (33 distinct min-vs-max
+    sha pairs). lane_mid 1.9 -> dc25783d..., 4.9 -> fc59cfd7... exactly as REPORT section 7 claims; net23_strap min_m1 ->
+    c0507860... = iterations/it09.'
+  effect:
+    metric: legal endpoints
+    delta: 66
+    unit: of 66
+    model: what-if
+  fix:
+    knob: '-'
+    to: '-'
+    note: ''
+  expected: met
+- id: F5
+  severity: note
+  category: routing
+  verdict: fixed
+  title: FIXED -- bank A order keeps the net2/net3 TopMetal1 haul short and exactly mirrored
+  where:
+  - kind: box
+    layer: TopMetal1drawing
+    x0: -45.83
+    y0: 17.83
+    x1: -5.9
+    y1: 122.74
+  - kind: box
+    layer: TopMetal1drawing
+    x0: 5.9
+    y0: 17.83
+    x1: 45.83
+    y1: 122.74
+  evidence: 'reviewer measured on the rebuilt GDS: net2 TopMetal1 bbox (-45.83, 17.83)..(-5.90, 122.74), 3 242.344 um2,
+    perimeter 400.47, 1 polygon; net3 is its exact mirror image on all six numbers. bankA_order is a LayoutParams field
+    and both endpoints build DRC-clean.'
+  effect:
+    metric: haul
+    delta: 0.0
+    unit: um mismatch
+    model: hand
+  fix:
+    knob: bankA_order
+    to: c13_axis
+    note: ''
+  expected: met
+- id: F6
+  severity: note
+  category: symmetry
+  verdict: fixed
+  title: FIXED -- net2/net3 and net4/net1 are still layer-for-layer mirror images, and the extraction agrees
+  where:
+  - kind: box
+    layer: Metal5drawing
+    x0: -10.0
+    y0: 120.74
+    x1: -4.71
+    y1: 211.33
+  - kind: box
+    layer: Metal5drawing
+    x0: 4.71
+    y0: 120.74
+    x1: 10.0
+    y1: 211.33
+  evidence: 'per-net geometry on the reviewer''s rebuild: net2 and net3 have IDENTICAL area, perimeter and shape count on
+    every layer (Activ 8.800, GatPoly 84.735, Metal1 29.542, Metal2/3/4 0.433, Metal5 22.743, TopMetal1 3 242.344) with
+    mirrored bboxes. Extracted delta(net2,net3) = -0.001 fF (0.17 aF of kpex substrate rounding), delta(net4,net1) = 0.089
+    fF -- both far inside the 45.7 / 166 fF asymmetry budgets.'
+  effect:
+    metric: delta C
+    delta: -0.001
+    unit: fF
+    model: what-if
+  fix:
+    knob: cap_spine_side
+    to: mirror
+    note: ''
+  expected: met
+- id: F7
+  severity: note
+  category: matching
+  verdict: fixed
+  title: 'FIXED -- five identical nmos rows: every live bias unit has an identically drawn device row above and below'
+  where:
+  - kind: box
+    layer: Activdrawing
+    x0: -160.88
+    y0: 119.14
+    x1: 160.88
+    y1: 127.14
+  - kind: box
+    layer: Activdrawing
+    x0: -160.88
+    y0: 135.04
+    x1: 160.88
+    y1: 143.04
+  - kind: box
+    layer: Activdrawing
+    x0: -160.88
+    y0: 150.94
+    x1: 160.88
+    y1: 158.94
+  - kind: box
+    layer: Activdrawing
+    x0: -160.88
+    y0: 166.84
+    x1: 160.88
+    y1: 174.84
+  - kind: box
+    layer: Activdrawing
+    x0: -160.88
+    y0: 182.74
+    x1: 160.88
+    y1: 190.74
+  evidence: 'Activ bands read back from the rebuilt GDS: five rows at y 119.14 / 135.04 / 150.94 / 166.84 / 182.74, four
+    devices each, 2 446.08 um2 per row, with the live xr3 / xm9-xm10 / xr3 rows in the middle; the regenerated LVS reference
+    carries Mdumn w=336u (14 x 24 um).'
+  effect:
+    metric: rows
+    delta: 5
+    unit: drawn rows
+    model: hand
+  fix:
+    knob: bias_dummy_rows
+    to: 1
+    note: ''
+  expected: met -- and F17 closes the routing half of the same rule
+- id: F8
+  severity: note
+  category: symmetry
+  verdict: fixed
+  title: FIXED -- output-pair imbalance stays inside budget; HD2 is bench floor, not a layout property (reviewer's own proof)
+  where:
+  - kind: box
+    layer: Metal2drawing
+    x0: -28.3
+    y0: 209.89
+    x1: 28.3
+    y1: 222.26
+  - kind: box
+    layer: MIMdrawing
+    x0: -177.97
+    y0: 502.21
+    x1: 177.97
+    y1: 556.66
+  evidence: 'extracted delta(vout_1,vout_2) = -0.481 fF (budget 6 710) and delta(voutp,voutn) = 21.058 fF (budget 1 800);
+    voutp 460.060 fF = 1.01x its pvt budget. On HD2 the reviewer did NOT need a second extraction: a PURE REORDERING of
+    the parasitic C cards -- electrically identical, same file otherwise -- moves round 2''s own netlist from -104.2215
+    to -98.9640 / -99.2739 dB (5.3 dB) while THD and HD3 reproduce to 0.002 dB. The same permutation on round 3''s netlist
+    gives -97.17...-97.37 dB. Round 2''s -104.22 was a draw, not a property; round 3''s -97.17 is the same floor. Symmetrising
+    the residual 11.2 aF cross-terms moves it 0.13 dB. HD2 is not specced; S7 THD = -49.7008 dB against -40, 9.7 dB of margin.'
+  effect:
+    metric: hd2_db
+    delta: 5.3
+    unit: dB of numerical scatter
+    model: what-if
+  fix:
+    knob: none
+    to: '-'
+    note: do not spend a round chasing HD2 on this bench -- the designer's gotcha is correct and now independently proven
+  expected: met
+- id: F9
+  severity: note
+  category: knob
+  verdict: fixed
+  title: 'FIXED -- no dead knob: 33/33 LayoutParams fields change the GDS at their endpoints'
+  where:
+  - kind: net
+    name: LayoutParams (33 fields)
+  evidence: 'reviewer''s own endpoint sweep: 33 knobs, 33 distinct min-vs-max GDS sha pairs, no exceptions.'
+  effect:
+    metric: dead knobs
+    delta: 0
+    unit: knobs
+    model: what-if
+  fix:
+    knob: '-'
+    to: '-'
+    note: ''
+  expected: met
+- id: F10
+  severity: note
+  category: knob
+  verdict: fixed
+  title: FIXED -- BOUNDS is the single source of truth, asserted against LayoutParams inside every build
+  where:
+  - kind: net
+    name: BOUNDS
+  evidence: reviewer parsed BOUNDS from the committed generator (33 entries) and swept it; validate() asserts set(BOUNDS)
+    == set(LayoutParams fields) on every build and clamp() resolves the couplings so every endpoint is buildable. REPORT
+    section 7's table prints exactly the ranges the reviewer swept.
+  effect:
+    metric: contract drift
+    delta: 0
+    unit: knobs
+    model: hand
+  fix:
+    knob: '-'
+    to: '-'
+    note: PLAN section 5's axis_gap default is now stale -- see F21
+  expected: met
+not_checked:
+- MIM top-plate environment capacitance (kpex cmim_top is <TODO>; extraction runs on the stripped GDS) -- F11
+- n-well / p-substrate junction capacitance as a model (only the lumped-Cj what-if bound) -- F3
+- antenna ratios (the IHP KLayout deck ships no antenna rule table) -- F12
+- post-layout mismatch Monte Carlo -- which is what would price F7, F14 and F17's benefit; F17 is verified geometrically,
+  not statistically
+- the full 45-point PVT grid post-layout (ran the 9-point AXES set + the five cornerCAP.lib points)
+- Magic DRC / netgen LVS second opinion
+- fill / density / sealring are absent by PLAN section 6, so pre- and post-layout are equally fill-free; a chip-level fill
+  will move the budget
+- the pathological RC mesh the designer reported (three reviewer RC draws all converged) -- F24
+reviewer: layout-reviewer
+date: '2026-08-16'

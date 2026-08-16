@@ -1,33 +1,37 @@
 {
   "cell": "H12-pdk-cap",
   "kind": "post-layout (PEX)",
+  "round": 3,
   "from": "layout/H12-pdk-cap/gen_H12_pdk_cap.py + kpex 2.5D CC",
   "netlist": "layout/H12-pdk-cap/asbuilt/core_pex.sp",
-  "gds_sha256": "e5cfa1daad8818248f2695ac22b18d633d7723edd71cd2f4f0d76bc888786a9c",
-  "lvs_netlist_sha256": "4ce3177c16c239c33c04d3f41c3f705a41b2a400e808b84c72160059fba0f4a5",
+  "gds_sha256": "fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed",
+  "lvs_netlist_sha256": "57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1",
+  "pex_netlist_sha256": "cdd5cd832a028a64b05986a0d8a4e4abdb1434174206a374e6acfad01cf0e15f",
   "pex": {
     "tool": "kpex 0.3.12 klayout-pex 2.5D",
     "mode": "CC",
-    "n_c": 78,
+    "n_c": 71,
     "n_r": 0,
-    "mim": "MIM plates stripped for extraction (kpex tech gap); cap_cmim devices re-inserted from the certified netlist"
+    "mim": "MIM plates stripped for extraction (kpex tech gap); cap_cmim devices re-inserted from the certified netlist",
+    "note": "round 2 had 78 C: the 7 elements gone are the net2<->net3, net4<->net1 and related lane couplings removed by F16"
   },
   "bench": "lab.metrics.evaluate (op+ac+noise, mos_tt, 27 C, 1.5 V) + lab.thd.measure, spliced via Design.dut_override",
-  "vicm": 0.24,
-  "vocm": 1.2784,
   "scorecard": {
-    "fc_hz": 248.2746,
+    "fc_hz": 248.6388,
     "dc_db": -0.0081,
-    "ripple_db": 0.0232,
-    "peak_db": 0.0206,
-    "mono_db": 0.0206,
-    "a1000_db": -49.2629,
-    "ph_max_deg": 330.7324,
-    "irn_uv": 29.1947,
-    "p_core_nw": 11.913,
+    "ripple_db": 0.0347,
+    "peak_db": 0.0136,
+    "mono_db": 0.0136,
+    "a1000_db": -49.2221,
+    "ph_max_deg": 331.1595,
+    "irn_uv": 29.1942,
+    "p_core_nw": 11.9136,
     "c_total_pf": 183.7792
   },
-  "thd_db": -49.6136,
+  "thd_db": -49.7008,
+  "hd3_db": -49.8985,
+  "hd2_db": -97.1706,
+  "hd2_note": "HD2 is at the numerical floor of this bench: two PEX netlists of the SAME GDS with byte-identical C cards and identical device cards (only kpex instance ordering differs) measure -98.99 and -97.17 dB. Round 2's -104.22 is the same floor, not a property the layout holds. THD and HD3 reproduce to 0.002 dB across the same pair.",
   "passes": {
     "S1_phase": true,
     "S1_stopband": true,
@@ -39,6 +43,7 @@
     "S6_power": true,
     "S7_thd": true
   },
+  "violations": [],
   "pre_layout": {
     "fc_hz": 249.7746,
     "dc_db": -0.0081,
@@ -52,25 +57,121 @@
     "c_total_pf": 183.7792,
     "thd_db": -50.401
   },
-  "deltas": {
-    "fc_hz": -1.5,
+  "round1_post_layout": {
+    "fc_hz": 248.2746,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0232,
+    "peak_db": 0.0206,
+    "mono_db": 0.0206,
+    "a1000_db": -49.2629,
+    "ph_max_deg": 330.7324,
+    "irn_uv": 29.1947,
+    "p_core_nw": 11.913,
+    "c_total_pf": 183.7792,
+    "thd_db": -49.6136
+  },
+  "round2_post_layout": {
+    "fc_hz": 248.651,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0355,
+    "peak_db": 0.0132,
+    "mono_db": 0.0132,
+    "a1000_db": -49.2201,
+    "ph_max_deg": 331.1554,
+    "irn_uv": 29.1945,
+    "p_core_nw": 11.9134,
+    "c_total_pf": 183.7792,
+    "thd_db": -49.7136,
+    "hd2_db": -104.2215
+  },
+  "deltas_vs_pre": {
+    "fc_hz": -1.1358,
     "dc_db": 0.0,
-    "ripple_db": -0.0291,
-    "peak_db": 0.0188,
-    "mono_db": 0.0188,
-    "a1000_db": -0.2369,
-    "ph_max_deg": -1.6499,
-    "irn_uv": -0.0043,
-    "p_core_nw": 0.0005,
-    "c_total_pf": 0.0,
-    "thd_db": 0.7874
+    "ripple_db": -0.0176,
+    "peak_db": 0.0118,
+    "mono_db": 0.0118,
+    "a1000_db": -0.1961,
+    "ph_max_deg": -1.2228,
+    "irn_uv": -0.0048,
+    "p_core_nw": 0.0011,
+    "c_total_pf": 0.0
+  },
+  "deltas_vs_round2": {
+    "fc_hz": -0.0122,
+    "dc_db": 0.0,
+    "ripple_db": -0.0008,
+    "peak_db": 0.0004,
+    "mono_db": 0.0004,
+    "a1000_db": -0.002,
+    "ph_max_deg": 0.0041,
+    "irn_uv": -0.0003,
+    "p_core_nw": 0.0002,
+    "c_total_pf": 0.0
   },
   "rc_crosscheck": {
     "mode": "RC",
-    "fc_hz": 248.3424,
-    "ph_max_deg": 330.7321,
-    "a1000_db": -49.2537,
-    "note": "6233 R + 77 C; converged without a .nodeset; identical to CC (R is a don't-care, BRIEF 1.2)"
+    "n_c": 71,
+    "n_r": 8609,
+    "fc_hz": 248.6793,
+    "ph_max_deg": 331.1592,
+    "a1000_db": -49.2167,
+    "note": "converged without a .nodeset and agrees with CC to 0.0003 deg / 0.041 Hz. A FIRST RC extraction of the same GDS produced an R mesh with different sub-node numbering whose ngspice op solved to a wrong (shorted) DC point; re-extracting fixed it. kpex's RC node numbering is not deterministic across runs."
+  },
+  "per_net_c_to_acgnd_ff": {
+    "net1": 67.249,
+    "net2": 32.328,
+    "net3": 32.329,
+    "net4": 67.338,
+    "rep_x": 54.445,
+    "vbn": 609.904,
+    "vbr": 95.698,
+    "vdd": 206.922,
+    "vinn": 34.027,
+    "vinp": 34.027,
+    "vout_1": 166.059,
+    "vout_2": 166.54,
+    "voutn": 439.002,
+    "voutp": 460.06
+  },
+  "c_between_halves_ff": {
+    "net2_net3": 0.0,
+    "net4_net1": 0.0,
+    "budget_ff": {
+      "net2_net3": 11.4,
+      "net4_net1": 41.4
+    },
+    "round2": {
+      "net2_net3": 1.3792,
+      "net4_net1": 0.0257
+    },
+    "note": "F16: brief.json's budget_c_diff_ff was never in the round-2 budget table; it is now."
+  },
+  "one_sided_delta_ff": {
+    "net2_net3": -0.001,
+    "net4_net1": 0.089,
+    "vout_1_vout_2": -0.481,
+    "voutp_voutn": 21.058
+  },
+  "ab_coupling_ff": 0,
+  "corner_miss": {
+    "corner": "cap_bcs x0.9 with iref x0.9",
+    "ph_max_deg": 329.751,
+    "limit_deg": 330.0,
+    "round2": 329.746,
+    "round1": 329.299,
+    "pre_layout": 331.018,
+    "note": "R2.10 A7 still missed; delivered with the miss documented (PLAN R2.8 Q3, block owner approved). Round 3 nets +0.005 deg: +0.062 from F16 (lane_mid) minus 0.057 spent honouring BRIEF 2.1 (F17)."
+  },
+  "symmetry": {
+    "nine_physical_layers_xor_um2": 0.0,
+    "balance_layers_um2": 0.0,
+    "assertion": "gen_H12_pdk_cap.py --check-symmetry <gds>; FAILS on iterations/it01/layout.gds (15 rules, 8 layers), PASSES on it08/it11/it12"
+  },
+  "bounds_endpoints": {
+    "knobs": 33,
+    "builds": 66,
+    "drc_clean": 66,
+    "dead_knobs": 0
   },
   "all_pass": true
 }

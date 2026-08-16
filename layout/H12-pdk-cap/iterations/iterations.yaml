@@ -1,0 +1,540 @@
+iterations:
+- id: it01
+  note: it01 = round-1 layout of record rebuilt from the committed generator at default LayoutParams,
+    before any round-2 edit; GDS sha reproduces e5cfa1da... exactly; DRC 0 / LVS matched / kpex CC 78C
+    0R, round-1 scorecard attached (baseline for the round)
+  gen_sha256: 845785f4a4372ae0d3fa9443bb7ed9d71c8bed17ad8e89707424ba5fad71a223
+  gds_sha256: e5cfa1daad8818248f2695ac22b18d633d7723edd71cd2f4f0d76bc888786a9c
+  params: {}
+  area_um2: 230624.2848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 4ce3177c16c239c33c04d3f41c3f705a41b2a400e808b84c72160059fba0f4a5
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.2746
+    ph_max_deg: 330.7324
+    a1000_db: -49.2629
+    ripple_db: 0.0232
+    peak_db: 0.0206
+    dc_db: -0.0081
+    irn_uv: 29.1947
+    p_core_nw: 11.913
+    thd_db: -49.6136
+  files:
+    gen: it01/gen.py
+    gds: it01/layout.gds
+    png: it01/layout.png
+  drc_hits: {}
+- id: it02
+  note: F9 tap_len deleted, F10 BOUNDS/PLAN reconciled + clamp()/validate(), F2 cc13_cols 2->1, F6 spine
+    on the axis-facing column, F4 root causes fixed (outline now contains the device islands; row tap
+    height decoupled from ring_w), xr1_split code added (off) — net2 50.04->42.52, net4 77.30->67.37,
+    d(net4,net1) 10.04->0.11, ph_max 330.732->330.905; DRC 0, LVS matched
+  gen_sha256: 013413ee52064abd6c937106f65a66880b8f9418615589ebffa0a476540b655b
+  gds_sha256: c6532b8fc7ce43fcd2cbf0434fe07a4ef706eb2270ff56450ac02c940be65eb2
+  params: {}
+  area_um2: 230624.2848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 4ce3177c16c239c33c04d3f41c3f705a41b2a400e808b84c72160059fba0f4a5
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.4315
+    ph_max_deg: 330.9054
+    a1000_db: -49.2437
+    ripple_db: 0.0273
+    peak_db: 0.0179
+    dc_db: -0.0081
+    irn_uv: 29.1941
+    p_core_nw: 11.9137
+    net2_ff: 42.516
+    net3_ff: 42.106
+    net4_ff: 67.372
+    net1_ff: 67.266
+  files:
+    gen: it02/gen.py
+    gds: it02/layout.gds
+    png: it02/layout.png
+    diff_from_it01: diff_it01_it02.png
+  drc_hits: {}
+- id: it03
+  note: 'F5 bank-A re-order (xc13/xc17 on the axis, xc19 split 4+4 outboard) + F8 anti-orientation (xc19
+    L/R plates swapped, xc12 3|1|3) + cap_gap 0.4->0.6 (Mn.f for the split Metal5 sheets) + LVS reference
+    now emits the two split MIM card pairs — LVS matched first try, but DRC 5x TM1.b: the h() helper caps
+    every wire end by w/2, so the two xc12 comb bars across a 0.6 um group seam end 0.7 um apart'
+  gen_sha256: e0f8c2e7b1d0c2b060a5c66d1484ce832df34c7983447d174bce7b50f6c43c32
+  gds_sha256: 9c0aa71df861810297c8df135f449b3341305a4dec375b4bd0b7005bead30087
+  params: {}
+  area_um2: 233345.86080000002
+  drc:
+    passed: false
+    n: 5
+    rules:
+      TM1.b: 5
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 060edcf91e336172e6fa1d8ce474d5172c0b9ebc2c3c09bdce40bbd1f3a5bb3b
+  pex: {}
+  scorecard: {}
+  files:
+    gen: it03/gen.py
+    gds: it03/layout.gds
+    png: it03/layout.png
+    diff_from_it02: diff_it02_it03.png
+  drc_hits:
+    TM1.b:
+    - - 25.475
+      - 496.785
+    - - 25.475
+      - 498.173
+    - - 23.865
+      - 496.785
+    - - 24.775
+      - 498.485
+    - - 26.385
+      - 496.473
+- id: it04
+  note: 'TM1.b fixed by insetting the comb bars by w_tm1/2 before h() caps them — DRC back to 0, LVS matched.
+    F5+F8 measured: net2 42.52->32.71, net3 42.11->32.74 (delta 5.10->0.03), vout_1/vout_2 delta 155.80->0.48,
+    voutp/voutn delta 152.95->21.06, ph_max 330.905->331.139'
+  gen_sha256: 150a6dff53c16b633366d35e90757f0168bee7608966d7728052530b0efd5abd
+  gds_sha256: 3696c56cf6791149797e13adf69583adc2ac4d836c8e0b60985d9cbabeb85059
+  params: {}
+  area_um2: 233345.86080000002
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 060edcf91e336172e6fa1d8ce474d5172c0b9ebc2c3c09bdce40bbd1f3a5bb3b
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.5554
+    ph_max_deg: 331.1391
+    a1000_db: -49.229
+    ripple_db: 0.0338
+    peak_db: 0.0143
+    irn_uv: 29.1947
+    p_core_nw: 11.9134
+    net2_ff: 32.71
+    net3_ff: 32.736
+    net4_ff: 67.507
+    net1_ff: 67.401
+    voutp_ff: 459.343
+    voutn_ff: 438.284
+  files:
+    gen: it04/gen.py
+    gds: it04/layout.gds
+    png: it04/layout.png
+    diff_from_it03: diff_it03_it04.png
+  drc_hits: {}
+- id: it05
+  note: 'R2.6 residual levers on net2/net3: spine layer Metal2->Metal5 (27.5 vs 34.8 aF/um sidewall),
+    net23_strap=min_m1 (the 52 um xm9 drain bar and the xm4 gate hop leave Metal1 entirely; only contact-row
+    stubs + 0.38 um via pads remain), xc13/xc17 top-aligned with the bank (-18 um of TopMetal1 spine)
+    — net2 32.71->26.46, Metal1 10.7->2.4 fF, C(net2,vbn) 4.47->3.77, ph_max 331.139->331.214; DRC 0,
+    LVS matched'
+  gen_sha256: 1f340f8769435195c1ab35a56ac85537b8ca3ee3be16f345dc358229f6df8a2a
+  gds_sha256: 0d2ed4461a3894509e84956360b6acef898545a4b147ecc4582b8c5ccc52b6f6
+  params: {}
+  area_um2: 233345.86080000002
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 060edcf91e336172e6fa1d8ce474d5172c0b9ebc2c3c09bdce40bbd1f3a5bb3b
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.6886
+    ph_max_deg: 331.2136
+    net2_ff: 26.461
+    net3_ff: 26.469
+    net4_ff: 67.507
+    net1_ff: 67.401
+    voutp_ff: 459.343
+    voutn_ff: 438.284
+  files:
+    gen: it05/gen.py
+    gds: it05/layout.gds
+    png: it05/layout.png
+    diff_from_it04: diff_it04_it05.png
+  drc_hits: {}
+- id: it06
+  note: 'F7 bias_dummy_rows=1 (5 drawn rows, 3 live: every array member now has a dummy on four sides;
+    14 nmos dummies, Mdumn w=336u) + F14 xr1_split=True (two anti-oriented nf=1 W=6u halves, LVS still
+    folds them to W=12u) — cost as priced: island A +31.8 um of height, net2/net3 26.46->28.27, ph_max
+    331.214->331.155; delta(net2,net3) now exactly 0.000 fF; DRC 0, LVS matched'
+  gen_sha256: 0dff5dcbbdbf80317fd9c6567b769a618fe92c08ab8405d075d2b950ec87caa4
+  gds_sha256: 0b7548b15ff5b12c171695f2f8071862e9f94d1e05dcd92763551613a20b0ce1
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.651
+    ph_max_deg: 331.1554
+    net2_ff: 28.27
+    net3_ff: 28.27
+    net4_ff: 67.578
+    net1_ff: 67.471
+    voutp_ff: 459.418
+    voutn_ff: 438.359
+  files:
+    gen: it06/gen.py
+    gds: it06/layout.gds
+    png: it06/layout.png
+    diff_from_it05: diff_it05_it06.png
+  drc_hits: {}
+- id: it07
+  note: 'R2.3/PLAN-4 build-time assertions added: per-layer mirror-XOR (nine physical layers must be exactly
+    0; routing layers against a declared, itemised budget) and the A/B keep-apart check (no Metal5 or
+    TopMetal1 shape may cross the grounded shield band). The XOR assertion immediately found a real defect:
+    the tap contact rows were not their own mirror image (Cont XOR 0.0128 um2 from 5 nm banker''s-rounding
+    slivers) — fixed by snapping the contact CENTRE. Electrically identical to it06 (same PEX, same scorecard)'
+  gen_sha256: dda8536fe88ac334d71a175df276ff4f6ffbdd06db83479ed6765f58752db51c
+  gds_sha256: 240fb440614ba284a913ff8232a45bbc35722d668cd75253480debb6251ce4cb
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.651
+    ph_max_deg: 331.1554
+    net2_ff: 28.27
+    net3_ff: 28.27
+    net4_ff: 67.578
+    net1_ff: 67.471
+    voutp_ff: 459.418
+    voutn_ff: 438.359
+  files:
+    gen: it07/gen.py
+    gds: it07/layout.gds
+    png: it07/layout.png
+    diff_from_it06: diff_it06_it07.png
+  drc_hits: {}
+- id: it08
+  note: 'F4 closed: XOR budget made scale-relative (a fixed one is calibrated for one geometry only),
+    TGO.e floor added to the nmos in-row pitch (dev_gap_x=1.0 root cause), ws now reaches w_m1''s own
+    0.16 minimum, dead knob vbn_bus_keepout DELETED (measured: after the F5 re-order the vbn M3 bus no
+    longer runs under the net2/net3 corridor and the residual 3.8 fF C(net2,vbn) is xm9''s own gate-to-drain
+    geometry, which no routing knob reaches), bankA_order/cap_anti_orient coupling made symmetric so neither
+    knob is dead, axis_gap/cap_bank_gap/w_m2 ranges re-measured — 64/64 BOUNDS endpoints build DRC-clean,
+    0 dead knobs; GDS unchanged from it07; PEX CC+RC; THD -49.714, HD2 -104.22 (round 1: -88.06)'
+  gen_sha256: 33768488b28a600941c01b40dc2dc5d111ba3beb80ebf6d2c0fb8860b2d8e2a6
+  gds_sha256: 240fb440614ba284a913ff8232a45bbc35722d668cd75253480debb6251ce4cb
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 78
+    n_r: 0
+  scorecard:
+    fc_hz: 248.651
+    ph_max_deg: 331.1554
+    a1000_db: -49.2201
+    ripple_db: 0.0355
+    peak_db: 0.0132
+    dc_db: -0.0081
+    irn_uv: 29.1945
+    p_core_nw: 11.9134
+    thd_db: -49.7136
+    hd2_db: -104.2215
+    net2_ff: 28.27
+    net3_ff: 28.27
+  files:
+    gen: it08/gen.py
+    gds: it08/layout.gds
+    png: it08/layout.png
+    diff_from_it07: diff_it07_it08.png
+  drc_hits: {}
+- id: it09
+  note: 'F16: the net2/net3 (and net4/net1) lane offset is now the knob `lane_mid` (BOUNDS 1.9-4.9, clamped
+    to axis_gap/2-1.1) and axis_gap''s default moves 6->12, so the two spines sit 9.8 um apart instead
+    of 3.8 -- the reviewer''s what-if geometry, reproduced byte-identically (sha c0507860...). C(net2,net3)
+    1.379 -> 0.000 fF (the element is gone from the extraction: 78 -> 71 C), C(net4,net1) also gone; net2/net3
+    to ac gnd 28.270 -> 29.106 fF (the lane now runs over its own device row), delta(net2,net3) still
+    exactly 0.000. ph_max 331.155 -> 331.209 nominal, 329.746 -> 329.808 at cap_bcs x0.9 + iref x0.9.
+    DRC 0, LVS matched, area unchanged at 247136.88 um2'
+  gen_sha256: e35c0288d7fe5c4ebb0e581e340b45afae503698bb7dfd2d1f100c11c1fcfd9f
+  gds_sha256: c0507860c009c8fbc41805279d8ac8e68783808a62127625eee3ba52ceea1545
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 71
+    n_r: 0
+  scorecard:
+    fc_hz: 248.6866
+    ph_max_deg: 331.2094
+    a1000_db: -49.2144
+    ripple_db: 0.0367
+    peak_db: 0.0126
+    dc_db: -0.0081
+    irn_uv: 29.1944
+    p_core_nw: 11.9136
+  files:
+    gen: it09/gen.py
+    gds: it09/layout.gds
+    png: it09/layout.png
+    diff_from_it08: diff_it08_it09.png
+  drc_hits: {}
+- id: it10
+  note: 'F17: net23_strap default min_m1 -> lane_m1, so the Metal1 drain bar is drawn on ALL SIX members
+    of the rep_sink matching class again (BRIEF 2.1 ''identical S/D/G routing on all six''); min_m1 stays
+    as a knob but is no longer the default. Measured cost, disclosed: net2/net3 29.106 -> 32.328 fF (the
+    52 um xm9 drain bar plus the longer Metal1 hops at lane_mid=4.9; C(net2,vinp) 1.175 -> 1.639 partly
+    offsets it), ph_max 331.209 -> 331.160 nominal (-0.050, exactly the reviewer''s number) and 329.808
+    -> 329.751 at cap_bcs. Net of it09+it10 vs round 2: +0.005 deg with the brief''s matching rule honoured
+    and the 1.379 fF differential coupling gone. DRC 0, LVS matched'
+  gen_sha256: 8c864c39f458e9d8b0f3f13f196bff289cc9cec25bb5016e28e5dafc3d24fb09
+  gds_sha256: fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 71
+    n_r: 0
+  scorecard:
+    fc_hz: 248.6388
+    ph_max_deg: 331.1595
+    a1000_db: -49.2221
+    ripple_db: 0.0347
+    peak_db: 0.0136
+    dc_db: -0.0081
+    irn_uv: 29.1942
+    p_core_nw: 11.9136
+  files:
+    gen: it10/gen.py
+    gds: it10/layout.gds
+    png: it10/layout.png
+    diff_from_it09: diff_it09_it10.png
+  drc_hits: {}
+- id: it11
+  note: 'F18/F19/F20 guard-rail calibration; GDS byte-identical to it10 (fc59cfd7...), so this round changes
+    only what the build ASSERTS. F18: the round-2 XOR budget passed on it01 -- the very layout F6 was
+    raised against -- so it is re-derived by calibration (max(floor, fraction x the layer''s own area),
+    set to ~1.2-2x the round-3 measurement and below it01''s) and it01 now FAILS on Metal1 47.556>27.27,
+    Metal2 24.0>2.0, Metal5 948.78>78.10, TopMetal1 847.05>71.85, Via1 1.949>0.5, Via2 1.949>0.5, TopVia1
+    1.411>1.17. F20: Metal4 + Via1/2/3/4 + TopVia1 added to the table; on Metal3/Metal4/Via3/Via4/TopVia1
+    the plain XOR is saturated by the F8 balanced swaps (the two members sit at different y), so a second
+    rule XOR_BALANCE asserts the left/right drawn-area balance -- 0.0000 um2 on all eight balance layers
+    in round 3, and it01 breaks it on Metal2/Metal3/Metal4/Via1-4/TopVia1 (that is the rule that actually
+    catches F6''s one-sided Metal3 haul, 21.089 um2). F19: the 7.556 um2 Metal1 XOR is re-attributed to
+    the single-orientation xr2 (rep_x bridge, y 234.76-242.21), not xr1. New CLI ''gen_H12_pdk_cap.py
+    --check-symmetry <gds>'' re-runs the whole rule on any stored iteration. DRC 0, LVS matched, PEX CC
+    71C/0R + RC 71C/8609R'
+  gen_sha256: 9ac7064848b24b05d24634f489de7b138123da84d5c45d9026ca1664dcce3d63
+  gds_sha256: fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 71
+    n_r: 0
+  scorecard:
+    fc_hz: 248.6375
+    ph_max_deg: 331.1595
+    a1000_db: -49.2223
+    ripple_db: 0.0347
+    peak_db: 0.0136
+    dc_db: -0.0081
+    irn_uv: 29.1943
+    p_core_nw: 11.9136
+    thd_db: -49.7005
+  files:
+    gen: it11/gen.py
+    gds: it11/layout.gds
+    png: it11/layout.png
+    diff_from_it10: diff_it10_it11.png
+  drc_hits: {}
+- id: it12
+  note: 'F18 follow-up -- the calibrated budget of it11 made SEVEN legal BOUNDS endpoints unbuildable
+    (w_m1=1.0 Metal1 55.02>41.14, via_pad=3.0 Metal5 79.2>78.54, and five cap-topology endpoints), i.e.
+    round 2''s own recorded trap in a new costume. Fixed WITHOUT loosening the default rule: Metal1 fraction
+    0.004->0.006 and Metal5 0.0006->0.0008 (both still fail it01), plus a new budgets_for(params) that
+    applies a DECLARED, measured relaxation to exactly the layers a non-mirrored cap topology touches
+    -- cap_spine_side=''left'' (both halves put the top-plate spine on their left column), bankA_order=''c19_axis''/cap_anti_orient=False
+    (one on-axis xc19 array whose riser must pick a half) and cc12_split=''none'' (seven units cannot
+    be arranged mirror-symmetrically). The default configuration -- the layout of record, and what an
+    older GDS is judged by -- keeps the tight table. Result: 66/66 endpoints build DRC-clean, 0 dead knobs,
+    and ''gen_H12_pdk_cap.py --check-symmetry iterations/it01/layout.gds'' still FAILS on 15 rules across
+    8 layers while it08/it11/it12 PASS. GDS byte-identical to it10/it11 (fc59cfd7...); PEX C-card set
+    byte-identical to it11''s; DRC 0, LVS matched, PEX CC 71C/0R + RC 71C/8609R'
+  gen_sha256: 09262b78c37bec5067d63dbf5bfe287b40676824a12a6dd7db7552183b2d58d2
+  gds_sha256: fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 71
+    n_r: 0
+  scorecard:
+    fc_hz: 248.6388
+    ph_max_deg: 331.1595
+    a1000_db: -49.2221
+    ripple_db: 0.0347
+    peak_db: 0.0136
+    dc_db: -0.0081
+    irn_uv: 29.1942
+    p_core_nw: 11.9136
+    thd_db: -49.7008
+  files:
+    gen: it12/gen.py
+    gds: it12/layout.gds
+    png: it12/layout.png
+    diff_from_it11: diff_it11_it12.png
+  drc_hits: {}
+- id: it13
+  note: 'Documentation round, no geometry and no rule change: the module docstring gains the round-3 summary
+    and the new --check-symmetry CLI line. GDS byte-identical to it10/it11/it12 (fc59cfd7...) and re-verified
+    end to end anyway -- DRC 0, LVS matched, kpex CC 71C/0R -- so the LAST entry of this trail is the
+    committed generator (sha 6ae114ad...), which is the property a reviewer rebuilds against. Round 3
+    delivers here: ph_max 331.1595 nominal / 329.751 at cap_bcs x0.9 + iref x0.9 (S1 still short by 0.249
+    deg, delivered with the miss documented), C(net2,net3) 0.000 fF, identical routing on all six rep_sink
+    units, symmetry guard-rail FAILING on it01 as it must, 66/66 BOUNDS endpoints DRC-clean'
+  gen_sha256: 6ae114ad2690935155d07a2b9fbb984e574445f72a4382770e02d99498fce65e
+  gds_sha256: fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed
+  params: {}
+  area_um2: 247136.8848
+  drc:
+    passed: true
+    n: 0
+    rules: {}
+  lvs:
+    passed: true
+    matched: true
+    unmatched: {}
+    netlist_sha: 57ee5906a02982a840f2c2db2aa5c6a4c797bd6ab355974b525abd6e833d46b1
+  pex:
+    ok: true
+    mode: CC
+    n_c: 71
+    n_r: 0
+  scorecard:
+    fc_hz: 248.6388
+    ph_max_deg: 331.1595
+    a1000_db: -49.2221
+    ripple_db: 0.0347
+    peak_db: 0.0136
+    dc_db: -0.0081
+    irn_uv: 29.1942
+    p_core_nw: 11.9136
+    thd_db: -49.7008
+  files:
+    gen: it13/gen.py
+    gds: it13/layout.gds
+    png: it13/layout.png
+    diff_from_it12: diff_it12_it13.png
+  drc_hits: {}
