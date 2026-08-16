@@ -676,10 +676,12 @@ Full list with commands and effort in `README.md` §5. The layout-specific ones:
 7. **Round 4 has not been independently reviewed.** The review of record is
    round 3. A paper should say which round each layout number comes from — this
    file does.
-8. **A pre-layout corner discrepancy to reconcile** (new, found while assembling
-   this pack): `REPORT.md` §5's A7 table gives pre-layout `ph_max` = **237.04°**
-   at `mos_tt`/−40 °C and **222.31°** at +125 °C, while the certified
-   `PRELAYOUT.md` and this pack's independent re-run both give **251.7°** and
-   **256.0°** at the same two corners. The post-layout columns are
-   self-consistent; it is the *pre-layout reference column* that disagrees. Both
-   are in the repo — reconcile before quoting either.
+8. **The pre-layout corner discrepancy is resolved** (found while assembling
+   this pack, re-run 2026-08-16): `REPORT.md` §5's A7 table (pre 237.04° at
+   `mos_tt`/−40 °C, 222.31° at +125 °C) was run with the constant-current bias
+   law (`LPF_BIAS_ALPHA` unset = 0) for *both* the pre- and post-layout DUT;
+   `PRELAYOUT.md` uses α = 1.1 (251.7° / 256.0°). Re-running the pre-layout
+   design at α = 0 reproduces 237.04 / 222.31 exactly; at α = 1.1 it gives
+   251.67 / 256.03. REPORT §5's caption now says so. Quote the α = 1.1 rows for
+   the schematic PVT story and the REPORT rows only for the pre→post *shift*
+   (both columns share the same law); both temperature extremes fail either way.

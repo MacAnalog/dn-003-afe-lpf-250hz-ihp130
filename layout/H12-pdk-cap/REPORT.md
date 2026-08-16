@@ -253,7 +253,7 @@ the sizing record, and layout does not touch either.
 
 ### Corners on the PEX netlist (A7)
 
-9-point `lab.corners.AXES` (both DUTs, `LPF_BIAS_ALPHA = 1.1`) **plus** the five
+9-point `lab.corners.AXES` (both DUTs, **constant-current bias law, `LPF_BIAS_ALPHA` unset = 0** — so the two temperature rows differ from `PRELAYOUT.md`, which uses α = 1.1 and gives 251.7 / 256.0° pre-layout; the pre and post columns here share the same law, so the pre→post shift is comparable) **plus** the five
 `cornerCAP.lib` points with the `iref` trim, all re-run on round 4's own
 extraction.
 
