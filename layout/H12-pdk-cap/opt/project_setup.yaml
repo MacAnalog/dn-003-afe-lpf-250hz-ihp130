@@ -1,0 +1,138 @@
+# H12-pdk-cap LPF core — LAYOUT-AREA optimization through the spicexplorer platform.
+#
+# The same search ../optimize_area.py runs stand-alone, expressed in the platform DSL:
+# dut_params = the generator's 25 numeric knobs (BOUNDS; init = the round-3 layout of
+# record), ONE testbench = the layout flow (opt/flow.yaml: build → DRC → LVS → kpex CC →
+# frozen benches), target specs = the round-3 gates. `sim_engine: layout` picks
+# spicexplorer.backends.layout; Nevergrad / checkpoints / reports are the ordinary path.
+#
+# Run (from the platform workspace, which has nevergrad + the leaf tools):
+#   cd spicexplorer-platform
+#   uv run spicexplorer-optimize ../external/agentic-design-250hz-lpf-ihp130/layout/H12-pdk-cap/opt/project_setup.yaml \
+#       --budget 3 --workers 3 --outdir /path/to/scratch/h12_layoutopt
+# The `init` point (seed_from_init; usually trial 0 — suggest() is a hint, with parallel
+# workers it may land a few trials in) must reproduce round 3:
+#   area 247136.9 um2, ph_max_deg 331.1595, c_net2_ff 32.328 / c_net3_ff 32.329.
+project:
+  name: H12-PDK-CAP-LAYOUT
+  description: area-optimize the H12-pdk-cap lpf_core layout under the round-3 gates
+  simulator: none            # unused by the layout backend (a required DSL field)
+  save_sim: false
+  parallel_sim: false        # one flow at a time (each trial already fans out klayout/kpex/ngspice)
+  sim_engine: layout
+
+  ws_root: .                 # this directory (layout/H12-pdk-cap/opt)
+  netlist: flow.yaml         # the DUT "netlist" is the flow spec (no SPICE deck for a layout project)
+  outdir: temp_spice_out     # <outdir>/layout/<testbench>/run_<n>_<label>/{lpf_core.gds, drc/, lvs/, pex/, summary.json}
+
+  tech_spec:
+    name: ihp-sg13g2
+    constraints: {}
+
+  # ------------------------------------------------------------------
+  # The 25 NUMERIC knobs of gen_H12_pdk_cap.LayoutParams (BOUNDS; um unless a count).
+  # The 8 categorical / floorplan-mode knobs are pinned in flow.yaml `fixed_params`
+  # (bankA_order, cap_spine_side, cap_anti_orient, cc12_split, bias_dummy_rows, xr1_split,
+  # net23_strap, net23_spine_layer) — design decisions, not tuning. `init` = round-3 defaults.
+  # ------------------------------------------------------------------
+  dut_params:
+    - { name: dev_gap_x,        min_val: 1.0,   max_val: 6.0,   init: 2.0, description: "clearance between devices inside a row" }
+    - { name: axis_gap,         min_val: 4.0,   max_val: 30.0,  init: 12.0, description: "symmetry axis -> inner edge of each half" }
+    - { name: lane_mid,         min_val: 1.9,   max_val: 4.9,   init: 4.9, description: "axis -> net2/net3 (and net4/net1) lane (F16)" }
+    - { name: row_gap,          min_val: 3.0,   max_val: 20.0,  init: 6.0, description: "routing channel between device rows" }
+    - { name: bias_row_gap,     min_val: 2.0,   max_val: 12.0,  init: 4.0, description: "vertical pitch gap inside the bias array" }
+    - { name: bias_dummy_cols,  min_val: 0,     max_val: 2,     init: 1, is_integer: true, description: "dummy columns per side of the bias array" }
+    - { name: gmfb_dummy,       min_val: 0,     max_val: 2,     init: 1, is_integer: true, description: "dummy hv-pmos per end of the gmf_b row" }
+    - { name: well_margin,      min_val: 0.62,  max_val: 3.0,   init: 0.62, description: "NWell enclosure of Activ (NW.c1 floor)" }
+    - { name: well_gap,         min_val: 1.8,   max_val: 6.0,   init: 2.0, description: "different-net NWell spacing (NW.b1 floor)" }
+    - { name: ring_w,           min_val: 0.6,   max_val: 3.0,   init: 1.0, description: "guard-ring Metal1 / tap width" }
+    - { name: ring_gap,         min_val: 2.0,   max_val: 15.0,  init: 4.0, description: "ring -> nearest device / cap plate" }
+    - { name: shield_w,         min_val: 2.0,   max_val: 12.0,  init: 4.0, description: "grounded A/B shield band width" }
+    - { name: cap_gap,          min_val: 0.6,   max_val: 3.0,   init: 0.6, description: "gap between adjacent MIM Metal5 plates (Mn.f)" }
+    - { name: cap_bank_gap,     min_val: 9.0,   max_val: 40.0,  init: 10.0, description: "gap between two sub-arrays inside a bank" }
+    - { name: cap_axis_gap,     min_val: 3.0,   max_val: 20.0,  init: 5.0, description: "axis -> inner edge of the axis-adjacent sub-array (F5)" }
+    - { name: bank_gap,         min_val: 14.0,  max_val: 60.0,  init: 14.0, description: "cap bank -> device island" }
+    - { name: w_m1,             min_val: 0.16,  max_val: 1.0,   init: 0.2, description: "Metal1 wire width (M1.a = 0.16)" }
+    - { name: w_m2,             min_val: 0.2,   max_val: 0.4,   init: 0.2, description: "Metal2 wire width (Mn.a = 0.20)" }
+    - { name: w_m3,             min_val: 0.2,   max_val: 1.0,   init: 0.25, description: "Metal3 wire width" }
+    - { name: w_tm1,            min_val: 1.64,  max_val: 4.0,   init: 1.7, description: "TopMetal1 wire width (TM1.a = 1.64)" }
+    - { name: via_pad,          min_val: 1.7,   max_val: 3.0,   init: 2.0, description: "side of a via-stack landing pad" }
+    - { name: cc19_cols,        min_val: 1,     max_val: 2,     init: 2, is_integer: true, description: "xc19 columns (per 4-unit half when split)" }
+    - { name: cc1_cols,         min_val: 2,     max_val: 8,     init: 4, is_integer: true, description: "xc1/xc10 array columns (rows = 16/cols)" }
+    - { name: cc12_cols,        min_val: 1,     max_val: 7,     init: 7, is_integer: true, description: "xc12 array columns" }
+    - { name: cc13_cols,        min_val: 1,     max_val: 2,     init: 1, is_integer: true, description: "xc13/xc17 array columns" }
+
+  testbenches:
+    - name: layout
+      description: build → DRC → LVS(writer) → kpex CC (MIM-stripped) → S1..S7 scorecard on the PEX core
+      netlist: flow.yaml
+      params: []
+      enable: true
+
+  optimizer_config:
+    type: nevergrad
+    name: TwoPointsDE
+    budget: 240                # CLI: --budget N
+    random_seed: 0
+    seed_from_init: true       # the round-3 layout of record is evaluated early (parity point; usually trial 0)
+    optimizer_kwargs: { num_workers: 8 }   # CLI: --workers K (Nevergrad batch hint; trials run sequentially)
+    lin_variable_bounds: { min: 0, max: 1 }
+    log_variable_bounds: { min: 1, max: 100 }
+
+    # ------------------------------------------------------------------
+    # The round-3 gates as target specs (all sim_type: layout). DSL spellings:
+    #   "m >= T" → goal: exceed,   target: T          "m <= T" → goal: minimize, target: T (reward_type none = pure bound)
+    #   "m == T" → goal: exact,    target: T, tolerance: 0
+    # A gated-off stage (DRC fail → no LVS/PEX/bench) reads NaN → MAX_PENALTY on those specs;
+    # area_um2 (from the build) still scores, so an infeasible point ranks by area + failures.
+    # ------------------------------------------------------------------
+    target_specs:
+      - name: area_um2
+        description: bbox area — the objective; target = the round-3 area (247137 um2), reward pushes below it
+        testbench: layout
+        sim_type: layout
+        goal: minimize
+        target: 247137
+        range: 50000
+        tolerance: 0
+        weight: 10
+        error_type: relative-absolute
+        # `log` = |log10(area/target)|: grows MONOTONICALLY as area shrinks below the target.
+        # (`relative-log` = |log10(|area-target|/range)| rewards PROXIMITY to the target — it
+        # would rank an area 4 um2 under the target above one 30 um2 under it. Don't use it
+        # for a minimize objective.)
+        reward_type: log
+      - name: ph_max_deg
+        description: nominal ph_max >= 331.10 (round 3 = 331.1595; do not give phase back)
+        testbench: layout
+        sim_type: layout
+        goal: exceed
+        target: 331.10
+        range: 2.0
+        tolerance: 0
+        weight: 20
+        reward_type: none
+      - name: c_net2_ff
+        description: C(net2 -> ac ground) <= 32.40 fF (round 3 = 32.33; brief nominal budget 22.8)
+        testbench: layout
+        sim_type: layout
+        goal: minimize
+        target: 32.40
+        range: 10.0
+        tolerance: 0
+        weight: 10
+        reward_type: none
+      - name: c_net3_ff
+        description: C(net3 -> ac ground) <= 32.40 fF
+        testbench: layout
+        sim_type: layout
+        goal: minimize
+        target: 32.40
+        range: 10.0
+        tolerance: 0
+        weight: 10
+        reward_type: none
+      - { name: n_violations, testbench: layout, sim_type: layout, goal: exact, target: 0, tolerance: 0, range: 1, weight: 50, reward_type: none, description: "S1..S7 nominal violations == 0" }
+      - { name: drc_pass,     testbench: layout, sim_type: layout, goal: exact, target: 1, tolerance: 0, range: 1, weight: 100, reward_type: none, description: "KLayout DRC clean (1/0)" }
+      - { name: lvs_match,    testbench: layout, sim_type: layout, goal: exact, target: 1, tolerance: 0, range: 1, weight: 100, reward_type: none, description: "KLayout LVS match (1/0)" }
+      - { name: pex_ok,       testbench: layout, sim_type: layout, goal: exact, target: 1, tolerance: 0, range: 1, weight: 100, reward_type: none, description: "kpex extraction ran (1/0)" }

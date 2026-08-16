@@ -16,10 +16,12 @@ Mr2 vbr vbr rep_x rep_x sg13_hv_pmos w=5u l=33u
 Mr3 vbr vbn vss vss sg13_hv_nmos w=96u l=25u
 Cc13 net2 vout_1 cap_cmim w=40.53u l=40.53u m=2
 Cc17 net3 vout_2 cap_cmim w=40.53u l=40.53u m=2
-Cc19 vout_2 vout_1 cap_cmim w=49.42u l=49.42u m=8
+Cc19a vout_2 vout_1 cap_cmim w=49.42u l=49.42u m=4
+Cc19b vout_1 vout_2 cap_cmim w=49.42u l=49.42u m=4
 Cc1 net4 voutp cap_cmim w=49.91u l=49.91u m=16
 Cc10 net1 voutn cap_cmim w=49.91u l=49.91u m=16
-Cc12 voutn voutp cap_cmim w=48.45u l=48.45u m=7
+Cc12a voutn voutp cap_cmim w=48.45u l=48.45u m=4
+Cc12b voutp voutn cap_cmim w=48.45u l=48.45u m=3
 Mdumn vss vss vss vss sg13_hv_nmos w=144u l=25u
 Mdump vdd vdd vdd vdd sg13_hv_pmos w=24u l=31u
 .ends lpf_core

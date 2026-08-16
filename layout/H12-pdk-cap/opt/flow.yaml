@@ -1,0 +1,58 @@
+# layout-flow/1 — the H12-pdk-cap LPF core layout as a spicexplorer optimizer "testbench".
+#
+# One trial = build (gen_H12_pdk_cap.py in the gdsfactory env) → KLayout DRC → KLayout LVS
+# (reference regenerated per trial: it depends on the knobs) → kpex 2.5D CC on the
+# MIM-stripped GDS (schematic MIM cards re-inserted) → the block's own frozen benches on
+# the extracted core (measure_post.py, in the LPF venv). Same recipe as ../optimize_area.py,
+# expressed as data; consumed by spicexplorer.backends.layout (platform, sim_engine: layout).
+# Paths are relative to THIS file (layout/H12-pdk-cap/opt/).
+schema: layout-flow/1
+
+generator: ../gen_H12_pdk_cap.py
+cell: lpf_core
+sizing: ../../../signoff/post-pvt/H12-pdk-cap/design.json     # build(params, sizing)
+gds_python: ~/miniconda3/envs/ai_env/bin/python                # GDS_PYTHON env overrides
+param_grid: 0.01                                               # float knobs on the 0.01 um grid
+
+# tool-discovery defaults (an already-set env var wins); kpex/klayout come from the
+# signoff package's own fallbacks (~/miniconda3/envs/pex/bin/kpex, klayout on PATH)
+env:
+  PDK_ROOT: ~/local/pdks
+  PDK: ihp-sg13g2
+
+# The 8 categorical / floorplan-mode knobs are DESIGN DECISIONS (approved PLAN), not tuning:
+# pinned at their defaults. Only the 25 numeric knobs in project_setup.yaml are searched.
+fixed_params:
+  bankA_order: c13_axis
+  cap_spine_side: mirror
+  cap_anti_orient: true
+  cc12_split: "3|1|3"
+  bias_dummy_rows: 1
+  xr1_split: true
+  net23_strap: lane_m1
+  net23_spine_layer: Metal5
+
+drc: { enabled: true, no_density: true }
+lvs:
+  writer: write_lvs_reference     # gen_H12_pdk_cap.write_lvs_reference(LayoutParams, out=…)
+pex:
+  mode: CC
+  strip_mim: true                                                # IHP MIM layers out of the PEX GDS
+  schematic_cards_from: ../../../signoff/post-pvt/H12-pdk-cap/asbuilt/core.sp   # its xc* MIM cards go back in
+  schematic_card_prefixes: [xc]
+  ports: vinp vinn voutp voutn vbn vbp vdd                       # bench port order (header rewrite)
+  # the benches AC-ground these nets: c_<net>_ff = C(net → 0/VSS/VSUBS ∪ these) — the
+  # layout-brief budget number (round 3: net2/net3 32.33 fF); ctot_<net>_ff = Σ to anything
+  ac_gnd_nets: [vdd, vbn, vbr, rep_x, vinp, vinn]
+
+measure:
+  module: measure_post.py            # frozen S1..S7 scorecard on the PEX core (lab.metrics.evaluate)
+  callable: measure
+  python: ../../../.venv/bin/python  # the LPF venv (has lab/, ngspice wrapper)
+  cwd: ../../../experiments/023-replica-bias
+  env:
+    LPF_NGSPICE: ~/local/bin/ngspice # native lane, not docker
+  timeout_s: 1800
+
+gates: { drc: true, lvs: true, pex: true }
+retain: all

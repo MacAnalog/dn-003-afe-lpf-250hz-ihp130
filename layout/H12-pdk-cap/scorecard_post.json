@@ -1,33 +1,63 @@
 {
   "cell": "H12-pdk-cap",
   "kind": "post-layout (PEX)",
+  "round": 4,
   "from": "layout/H12-pdk-cap/gen_H12_pdk_cap.py + kpex 2.5D CC",
   "netlist": "layout/H12-pdk-cap/asbuilt/core_pex.sp",
-  "gds_sha256": "e5cfa1daad8818248f2695ac22b18d633d7723edd71cd2f4f0d76bc888786a9c",
-  "lvs_netlist_sha256": "4ce3177c16c239c33c04d3f41c3f705a41b2a400e808b84c72160059fba0f4a5",
+  "generator_sha256": "771468be65d24b2eb521e1aa9aa018e401774d31f61cadb6d999a252f37efb3c",
+  "gds_sha256": "1607b803d9dbb33620b7ba1609cf8edaa840358596abf1ede6625c06bc16e5d9",
+  "lvs_netlist_sha256": "060edcf91e336172e6fa1d8ce474d5172c0b9ebc2c3c09bdce40bbd1f3a5bb3b",
+  "pex_netlist_sha256": "d0e1d3d4c59288dc27064d66b04af2abb5b1e0284d3de572c9053f1b79e799f0",
+  "iteration": "it14",
+  "what_changed": "owner reversal of PLAN R2.8 Q2 (2026-08-17): bias_dummy_rows 1 -> 0, plus the area campaign's A-best numeric knob point (opt/results/summary.json -> Abest_dummy0) as the new LayoutParams defaults. Generator fix in the same round: clamp() ties cc12_cols to cc12_split. No device, size, multiplicity or floorplan mode changed.",
+  "outline": {
+    "bbox_um": [
+      -216.01,
+      -8.83,
+      216.01,
+      519.14
+    ],
+    "width_um": 432.02,
+    "height_um": 527.97,
+    "area_um2": 228093.5994,
+    "area_mm2": 0.2281,
+    "round3_area_um2": 247136.88,
+    "delta_pct": -7.71
+  },
+  "drc": {
+    "violations": 0,
+    "waivers": []
+  },
+  "lvs": {
+    "matched": true,
+    "unmatched": 0,
+    "reference": "layout/H12-pdk-cap/asbuilt/core_lvs.sp (regenerated: Mdumn w 336u -> 144u, the 8 removed dummy-row nmos)"
+  },
   "pex": {
     "tool": "kpex 0.3.12 klayout-pex 2.5D",
     "mode": "CC",
-    "n_c": 78,
+    "n_c": 69,
     "n_r": 0,
-    "mim": "MIM plates stripped for extraction (kpex tech gap); cap_cmim devices re-inserted from the certified netlist"
+    "mim": "MIM plates stripped for extraction (kpex tech gap); cap_cmim devices re-inserted from the certified netlist",
+    "note": "round 3 had 71 C; the two elements gone are the 0.4 aF cross terms C(vinn,vout_1) and C(vinp,vout_2). Every other net pair present in round 3 is present here \u2014 the C-card *set* is otherwise identical, the values moved."
   },
   "bench": "lab.metrics.evaluate (op+ac+noise, mos_tt, 27 C, 1.5 V) + lab.thd.measure, spliced via Design.dut_override",
-  "vicm": 0.24,
-  "vocm": 1.2784,
   "scorecard": {
-    "fc_hz": 248.2746,
+    "fc_hz": 248.6636,
     "dc_db": -0.0081,
-    "ripple_db": 0.0232,
-    "peak_db": 0.0206,
-    "mono_db": 0.0206,
-    "a1000_db": -49.2629,
-    "ph_max_deg": 330.7324,
-    "irn_uv": 29.1947,
-    "p_core_nw": 11.913,
+    "ripple_db": 0.0363,
+    "peak_db": 0.0128,
+    "mono_db": 0.0128,
+    "a1000_db": -49.2183,
+    "ph_max_deg": 331.2208,
+    "irn_uv": 29.1944,
+    "p_core_nw": 11.9136,
     "c_total_pf": 183.7792
   },
-  "thd_db": -49.6136,
+  "thd_db": -49.7259,
+  "hd3_db": -49.9281,
+  "hd2_db": -102.721,
+  "hd2_note": "HD2 is at the numerical floor of this bench: two PEX netlists of the SAME GDS with byte-identical C cards and identical device cards (only kpex instance ordering differs) measure -98.99 and -97.17 dB. Round 2's -104.22 is the same floor, not a property the layout holds. THD and HD3 reproduce to 0.002 dB across the same pair.",
   "passes": {
     "S1_phase": true,
     "S1_stopband": true,
@@ -39,6 +69,7 @@
     "S6_power": true,
     "S7_thd": true
   },
+  "violations": [],
   "pre_layout": {
     "fc_hz": 249.7746,
     "dc_db": -0.0081,
@@ -52,25 +83,689 @@
     "c_total_pf": 183.7792,
     "thd_db": -50.401
   },
-  "deltas": {
-    "fc_hz": -1.5,
+  "round1_post_layout": {
+    "fc_hz": 248.2746,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0232,
+    "peak_db": 0.0206,
+    "mono_db": 0.0206,
+    "a1000_db": -49.2629,
+    "ph_max_deg": 330.7324,
+    "irn_uv": 29.1947,
+    "p_core_nw": 11.913,
+    "c_total_pf": 183.7792,
+    "thd_db": -49.6136
+  },
+  "round2_post_layout": {
+    "fc_hz": 248.651,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0355,
+    "peak_db": 0.0132,
+    "mono_db": 0.0132,
+    "a1000_db": -49.2201,
+    "ph_max_deg": 331.1554,
+    "irn_uv": 29.1945,
+    "p_core_nw": 11.9134,
+    "c_total_pf": 183.7792,
+    "thd_db": -49.7136,
+    "hd2_db": -104.2215
+  },
+  "round3_post_layout": {
+    "fc_hz": 248.6388,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0347,
+    "peak_db": 0.0136,
+    "mono_db": 0.0136,
+    "a1000_db": -49.2221,
+    "ph_max_deg": 331.1595,
+    "irn_uv": 29.1942,
+    "p_core_nw": 11.9136,
+    "c_total_pf": 183.7792,
+    "thd_db": -49.7008,
+    "hd2_db": -97.1706
+  },
+  "deltas_vs_pre": {
+    "fc_hz": -1.111,
     "dc_db": 0.0,
-    "ripple_db": -0.0291,
-    "peak_db": 0.0188,
-    "mono_db": 0.0188,
-    "a1000_db": -0.2369,
-    "ph_max_deg": -1.6499,
-    "irn_uv": -0.0043,
-    "p_core_nw": 0.0005,
-    "c_total_pf": 0.0,
-    "thd_db": 0.7874
+    "ripple_db": -0.016,
+    "peak_db": 0.011,
+    "mono_db": 0.011,
+    "a1000_db": -0.1923,
+    "ph_max_deg": -1.1615,
+    "irn_uv": -0.0046,
+    "p_core_nw": 0.0011,
+    "c_total_pf": 0.0
+  },
+  "deltas_vs_round3": {
+    "fc_hz": 0.0248,
+    "dc_db": 0.0,
+    "ripple_db": 0.0016,
+    "peak_db": -0.0008,
+    "mono_db": -0.0008,
+    "a1000_db": 0.0038,
+    "ph_max_deg": 0.0613,
+    "irn_uv": 0.0002,
+    "p_core_nw": 0.0,
+    "c_total_pf": 0.0
   },
   "rc_crosscheck": {
     "mode": "RC",
-    "fc_hz": 248.3424,
-    "ph_max_deg": 330.7321,
-    "a1000_db": -49.2537,
-    "note": "6233 R + 77 C; converged without a .nodeset; identical to CC (R is a don't-care, BRIEF 1.2)"
+    "n_c": 69,
+    "n_r": 6331,
+    "fc_hz": 248.7104,
+    "ph_max_deg": 331.2205,
+    "a1000_db": -49.212,
+    "irn_uv": 29.192,
+    "p_core_nw": 11.9157,
+    "note": "converged without a .nodeset; agrees with CC to 0.0003 deg / 0.047 Hz / 0.006 dB. C cards identical to CC."
   },
-  "all_pass": true
+  "per_net_c_to_acgnd_ff": {
+    "net1": 67.078,
+    "net2": 30.198,
+    "net3": 30.217,
+    "net4": 67.18,
+    "rep_x": 54.254,
+    "vbn": 608.281,
+    "vbr": 95.304,
+    "vdd": 209.6,
+    "vinn": 33.869,
+    "vinp": 33.869,
+    "vout_1": 162.924,
+    "vout_2": 163.085,
+    "voutn": 441.714,
+    "voutp": 463.401
+  },
+  "parasitic_budget": {
+    "net2": {
+      "c_to_acgnd_ff": 30.198,
+      "budget_nom_ff": 22.8,
+      "budget_pvt_ff": 9.59,
+      "ratio_nom": 1.324,
+      "ratio_pvt": 3.149,
+      "budget_asym_ff": 45.7,
+      "budget_asym_pvt_ff": 19.2,
+      "budget_diff_ff": 11.4
+    },
+    "net3": {
+      "c_to_acgnd_ff": 30.217,
+      "budget_nom_ff": 22.8,
+      "budget_pvt_ff": 9.59,
+      "ratio_nom": 1.325,
+      "ratio_pvt": 3.151,
+      "budget_asym_ff": 45.7,
+      "budget_asym_pvt_ff": 19.2,
+      "budget_diff_ff": 11.4
+    },
+    "net4": {
+      "c_to_acgnd_ff": 67.18,
+      "budget_nom_ff": 82.8,
+      "budget_pvt_ff": 34.8,
+      "ratio_nom": 0.811,
+      "ratio_pvt": 1.93,
+      "budget_asym_ff": 166.0,
+      "budget_asym_pvt_ff": 69.5,
+      "budget_diff_ff": 41.4
+    },
+    "net1": {
+      "c_to_acgnd_ff": 67.078,
+      "budget_nom_ff": 82.8,
+      "budget_pvt_ff": 34.8,
+      "ratio_nom": 0.81,
+      "ratio_pvt": 1.928,
+      "budget_asym_ff": 166.0,
+      "budget_asym_pvt_ff": 69.5,
+      "budget_diff_ff": 41.4
+    },
+    "vout_1": {
+      "c_to_acgnd_ff": 162.924,
+      "budget_nom_ff": 3350.0,
+      "budget_pvt_ff": 3350.0,
+      "ratio_nom": 0.049,
+      "ratio_pvt": 0.049,
+      "budget_asym_ff": 6710.0,
+      "budget_asym_pvt_ff": 6710.0,
+      "budget_diff_ff": 1680.0
+    },
+    "vout_2": {
+      "c_to_acgnd_ff": 163.085,
+      "budget_nom_ff": 3350.0,
+      "budget_pvt_ff": 3350.0,
+      "ratio_nom": 0.049,
+      "ratio_pvt": 0.049,
+      "budget_asym_ff": 6710.0,
+      "budget_asym_pvt_ff": 6710.0,
+      "budget_diff_ff": 1680.0
+    },
+    "voutp": {
+      "c_to_acgnd_ff": 463.401,
+      "budget_nom_ff": 905.0,
+      "budget_pvt_ff": 455.0,
+      "ratio_nom": 0.512,
+      "ratio_pvt": 1.018,
+      "budget_asym_ff": 1800.0,
+      "budget_asym_pvt_ff": 905.0,
+      "budget_diff_ff": 460.0
+    },
+    "voutn": {
+      "c_to_acgnd_ff": 441.714,
+      "budget_nom_ff": 905.0,
+      "budget_pvt_ff": 455.0,
+      "ratio_nom": 0.488,
+      "ratio_pvt": 0.971,
+      "budget_asym_ff": 1800.0,
+      "budget_asym_pvt_ff": 905.0,
+      "budget_diff_ff": 460.0
+    }
+  },
+  "c_between_halves_ff": {
+    "net2_net3": 0.0,
+    "net4_net1": 0.0,
+    "budget_ff": {
+      "net2_net3": 11.4,
+      "net4_net1": 41.4
+    }
+  },
+  "one_sided_delta_ff": {
+    "net2_net3": -0.019,
+    "net4_net1": 0.102,
+    "vout_1_vout_2": -0.161,
+    "voutp_voutn": 21.687
+  },
+  "ab_coupling_ff": 0,
+  "corners": {
+    "axes": [
+      {
+        "dut": "pre",
+        "process": "mos_tt",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "tt_27c_1v500",
+        "ph_max_deg": 332.382,
+        "fc_hz": 249.775,
+        "a1000_db": -49.026,
+        "irn_uv": 29.2,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "process": "mos_ss",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "ss_27c_1v500",
+        "ph_max_deg": 332.379,
+        "fc_hz": 247.365,
+        "a1000_db": -49.36,
+        "irn_uv": 29.58,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "process": "mos_ff",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "ff_27c_1v500",
+        "ph_max_deg": 332.168,
+        "fc_hz": 252.502,
+        "a1000_db": -48.61,
+        "irn_uv": 28.82,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "process": "mos_sf",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "sf_27c_1v500",
+        "ph_max_deg": 332.245,
+        "fc_hz": 249.89,
+        "a1000_db": -48.913,
+        "irn_uv": 29.04,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "process": "mos_fs",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "fs_27c_1v500",
+        "ph_max_deg": 332.445,
+        "fc_hz": 248.836,
+        "a1000_db": -49.113,
+        "irn_uv": 29.38,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "process": "mos_tt",
+        "temp": 27.0,
+        "vdd": 1.35,
+        "slug": "tt_27c_1v350",
+        "ph_max_deg": 308.009,
+        "fc_hz": 243.56,
+        "a1000_db": -49.023,
+        "irn_uv": 29.54,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 308 < 330",
+          "S2 cutoff: 243.6 outside [245, 255]",
+          "S3 passband gain: |-0.7774| > 0.2",
+          "S3 passband flatness to 150 Hz: 0.3536 > 0.2"
+        ]
+      },
+      {
+        "dut": "pre",
+        "process": "mos_tt",
+        "temp": 27.0,
+        "vdd": 1.65,
+        "slug": "tt_27c_1v650",
+        "ph_max_deg": 332.419,
+        "fc_hz": 249.92,
+        "a1000_db": -48.999,
+        "irn_uv": 29.2,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "process": "mos_tt",
+        "temp": -40.0,
+        "vdd": 1.5,
+        "slug": "tt_m40c_1v500",
+        "ph_max_deg": 237.044,
+        "fc_hz": 268.379,
+        "a1000_db": -32.945,
+        "irn_uv": 30.84,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 237 < 330",
+          "S1 companion: |H| at 1 kHz: -32.95 > -48",
+          "S2 cutoff: 268.4 outside [245, 255]",
+          "S3 passband gain: |-10.13| > 0.2",
+          "S4 peaking: 3.428 > 0.2",
+          "S3 passband flatness to 150 Hz: 3.032 > 0.2"
+        ]
+      },
+      {
+        "dut": "pre",
+        "process": "mos_tt",
+        "temp": 125.0,
+        "vdd": 1.5,
+        "slug": "tt_125c_1v500",
+        "ph_max_deg": 222.305,
+        "fc_hz": 240.387,
+        "a1000_db": -41.015,
+        "irn_uv": 468.41,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 222.3 < 330",
+          "S1 companion: |H| at 1 kHz: -41.02 > -48",
+          "S2 cutoff: 240.4 outside [245, 255]",
+          "S3 passband gain: |-34.55| > 0.2",
+          "S4 peaking: 1.305 > 0.2",
+          "S3 passband flatness to 150 Hz: 1.298 > 0.2",
+          "S5 input-referred noise, 0.5-200 Hz: 468.4 >= 40"
+        ]
+      },
+      {
+        "dut": "post",
+        "process": "mos_tt",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "tt_27c_1v500",
+        "ph_max_deg": 331.221,
+        "fc_hz": 248.664,
+        "a1000_db": -49.218,
+        "irn_uv": 29.19,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "process": "mos_ss",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "ss_27c_1v500",
+        "ph_max_deg": 331.226,
+        "fc_hz": 246.245,
+        "a1000_db": -49.561,
+        "irn_uv": 29.58,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "process": "mos_ff",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "ff_27c_1v500",
+        "ph_max_deg": 331.027,
+        "fc_hz": 251.524,
+        "a1000_db": -48.802,
+        "irn_uv": 28.82,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "process": "mos_sf",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "sf_27c_1v500",
+        "ph_max_deg": 331.079,
+        "fc_hz": 248.748,
+        "a1000_db": -49.105,
+        "irn_uv": 29.04,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "process": "mos_fs",
+        "temp": 27.0,
+        "vdd": 1.5,
+        "slug": "fs_27c_1v500",
+        "ph_max_deg": 331.29,
+        "fc_hz": 247.757,
+        "a1000_db": -49.305,
+        "irn_uv": 29.37,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "process": "mos_tt",
+        "temp": 27.0,
+        "vdd": 1.35,
+        "slug": "tt_27c_1v350",
+        "ph_max_deg": 307.535,
+        "fc_hz": 242.308,
+        "a1000_db": -49.29,
+        "irn_uv": 29.53,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 307.5 < 330",
+          "S2 cutoff: 242.3 outside [245, 255]",
+          "S3 passband gain: |-0.7775| > 0.2",
+          "S3 passband flatness to 150 Hz: 0.3117 > 0.2"
+        ]
+      },
+      {
+        "dut": "post",
+        "process": "mos_tt",
+        "temp": 27.0,
+        "vdd": 1.65,
+        "slug": "tt_27c_1v650",
+        "ph_max_deg": 331.257,
+        "fc_hz": 248.805,
+        "a1000_db": -49.192,
+        "irn_uv": 29.19,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "process": "mos_tt",
+        "temp": -40.0,
+        "vdd": 1.5,
+        "slug": "tt_m40c_1v500",
+        "ph_max_deg": 235.171,
+        "fc_hz": 267.165,
+        "a1000_db": -33.075,
+        "irn_uv": 30.82,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 235.2 < 330",
+          "S1 companion: |H| at 1 kHz: -33.08 > -48",
+          "S2 cutoff: 267.2 outside [245, 255]",
+          "S3 passband gain: |-10.14| > 0.2",
+          "S4 peaking: 3.424 > 0.2",
+          "S3 passband flatness to 150 Hz: 3.044 > 0.2"
+        ]
+      },
+      {
+        "dut": "post",
+        "process": "mos_tt",
+        "temp": 125.0,
+        "vdd": 1.5,
+        "slug": "tt_125c_1v500",
+        "ph_max_deg": 221.763,
+        "fc_hz": 239.149,
+        "a1000_db": -41.167,
+        "irn_uv": 468.05,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 221.8 < 330",
+          "S1 companion: |H| at 1 kHz: -41.17 > -48",
+          "S2 cutoff: 239.1 outside [245, 255]",
+          "S3 passband gain: |-34.55| > 0.2",
+          "S4 peaking: 1.306 > 0.2",
+          "S3 passband flatness to 150 Hz: 1.302 > 0.2",
+          "S5 input-referred noise, 0.5-200 Hz: 468.1 >= 40"
+        ]
+      }
+    ],
+    "cap": [
+      {
+        "dut": "pre",
+        "cap_corner": "cap_typ",
+        "iref_scale": 1.0,
+        "ph_max_deg": 332.382,
+        "fc_hz": 249.775,
+        "a1000_db": -49.026,
+        "irn_uv": 29.2,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "cap_corner": "cap_bcs",
+        "iref_scale": 1.0,
+        "ph_max_deg": 330.954,
+        "fc_hz": 277.077,
+        "a1000_db": -45.345,
+        "irn_uv": 29.23,
+        "pass": false,
+        "violations": [
+          "S1 companion: |H| at 1 kHz: -45.35 > -48",
+          "S2 cutoff: 277.1 outside [245, 255]"
+        ]
+      },
+      {
+        "dut": "pre",
+        "cap_corner": "cap_bcs",
+        "iref_scale": 0.9,
+        "ph_max_deg": 331.018,
+        "fc_hz": 250.603,
+        "a1000_db": -48.883,
+        "irn_uv": 30.59,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "pre",
+        "cap_corner": "cap_wcs",
+        "iref_scale": 1.0,
+        "ph_max_deg": 333.61,
+        "fc_hz": 227.335,
+        "a1000_db": -52.37,
+        "irn_uv": 29.18,
+        "pass": false,
+        "violations": [
+          "S2 cutoff: 227.3 outside [245, 255]"
+        ]
+      },
+      {
+        "dut": "pre",
+        "cap_corner": "cap_wcs",
+        "iref_scale": 1.1,
+        "ph_max_deg": 333.564,
+        "fc_hz": 249.041,
+        "a1000_db": -49.16,
+        "irn_uv": 28.01,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "cap_corner": "cap_typ",
+        "iref_scale": 1.0,
+        "ph_max_deg": 331.221,
+        "fc_hz": 248.664,
+        "a1000_db": -49.218,
+        "irn_uv": 29.19,
+        "pass": true,
+        "violations": []
+      },
+      {
+        "dut": "post",
+        "cap_corner": "cap_bcs",
+        "iref_scale": 1.0,
+        "ph_max_deg": 329.758,
+        "fc_hz": 275.88,
+        "a1000_db": -45.554,
+        "irn_uv": 29.22,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 329.8 < 330",
+          "S1 companion: |H| at 1 kHz: -45.55 > -48",
+          "S2 cutoff: 275.9 outside [245, 255]"
+        ]
+      },
+      {
+        "dut": "post",
+        "cap_corner": "cap_bcs",
+        "iref_scale": 0.9,
+        "ph_max_deg": 329.821,
+        "fc_hz": 249.334,
+        "a1000_db": -49.099,
+        "irn_uv": 30.59,
+        "pass": false,
+        "violations": [
+          "S1 biquad-order certificate (max unwrapped phase lag): 329.8 < 330"
+        ]
+      },
+      {
+        "dut": "post",
+        "cap_corner": "cap_wcs",
+        "iref_scale": 1.0,
+        "ph_max_deg": 332.491,
+        "fc_hz": 226.424,
+        "a1000_db": -52.549,
+        "irn_uv": 29.17,
+        "pass": false,
+        "violations": [
+          "S2 cutoff: 226.4 outside [245, 255]"
+        ]
+      },
+      {
+        "dut": "post",
+        "cap_corner": "cap_wcs",
+        "iref_scale": 1.1,
+        "ph_max_deg": 332.449,
+        "fc_hz": 248.018,
+        "a1000_db": -49.338,
+        "irn_uv": 28.0,
+        "pass": true,
+        "violations": []
+      }
+    ],
+    "note": "9-point lab.corners.AXES on both DUTs (LPF_BIAS_ALPHA=1.1) + 5 cornerCAP.lib points with the iref trim"
+  },
+  "corner_miss": {
+    "corner": "cap_bcs x0.9 with iref x0.9",
+    "ph_max_deg": 329.821,
+    "limit_deg": 330.0,
+    "round3": 329.751,
+    "round2": 329.746,
+    "round1": 329.299,
+    "pre_layout": 331.018,
+    "short_by_deg": 0.179,
+    "note": "R2.10 A7 still missed; delivered with the miss documented (PLAN R2.8 Q3, block owner approved). Round 4 nets +0.070 deg, entirely from the dummy-row removal (island A shorter -> shorter net2/net3 spine)."
+  },
+  "symmetry": {
+    "nine_physical_layers_xor_um2": 0.0,
+    "balance_layers_um2": 0.0,
+    "assertion": "gen_H12_pdk_cap.py --check-symmetry iterations/it14/layout.gds -> PASS (all 20 layers); FAILS on iterations/it01/layout.gds (15 rules, 8 layers)"
+  },
+  "bounds_endpoints": {
+    "knobs": 33,
+    "endpoints": 66,
+    "build_ok": 65,
+    "drc_clean": 65,
+    "lvs_match": 63,
+    "dead_knobs": 0,
+    "gate": "build -> PDK DRC -> per-endpoint generator-emitted core_lvs.sp -> sg13g2.lvs (round 3 was DRC-only)",
+    "illegal_endpoints": [
+      {
+        "knob": "w_m1",
+        "value": 1.0,
+        "verdict": "DRC 0, LVS mismatch",
+        "at_round3_defaults": "also mismatches",
+        "detail": "1 um Metal1 merges 11 nets into one extracted net; zero DRC violations because same-layer shapes that touch simply merge. Latent defect round 3 certified as clean."
+      },
+      {
+        "knob": "ring_gap",
+        "value": 15.0,
+        "verdict": "DRC 0, LVS mismatch",
+        "at_round3_defaults": "matches",
+        "detail": "vout_1/vout_2/vss merge; new at the A-best point (ring_w 1.02 + tighter pitches)."
+      },
+      {
+        "knob": "w_tm1",
+        "value": 4.0,
+        "verdict": "build FAIL",
+        "at_round3_defaults": "builds clean",
+        "detail": "AssertionError: mirror symmetry broken -- TopMetal1: XOR 72.32 um2 > 71.86 (scale-relative budget shrank with the cell)."
+      }
+    ],
+    "note": "BOUNDS defects, not layout-of-record defects: the delivered cell is at the defaults. Narrowing the three ranges is a round-5 generator change."
+  },
+  "all_pass": true,
+  "reproduces_round3": {
+    "gds_sha256": "fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed",
+    "how": "the round-4 generator built at round-3 default values",
+    "area_um2": 247136.9,
+    "why": "proves round 4 is a re-defaulting: the only geometry-path change is the cc12_cols clamp, inert at cc12_cols=7"
+  },
+  "knobs_moved": {
+    "total": 18,
+    "numeric_from_campaign": 17,
+    "owner_reversal": [
+      "bias_dummy_rows"
+    ],
+    "categorical_or_floorplan_mode": 0
+  },
+  "what_ifs_on_pex": {
+    "delete_net23_all": {
+      "ph_max_deg": 331.901,
+      "d_deg": 0.68
+    },
+    "delete_net23_substrate": {
+      "ph_max_deg": 331.847,
+      "d_deg": 0.626
+    },
+    "delete_net41_all": {
+      "ph_max_deg": 331.71,
+      "d_deg": 0.489
+    },
+    "delete_net23_vbn": {
+      "ph_max_deg": 331.333,
+      "d_deg": 0.112
+    },
+    "delete_net23_vin": {
+      "ph_max_deg": 331.156,
+      "d_deg": -0.064
+    },
+    "delete_all_c": {
+      "ph_max_deg": 332.332,
+      "d_deg": 1.111
+    },
+    "sensitivity_deg_per_ff": 0.0225,
+    "note": "2.130 fF off net2/net3 at 0.0225 deg/fF predicts +0.048 deg; measured +0.061; the rest is net1/net4 and vout_1/vout_2"
+  }
 }
