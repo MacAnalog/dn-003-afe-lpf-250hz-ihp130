@@ -1,0 +1,76 @@
+{
+  "cell": "H12-pdk-cap",
+  "kind": "post-layout (PEX)",
+  "from": "layout/H12-pdk-cap/gen_H12_pdk_cap.py + kpex 2.5D CC",
+  "netlist": "layout/H12-pdk-cap/asbuilt/core_pex.sp",
+  "gds_sha256": "e5cfa1daad8818248f2695ac22b18d633d7723edd71cd2f4f0d76bc888786a9c",
+  "lvs_netlist_sha256": "4ce3177c16c239c33c04d3f41c3f705a41b2a400e808b84c72160059fba0f4a5",
+  "pex": {
+    "tool": "kpex 0.3.12 klayout-pex 2.5D",
+    "mode": "CC",
+    "n_c": 78,
+    "n_r": 0,
+    "mim": "MIM plates stripped for extraction (kpex tech gap); cap_cmim devices re-inserted from the certified netlist"
+  },
+  "bench": "lab.metrics.evaluate (op+ac+noise, mos_tt, 27 C, 1.5 V) + lab.thd.measure, spliced via Design.dut_override",
+  "vicm": 0.24,
+  "vocm": 1.2784,
+  "scorecard": {
+    "fc_hz": 248.2746,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0232,
+    "peak_db": 0.0206,
+    "mono_db": 0.0206,
+    "a1000_db": -49.2629,
+    "ph_max_deg": 330.7324,
+    "irn_uv": 29.1947,
+    "p_core_nw": 11.913,
+    "c_total_pf": 183.7792
+  },
+  "thd_db": -49.6136,
+  "passes": {
+    "S1_phase": true,
+    "S1_stopband": true,
+    "S2_cutoff": true,
+    "S3_dc": true,
+    "S3_flatness": true,
+    "S4_peaking": true,
+    "S5_irn": true,
+    "S6_power": true,
+    "S7_thd": true
+  },
+  "pre_layout": {
+    "fc_hz": 249.7746,
+    "dc_db": -0.0081,
+    "ripple_db": 0.0523,
+    "peak_db": 0.0018,
+    "mono_db": 0.0018,
+    "a1000_db": -49.026,
+    "ph_max_deg": 332.3823,
+    "irn_uv": 29.199,
+    "p_core_nw": 11.9125,
+    "c_total_pf": 183.7792,
+    "thd_db": -50.401
+  },
+  "deltas": {
+    "fc_hz": -1.5,
+    "dc_db": 0.0,
+    "ripple_db": -0.0291,
+    "peak_db": 0.0188,
+    "mono_db": 0.0188,
+    "a1000_db": -0.2369,
+    "ph_max_deg": -1.6499,
+    "irn_uv": -0.0043,
+    "p_core_nw": 0.0005,
+    "c_total_pf": 0.0,
+    "thd_db": 0.7874
+  },
+  "rc_crosscheck": {
+    "mode": "RC",
+    "fc_hz": 248.3424,
+    "ph_max_deg": 330.7321,
+    "a1000_db": -49.2537,
+    "note": "6233 R + 77 C; converged without a .nodeset; identical to CC (R is a don't-care, BRIEF 1.2)"
+  },
+  "all_pass": true
+}
