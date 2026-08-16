@@ -12,6 +12,7 @@ write, and it is deliberate (doc/memory/README.md).
 """
 from __future__ import annotations
 
+import hashlib as _hashlib
 import json
 import os
 import platform
@@ -67,9 +68,12 @@ def design_dict(design) -> dict:
     1.10.  Rebuilders must therefore CHECK a reconstruction against the row's
     own recorded metrics rather than trust it (see experiments/.../state.py).
     """
+    ov = getattr(design, "dut_override", None)
     return {
         "topology": design.topology,
         "iref": design.iref,
+        # sha of a verbatim DUT override (post-layout PEX / injected variant); absent = built
+        **({"dut_override_sha": _hashlib.sha256(ov.encode()).hexdigest()[:16]} if ov else {}),
         "vicm": design.vicm,
         "vocm": design.vocm,
         "caps_pf": {k: round(getattr(design, k) * 1e12, 6)

@@ -1,0 +1,1376 @@
+{
+ "cell": "H12-pdk-cap",
+ "netlist": "signoff/post-pvt/H12-pdk-cap/asbuilt/core.sp",
+ "netlist_sha": "ef78d6f8d4e28cfbf18dc7abf6bd4066070fdf9f63546d430f16c4d71ffaf3c7",
+ "design": "signoff/post-pvt/H12-pdk-cap/design.json",
+ "bench": "lab.metrics.evaluate (ac+noise, mos_tt, 27 C, 1.5 V) + lab.thd.measure (S7); perturbation via spicexplorer_signoff.sensitivity + Design.dut_override",
+ "margin_fraction": 0.25,
+ "margin_basis": "nominal 27 C / 1.5 V / mos_tt scorecard; *_pvt columns use the worst PASS corner in PRELAYOUT.md sec.2 and sec.5",
+ "baseline": {
+  "fc_hz": 249.7746,
+  "dc_db": -0.0081,
+  "ripple_db": 0.0523,
+  "peak_db": 0.0018,
+  "ph_max_deg": 332.3823,
+  "a1000_db": -49.026,
+  "irn_uv": 29.199,
+  "p_core_nw": 11.9125,
+  "thd_db": -50.401,
+  "hd3_db": -50.605,
+  "hd2_db": -100.19
+ },
+ "margins_nominal": {
+  "fc_hz": 4.775,
+  "dc_db": 0.192,
+  "ripple_db": 0.148,
+  "peak_db": 0.198,
+  "ph_max_deg": 2.382,
+  "a1000_db": 1.026,
+  "irn_uv": 10.8,
+  "p_core_nw": 38.09,
+  "thd_db": 10.4
+ },
+ "margins_pvt": {
+  "fc_hz": 2.4,
+  "dc_db": 0.166,
+  "ripple_db": 0.103,
+  "peak_db": 0.198,
+  "ph_max_deg": 1.0,
+  "a1000_db": 0.6,
+  "irn_uv": 9.4,
+  "p_core_nw": 36.9,
+  "thd_db": 7.28
+ },
+ "nets": [
+  {
+   "name": "net2",
+   "class": "diff:biquadA_internal",
+   "budget_c_ff": 22.8,
+   "budget_c_ff_pvt": 9.59,
+   "budget_c_asym_ff": 45.7,
+   "budget_c_asym_ff_pvt": 19.2,
+   "budget_c_diff_ff": 11.4,
+   "binds": "ph_max_deg",
+   "sensitivity": {
+    "fc_hz": -0.0145,
+    "ripple_db": -0.000614,
+    "peak_db": 0.000242,
+    "ph_max_deg": -0.0261,
+    "a1000_db": -0.00205,
+    "irn_uv": -4.52e-05
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": true
+  },
+  {
+   "name": "net3",
+   "class": "diff:biquadA_internal",
+   "budget_c_ff": 22.8,
+   "budget_c_ff_pvt": 9.59,
+   "budget_c_asym_ff": 45.7,
+   "budget_c_asym_ff_pvt": 19.2,
+   "budget_c_diff_ff": 11.4,
+   "binds": "ph_max_deg",
+   "sensitivity": {
+    "fc_hz": -0.0145,
+    "ripple_db": -0.000614,
+    "peak_db": 0.000242,
+    "ph_max_deg": -0.0261,
+    "a1000_db": -0.00205,
+    "irn_uv": -4.52e-05
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": true
+  },
+  {
+   "name": "net4",
+   "class": "diff:biquadB_internal",
+   "budget_c_ff": 82.8,
+   "budget_c_ff_pvt": 34.8,
+   "budget_c_asym_ff": 166.0,
+   "budget_c_asym_ff_pvt": 69.5,
+   "budget_c_diff_ff": 41.4,
+   "binds": "ph_max_deg",
+   "sensitivity": {
+    "fc_hz": -0.000562,
+    "ripple_db": 1.65e-05,
+    "peak_db": 2.31e-06,
+    "ph_max_deg": -0.00719,
+    "a1000_db": -0.000246,
+    "irn_uv": 2.4e-06
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": true
+  },
+  {
+   "name": "net1",
+   "class": "diff:biquadB_internal",
+   "budget_c_ff": 82.8,
+   "budget_c_ff_pvt": 34.8,
+   "budget_c_asym_ff": 166.0,
+   "budget_c_asym_ff_pvt": 69.5,
+   "budget_c_diff_ff": 41.4,
+   "binds": "ph_max_deg",
+   "sensitivity": {
+    "fc_hz": -0.000562,
+    "ripple_db": 1.65e-05,
+    "peak_db": 2.31e-06,
+    "ph_max_deg": -0.00719,
+    "a1000_db": -0.000246,
+    "irn_uv": 2.4e-06
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": true
+  },
+  {
+   "name": "vout_1",
+   "class": "diff:biquadA_out",
+   "budget_c_ff": 3350.0,
+   "budget_c_ff_pvt": 3350.0,
+   "budget_c_asym_ff": 6710.0,
+   "budget_c_asym_ff_pvt": 6710.0,
+   "budget_c_diff_ff": 1680.0,
+   "binds": "peak_db",
+   "sensitivity": {
+    "fc_hz": 9.88e-06,
+    "ripple_db": -5.91e-05,
+    "peak_db": 1.48e-05,
+    "ph_max_deg": 5.5e-05,
+    "a1000_db": -0.000157,
+    "irn_uv": -1.35e-05
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": false
+  },
+  {
+   "name": "vout_2",
+   "class": "diff:biquadA_out",
+   "budget_c_ff": 3350.0,
+   "budget_c_ff_pvt": 3350.0,
+   "budget_c_asym_ff": 6710.0,
+   "budget_c_asym_ff_pvt": 6710.0,
+   "budget_c_diff_ff": 1680.0,
+   "binds": "peak_db",
+   "sensitivity": {
+    "fc_hz": 9.88e-06,
+    "ripple_db": -5.91e-05,
+    "peak_db": 1.48e-05,
+    "ph_max_deg": 5.5e-05,
+    "a1000_db": -0.000157,
+    "irn_uv": -1.35e-05
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": false
+  },
+  {
+   "name": "voutp",
+   "class": "diff:biquadB_out",
+   "budget_c_ff": 905.0,
+   "budget_c_ff_pvt": 455.0,
+   "budget_c_asym_ff": 1800.0,
+   "budget_c_asym_ff_pvt": 905.0,
+   "budget_c_diff_ff": 460.0,
+   "binds": "fc_hz",
+   "sensitivity": {
+    "fc_hz": -0.00132,
+    "ripple_db": 2.71e-05,
+    "peak_db": -1.63e-06,
+    "ph_max_deg": 0.000193,
+    "a1000_db": -0.000148
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": false
+  },
+  {
+   "name": "voutn",
+   "class": "diff:biquadB_out",
+   "budget_c_ff": 905.0,
+   "budget_c_ff_pvt": 455.0,
+   "budget_c_asym_ff": 1800.0,
+   "budget_c_asym_ff_pvt": 905.0,
+   "budget_c_diff_ff": 460.0,
+   "binds": "fc_hz",
+   "sensitivity": {
+    "fc_hz": -0.00132,
+    "ripple_db": 2.71e-05,
+    "peak_db": -1.63e-06,
+    "ph_max_deg": 0.000193,
+    "a1000_db": -0.000148
+   },
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": false
+  },
+  {
+   "name": "vinp",
+   "class": "diff:in",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_asym_ff_pvt": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": false
+  },
+  {
+   "name": "vinn",
+   "class": "diff:in",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_asym_ff_pvt": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..100fF_to_gnd_on_both_halves (budget_c_ff) / one half (asym) / between halves (diff)",
+   "hi_z": false
+  },
+  {
+   "name": "vbr",
+   "class": "bias:replica_gate_rail",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..1000fF_to_gnd (no measurable effect: AC-inert node)",
+   "hi_z": true,
+   "note": "no measurable ac sensitivity up to 100 pF"
+  },
+  {
+   "name": "rep_x",
+   "class": "bias:replica_internal",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..1000fF_to_gnd (no measurable effect: AC-inert node)",
+   "hi_z": true,
+   "note": "no measurable ac sensitivity up to 100 pF"
+  },
+  {
+   "name": "vbn",
+   "class": "bias:nmos_gate_rail",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..1000fF_to_gnd (no measurable effect: AC-inert node)",
+   "hi_z": false,
+   "note": "no measurable ac sensitivity up to 100 pF"
+  },
+  {
+   "name": "vdd",
+   "class": "supply",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..1000fF_to_gnd (no measurable effect: AC-inert node)",
+   "hi_z": false,
+   "note": "no measurable ac sensitivity up to 100 pF"
+  },
+  {
+   "name": "vbp",
+   "class": "unused_port",
+   "budget_c_ff": null,
+   "budget_c_ff_pvt": null,
+   "budget_c_asym_ff": null,
+   "budget_c_diff_ff": null,
+   "binds": null,
+   "sensitivity": {},
+   "unit": "1..1000fF_to_gnd (no measurable effect: AC-inert node)",
+   "hi_z": false,
+   "note": "no measurable ac sensitivity up to 100 pF"
+  }
+ ],
+ "cross_coupling": [
+  {
+   "pair": [
+    "net2",
+    "voutp"
+   ],
+   "also": [
+    "net3",
+    "voutn"
+   ],
+   "kind": "biquadA_int_to_biquadB",
+   "slope_ph_deg_per_ff": -2.151,
+   "budget_c_ff": 0.277,
+   "budget_c_ff_pvt": 0.116,
+   "hard_fail_ff": 1.11,
+   "binds": "ph_max_deg",
+   "note": "applied to BOTH halves, as a symmetric layout would; 1.5 fF/half already fails S1"
+  },
+  {
+   "pair": [
+    "net2",
+    "net4"
+   ],
+   "also": [
+    "net3",
+    "net1"
+   ],
+   "kind": "biquadA_int_to_biquadB_one_half",
+   "slope_ph_deg_per_ff": -1.371,
+   "budget_c_ff": 0.434,
+   "budget_c_ff_pvt": 0.182,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net2",
+    "voutp"
+   ],
+   "also": [
+    "net3",
+    "voutn"
+   ],
+   "kind": "biquadA_int_to_biquadB_one_half",
+   "slope_ph_deg_per_ff": -1.345,
+   "budget_c_ff": 0.443,
+   "budget_c_ff_pvt": 0.186,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net2",
+    "vout_2"
+   ],
+   "kind": "biquadA_int_to_opposite_half_out",
+   "budget_c_ff": 23.1,
+   "budget_c_ff_pvt": 9.68,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net2",
+    "net1"
+   ],
+   "kind": "biquadA_int_to_opposite_half_biquadB",
+   "budget_c_ff": 110.0,
+   "budget_c_ff_pvt": 55.5,
+   "binds": "fc_hz"
+  },
+  {
+   "pair": [
+    "net2",
+    "voutn"
+   ],
+   "kind": "biquadA_int_to_opposite_half_out",
+   "budget_c_ff": 103.0,
+   "budget_c_ff_pvt": 52.0,
+   "binds": "fc_hz"
+  },
+  {
+   "pair": [
+    "voutp",
+    "net1"
+   ],
+   "kind": "biquadB_out_to_opposite_half_int",
+   "budget_c_ff": 84.8,
+   "budget_c_ff_pvt": 35.6,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "vout_1",
+    "voutn"
+   ],
+   "kind": "biquadA_out_to_opposite_half_out",
+   "budget_c_ff": 205.0,
+   "budget_c_ff_pvt": 120.0,
+   "binds": "a1000_db"
+  },
+  {
+   "pair": [
+    "net4",
+    "vout_2"
+   ],
+   "kind": "biquadB_int_to_opposite_half_out",
+   "budget_c_ff": 213.0,
+   "budget_c_ff_pvt": 125.0,
+   "binds": "a1000_db"
+  },
+  {
+   "pair": [
+    "net2",
+    "vbr"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 45.6,
+   "budget_c_ff_pvt": 19.1,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net2",
+    "vbn"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 45.6,
+   "budget_c_ff_pvt": 19.2,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net2",
+    "rep_x"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 45.6,
+   "budget_c_ff_pvt": 19.1,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net4",
+    "vbr"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 166.0,
+   "budget_c_ff_pvt": 69.5,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net4",
+    "vbn"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 166.0,
+   "budget_c_ff_pvt": 69.7,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "net4",
+    "rep_x"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 166.0,
+   "budget_c_ff_pvt": 69.5,
+   "binds": "ph_max_deg"
+  },
+  {
+   "pair": [
+    "voutp",
+    "vbr"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 1830.0,
+   "budget_c_ff_pvt": 919.0,
+   "binds": "fc_hz"
+  },
+  {
+   "pair": [
+    "vout_1",
+    "vbr"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 6600.0,
+   "budget_c_ff_pvt": 6600.0,
+   "binds": "peak_db"
+  },
+  {
+   "pair": [
+    "vout_1",
+    "rep_x"
+   ],
+   "kind": "signal_to_bias_rail",
+   "budget_c_ff": 6300.0,
+   "budget_c_ff_pvt": 6300.0,
+   "binds": "peak_db"
+  }
+ ],
+ "matching": [
+  {
+   "class": "bias_unit_array",
+   "devices": [
+    "xm9",
+    "xm10",
+    "xr3(m=4)"
+   ],
+   "pattern": "common_centroid+dummies (one 6-unit array; xr3 = 4 of the 6)",
+   "tolerated": {
+    "dvgs_common_mv": 0.409,
+    "dvgs_common_mv_pvt": 0.196,
+    "dvgs_diff_mv": 152.0,
+    "dvgs_diff_mv_pvt": 80.1,
+    "dw_pct": 2.02,
+    "dw_pct_pvt": 0.966
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 3.19,
+    "fc_hz_per_mv_diff": -0.00749
+   },
+   "binds": "fc_hz",
+   "note": "same 0.663 nA unit device in all 6 places; tightest class in the cell. The off-cell mirror unit (xmbn) must be drawn identically."
+  },
+  {
+   "class": "rep_sink_ratio",
+   "devices": [
+    "xr3",
+    "xm9",
+    "xm10"
+   ],
+   "pattern": "common_centroid+dummies (same array)",
+   "tolerated": {
+    "dvgs_common_mv": 0.346,
+    "dvgs_common_mv_pvt": 0.178,
+    "dw_pct": 0.89,
+    "dw_pct_pvt": 0.458
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 3.51
+   },
+   "binds": "a1000_db",
+   "note": "replica sink vs the two signal sinks -- sets vbr, hence every branch current"
+  },
+  {
+   "class": "gmf_b",
+   "devices": [
+    "xm14",
+    "xm15",
+    "xr1"
+   ],
+   "pattern": "common_centroid+dummies (all three share the vdd n-well -> may interdigitate)",
+   "tolerated": {
+    "dvgs_common_mv": 0.793,
+    "dvgs_common_mv_pvt": 0.399,
+    "dvgs_diff_mv": 8.04,
+    "dvgs_diff_mv_pvt": 3.37,
+    "dw_pct": 4.02,
+    "dw_pct_pvt": 1.92
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": -1.5,
+    "fc_hz_per_mv_diff": 0.02
+   },
+   "binds": "fc_hz",
+   "note": "xr1 is the replica twin of xm14/xm15 and shares their well; put all three in one array"
+  },
+  {
+   "class": "rep_gmfb_ratio",
+   "devices": [
+    "xr1",
+    "xm14",
+    "xm15"
+   ],
+   "pattern": "common_centroid+dummies (same array)",
+   "tolerated": {
+    "dvgs_common_mv": 0.838,
+    "dvgs_common_mv_pvt": 0.401,
+    "dw_pct": 1.91,
+    "dw_pct_pvt": 0.958
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 1.56
+   },
+   "binds": "fc_hz",
+   "note": "replica vs signal gm_f ratio"
+  },
+  {
+   "class": "bridge",
+   "devices": [
+    "xmst",
+    "xmstn"
+   ],
+   "pattern": "mirrored about the axis, well-level common centroid (bulks are net4/net1 -> separate wells)",
+   "tolerated": {
+    "dvgs_common_mv": 0.794,
+    "dvgs_common_mv_pvt": 0.399,
+    "dvgs_diff_mv": 8.06,
+    "dvgs_diff_mv_pvt": 3.38,
+    "dw_pct": 3.79,
+    "dw_pct_pvt": 1.95
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": -1.5,
+    "fc_hz_per_mv_diff": 0.02
+   },
+   "binds": "a1000_db",
+   "note": "cannot interdigitate: each bulk sits on its own signal net"
+  },
+  {
+   "class": "rep_bridge_ratio",
+   "devices": [
+    "xr2",
+    "xmst",
+    "xmstn"
+   ],
+   "pattern": "same row, same orientation, abutted (xr2 bulk = rep_x -> third well)",
+   "tolerated": {
+    "dvgs_common_mv": 0.835,
+    "dvgs_common_mv_pvt": 0.4,
+    "dw_pct": 1.77,
+    "dw_pct_pvt": 0.891
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 1.56
+   },
+   "binds": "fc_hz",
+   "note": "replica vs signal bridge ratio"
+  },
+  {
+   "class": "in_b",
+   "devices": [
+    "xm0",
+    "xm1"
+   ],
+   "pattern": "mirrored about the axis (bulks are voutp/voutn -> separate wells); any interdigitation is a bonus",
+   "tolerated": {
+    "dvgs_common_mv": 33.7,
+    "dvgs_common_mv_pvt": 16.1,
+    "dvgs_diff_mv": 32.7,
+    "dvgs_diff_mv_pvt": 15.6,
+    "dw_pct": 37.4,
+    "dw_pct_pvt": 17.9
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 0.0387,
+    "fc_hz_per_mv_diff": 0.04
+   },
+   "binds": "fc_hz",
+   "note": "generous: 34 mV common / 33 mV differential"
+  },
+  {
+   "class": "gmf_a",
+   "devices": [
+    "xm4",
+    "xm8"
+   ],
+   "pattern": "same row, same orientation (nmos, shared substrate)",
+   "tolerated": {
+    "dvgs_common_mv": 97.0,
+    "dvgs_common_mv_pvt": 46.4,
+    "dvgs_diff_mv": 64.2,
+    "dvgs_diff_mv_pvt": 40.6,
+    "dw_pct": 13.9,
+    "dw_pct_pvt": 9.69
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 0.0135,
+    "fc_hz_per_mv_diff": 0.0154
+   },
+   "binds": "ripple_db",
+   "note": "generous"
+  },
+  {
+   "class": "in_a",
+   "devices": [
+    "xm2",
+    "xm5"
+   ],
+   "pattern": "mirrored about the axis (bulks are vout_1/vout_2 -> separate wells); orientation match only",
+   "tolerated": {
+    "dvgs_common_mv": 47.7,
+    "dvgs_common_mv_pvt": 22.8,
+    "dvgs_diff_mv": 108.0,
+    "dvgs_diff_mv_pvt": 54.1,
+    "dw_pct": 88.9,
+    "dw_pct_pvt": 37.3
+   },
+   "sensitivity": {
+    "fc_hz_per_mv_common": 0.0274,
+    "fc_hz_per_mv_diff": -0.0111
+   },
+   "binds": "ph_max_deg",
+   "note": "the loosest device class in the cell: 48 mV common / 108 mV differential"
+  },
+  {
+   "class": "c1_a",
+   "devices": [
+    "xc13",
+    "xc17"
+   ],
+   "pattern": "common_centroid+dummies, one unit size",
+   "tolerated": {
+    "dc_pct": 1.82,
+    "dc_pct_pvt": 0.914
+   },
+   "sensitivity": {
+    "fc_hz_per_pct": -0.657
+   },
+   "binds": "fc_hz",
+   "note": "4.94 pF each, 2 units of 40.53 um"
+  },
+  {
+   "class": "c1_b",
+   "devices": [
+    "xc1",
+    "xc10"
+   ],
+   "pattern": "common_centroid+dummies, one unit size",
+   "tolerated": {
+    "dc_pct": 1.69,
+    "dc_pct_pvt": 1.18
+   },
+   "sensitivity": {
+    "fc_hz_per_pct": -0.344
+   },
+   "binds": "ripple_db",
+   "note": "59.9 pF each, 16 units of 49.91 um"
+  },
+  {
+   "class": "c2_a",
+   "devices": [
+    "xc19"
+   ],
+   "pattern": "common_centroid+dummies, one unit size",
+   "tolerated": {
+    "dc_pct": 3.47,
+    "dc_pct_pvt": 3.47
+   },
+   "sensitivity": {
+    "fc_hz_per_pct": -0.00654
+   },
+   "binds": "peak_db",
+   "note": "29.4 pF bridging vout_1<->vout_2, on the axis"
+  },
+  {
+   "class": "c2_b",
+   "devices": [
+    "xc12"
+   ],
+   "pattern": "common_centroid+dummies, one unit size",
+   "tolerated": {
+    "dc_pct": 1.83,
+    "dc_pct_pvt": 0.919
+   },
+   "sensitivity": {
+    "fc_hz_per_pct": -0.653
+   },
+   "binds": "fc_hz",
+   "note": "24.7 pF bridging voutp<->voutn, on the axis"
+  }
+ ],
+ "leakage": [
+  {
+   "node": "net2",
+   "also": "net3",
+   "i_na": 0.663,
+   "z_dc_mohm": 22.4,
+   "budget_pa": 6.17,
+   "budget_pa_pvt": 2.95,
+   "budget_pa_one_sided": 11.0,
+   "binds": "fc_hz",
+   "rule": "no ESD/antenna diode, no pad, no extra diffusion or well area; minimum drain areas only"
+  },
+  {
+   "node": "vbr",
+   "i_na": 2.649,
+   "budget_pa": 25.9,
+   "budget_pa_pvt": 12.5,
+   "binds": "a1000_db",
+   "rule": "gate rail of xmst/xmstn + diode xr2 + drain xr3; keep it short, no diode-like structures"
+  },
+  {
+   "node": "net4",
+   "also": "net1",
+   "i_na": 2.646,
+   "z_dc_mohm": 8.2,
+   "budget_pa": 60.6,
+   "budget_pa_pvt": 29.0,
+   "budget_pa_one_sided": 122.0,
+   "binds": "fc_hz",
+   "rule": "carries the xmst/xmstn n-well; keep that well minimal (junction leak + junction C)"
+  },
+  {
+   "node": "rep_x",
+   "i_na": 2.649,
+   "budget_pa": 53.0,
+   "budget_pa_pvt": 25.7,
+   "binds": "a1000_db",
+   "rule": "carries the xr2 n-well"
+  },
+  {
+   "node": "vout_1",
+   "also": "vout_2",
+   "i_na": 1.984,
+   "budget_pa": 145.0,
+   "budget_pa_pvt": 72.7,
+   "binds": "fc_hz",
+   "rule": "carries the xm2/xm5 n-well; generous"
+  },
+  {
+   "node": "voutp",
+   "also": "voutn",
+   "i_na": 2.646,
+   "budget_pa": 211.0,
+   "budget_pa_pvt": 106.0,
+   "binds": "fc_hz",
+   "rule": "carries the xm0/xm1 n-well; the only nets that may leave the cell as analog outputs"
+  }
+ ],
+ "devices": [
+  {
+   "name": "xm2",
+   "role": "in_a",
+   "id_na": 0.6626,
+   "vds_mv": 165.7,
+   "vgs_mv": 454.8,
+   "vdsat_mv": 101.3,
+   "sat_margin_mv": 64.5,
+   "gm_id": 25.1,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "vout_1",
+   "well_v_mv": 695,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm5",
+   "role": "in_a",
+   "id_na": 0.6626,
+   "vds_mv": 165.7,
+   "vgs_mv": 454.8,
+   "vdsat_mv": 101.3,
+   "sat_margin_mv": 64.5,
+   "gm_id": 25.1,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "vout_2",
+   "well_v_mv": 695,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm4",
+   "role": "gmf_a",
+   "id_na": 1.9837,
+   "vds_mv": 694.8,
+   "vgs_mv": 529.1,
+   "vdsat_mv": 109.8,
+   "sat_margin_mv": 585.1,
+   "gm_id": 22.6,
+   "flavour": "hv",
+   "type": "hv_nmos",
+   "well": "psub",
+   "well_v_mv": 0,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm8",
+   "role": "gmf_a",
+   "id_na": 1.9837,
+   "vds_mv": 694.8,
+   "vgs_mv": 529.1,
+   "vdsat_mv": 109.8,
+   "sat_margin_mv": 585.1,
+   "gm_id": 22.6,
+   "flavour": "hv",
+   "type": "hv_nmos",
+   "well": "psub",
+   "well_v_mv": 0,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm9",
+   "role": "bias_a_int",
+   "id_na": 0.6626,
+   "vds_mv": 529.1,
+   "vgs_mv": 355.8,
+   "vdsat_mv": 101.3,
+   "sat_margin_mv": 427.8,
+   "gm_id": 28.1,
+   "flavour": "hv",
+   "type": "hv_nmos",
+   "well": "psub",
+   "well_v_mv": 0,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm10",
+   "role": "bias_a_int",
+   "id_na": 0.6626,
+   "vds_mv": 529.1,
+   "vgs_mv": 355.8,
+   "vdsat_mv": 101.3,
+   "sat_margin_mv": 427.8,
+   "gm_id": 28.1,
+   "flavour": "hv",
+   "type": "hv_nmos",
+   "well": "psub",
+   "well_v_mv": 0,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xmst",
+   "role": "bridge",
+   "id_na": 2.6462,
+   "vds_mv": 236.4,
+   "vgs_mv": 609.1,
+   "vdsat_mv": 105.4,
+   "sat_margin_mv": 131.0,
+   "gm_id": 22.2,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "net4",
+   "well_v_mv": 931,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xmstn",
+   "role": "bridge",
+   "id_na": 2.6462,
+   "vds_mv": 236.4,
+   "vgs_mv": 609.1,
+   "vdsat_mv": 105.4,
+   "sat_margin_mv": 131.0,
+   "gm_id": 22.2,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "net1",
+   "well_v_mv": 931,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm0",
+   "role": "in_b",
+   "id_na": 2.6462,
+   "vds_mv": 347.2,
+   "vgs_mv": 583.6,
+   "vdsat_mv": 103.6,
+   "sat_margin_mv": 243.5,
+   "gm_id": 23.4,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "voutp",
+   "well_v_mv": 1278,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm1",
+   "role": "in_b",
+   "id_na": 2.6462,
+   "vds_mv": 347.2,
+   "vgs_mv": 583.6,
+   "vdsat_mv": 103.6,
+   "sat_margin_mv": 243.5,
+   "gm_id": 23.4,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "voutn",
+   "well_v_mv": 1278,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm14",
+   "role": "gmf_b",
+   "id_na": 2.6463,
+   "vds_mv": 221.6,
+   "vgs_mv": 568.7,
+   "vdsat_mv": 102.9,
+   "sat_margin_mv": 118.7,
+   "gm_id": 24.0,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "vdd",
+   "well_v_mv": 1500,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xm15",
+   "role": "gmf_b",
+   "id_na": 2.6463,
+   "vds_mv": 221.6,
+   "vgs_mv": 568.7,
+   "vdsat_mv": 102.9,
+   "sat_margin_mv": 118.7,
+   "gm_id": 24.0,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "vdd",
+   "well_v_mv": 1500,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xr1",
+   "role": "rep_gmfb",
+   "id_na": 2.6491,
+   "vds_mv": 568.7,
+   "vgs_mv": 568.7,
+   "vdsat_mv": 102.9,
+   "sat_margin_mv": 465.8,
+   "gm_id": 24.0,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "vdd",
+   "well_v_mv": 1500,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xr2",
+   "role": "rep_bridge",
+   "id_na": 2.6491,
+   "vds_mv": 609.1,
+   "vgs_mv": 609.1,
+   "vdsat_mv": 105.4,
+   "sat_margin_mv": 503.7,
+   "gm_id": 22.2,
+   "flavour": "hv",
+   "type": "hv_pmos",
+   "well": "rep_x",
+   "well_v_mv": 931,
+   "body_tied_to": "source"
+  },
+  {
+   "name": "xr3",
+   "role": "rep_sink",
+   "id_na": 2.6491,
+   "vds_mv": 322.1,
+   "vgs_mv": 355.8,
+   "vdsat_mv": 101.3,
+   "sat_margin_mv": 220.8,
+   "gm_id": 28.1,
+   "flavour": "hv",
+   "type": "hv_nmos",
+   "well": "psub",
+   "well_v_mv": 0,
+   "body_tied_to": "source"
+  }
+ ],
+ "wells": [
+  {
+   "net": "vout_1",
+   "v_mv": 695,
+   "devices": [
+    "xm2"
+   ],
+   "share": false
+  },
+  {
+   "net": "vout_2",
+   "v_mv": 695,
+   "devices": [
+    "xm5"
+   ],
+   "share": false
+  },
+  {
+   "net": "net4",
+   "v_mv": 931,
+   "devices": [
+    "xmst"
+   ],
+   "share": false,
+   "note": "well junction C and leakage land on a net whose balanced budget is 83 fF"
+  },
+  {
+   "net": "net1",
+   "v_mv": 931,
+   "devices": [
+    "xmstn"
+   ],
+   "share": false,
+   "note": "as net4"
+  },
+  {
+   "net": "voutp",
+   "v_mv": 1278,
+   "devices": [
+    "xm0"
+   ],
+   "share": false
+  },
+  {
+   "net": "voutn",
+   "v_mv": 1278,
+   "devices": [
+    "xm1"
+   ],
+   "share": false
+  },
+  {
+   "net": "rep_x",
+   "v_mv": 931,
+   "devices": [
+    "xr2"
+   ],
+   "share": false
+  },
+  {
+   "net": "vdd",
+   "v_mv": 1500,
+   "devices": [
+    "xm14",
+    "xm15",
+    "xr1"
+   ],
+   "share": true,
+   "note": "the only shared n-well: these three may be one common-centroid array"
+  },
+  {
+   "net": "psub",
+   "v_mv": 0,
+   "devices": [
+    "xm4",
+    "xm8",
+    "xm9",
+    "xm10",
+    "xr3"
+   ],
+   "share": true
+  }
+ ],
+ "mim_caps": [
+  {
+   "name": "xc13",
+   "nets": [
+    "net2",
+    "vout_1"
+   ],
+   "plus_is_top_plate": "net2",
+   "bottom_plate_net": "vout_1",
+   "area_um2": 3285.4,
+   "c_pf": 4.94,
+   "c_bot_est_ff": [
+    17,
+    115
+   ],
+   "verdict": "OK as drawn (bottom plate on the 3.4 pF-budget net)"
+  },
+  {
+   "name": "xc17",
+   "nets": [
+    "net3",
+    "vout_2"
+   ],
+   "plus_is_top_plate": "net3",
+   "bottom_plate_net": "vout_2",
+   "area_um2": 3285.4,
+   "c_pf": 4.94,
+   "c_bot_est_ff": [
+    17,
+    115
+   ],
+   "verdict": "OK as drawn"
+  },
+  {
+   "name": "xc19",
+   "nets": [
+    "vout_2",
+    "vout_1"
+   ],
+   "plus_is_top_plate": "vout_2",
+   "bottom_plate_net": "vout_1",
+   "area_um2": 19538.7,
+   "c_pf": 29.31,
+   "c_bot_est_ff": [
+    102,
+    684
+   ],
+   "verdict": "OK but ASYMMETRIC -- split into 4+4 units anti-oriented so vout_1 and vout_2 each carry half the bottom plate"
+  },
+  {
+   "name": "xc1",
+   "nets": [
+    "voutp",
+    "net4"
+   ],
+   "plus_is_top_plate": "voutp",
+   "bottom_plate_net": "net4",
+   "area_um2": 39856.1,
+   "c_pf": 59.78,
+   "c_bot_est_ff": [
+    207,
+    1395
+   ],
+   "verdict": "FLIP -- 207..1395 fF on net4 against an 83 fF balanced budget (2.5..17x over)"
+  },
+  {
+   "name": "xc10",
+   "nets": [
+    "voutn",
+    "net1"
+   ],
+   "plus_is_top_plate": "voutn",
+   "bottom_plate_net": "net1",
+   "area_um2": 39856.1,
+   "c_pf": 59.78,
+   "c_bot_est_ff": [
+    207,
+    1395
+   ],
+   "verdict": "FLIP -- as xc1"
+  },
+  {
+   "name": "xc12",
+   "nets": [
+    "voutn",
+    "voutp"
+   ],
+   "plus_is_top_plate": "voutn",
+   "bottom_plate_net": "voutp",
+   "area_um2": 16431.8,
+   "c_pf": 24.65,
+   "c_bot_est_ff": [
+    85,
+    575
+   ],
+   "verdict": "OK but ASYMMETRIC -- split 4+3 anti-oriented"
+  }
+ ],
+ "structure": {
+  "axis": "vertical",
+  "mirror_pairs": [
+   [
+    "vinp",
+    "vinn"
+   ],
+   [
+    "net2",
+    "net3"
+   ],
+   [
+    "vout_1",
+    "vout_2"
+   ],
+   [
+    "net4",
+    "net1"
+   ],
+   [
+    "voutp",
+    "voutn"
+   ],
+   [
+    "xm2",
+    "xm5"
+   ],
+   [
+    "xm4",
+    "xm8"
+   ],
+   [
+    "xm9",
+    "xm10"
+   ],
+   [
+    "xmst",
+    "xmstn"
+   ],
+   [
+    "xm0",
+    "xm1"
+   ],
+   [
+    "xm14",
+    "xm15"
+   ],
+   [
+    "xc13",
+    "xc17"
+   ],
+   [
+    "xc1",
+    "xc10"
+   ]
+  ],
+  "on_axis": [
+   "xc19",
+   "xc12",
+   "xr1",
+   "xr2",
+   "xr3",
+   "vbr",
+   "rep_x",
+   "vbn"
+  ],
+  "pins": {
+   "left": [
+    "vinp",
+    "vinn"
+   ],
+   "right": [
+    "voutp",
+    "voutn"
+   ],
+   "bottom": [
+    "vbn",
+    "vss/psub"
+   ],
+   "top": [
+    "vdd"
+   ],
+   "unused": [
+    "vbp"
+   ]
+  },
+  "flow": "left to right: vinp/vinn -> biquad A (net2/net3, vout_1/vout_2) -> biquad B (net4/net1, voutp/voutn); the replica xr1/xr2/xr3 sits on the axis between the two biquads or below them, never between net2/net3 and biquad B",
+  "keep_apart": [
+   [
+    "net2",
+    "net4"
+   ],
+   [
+    "net2",
+    "voutp"
+   ],
+   [
+    "net3",
+    "net1"
+   ],
+   [
+    "net3",
+    "voutn"
+   ],
+   [
+    "net2",
+    "voutn"
+   ],
+   [
+    "net3",
+    "voutp"
+   ]
+  ],
+  "aggressors": [],
+  "self_heating": "none (11.9 nW total, max branch 2.65 nA, max dV/dt at 250 Hz)",
+  "current_density": "max net current 2.65 nA (net4/net1, voutp/voutn); vdd pin 7.94 nA. No EM or IR constraint anywhere -- metal width is a matching/shielding choice, not a current one.",
+  "nda": null
+ },
+ "dont_care": [
+  "vbn",
+  "vdd",
+  "vbp",
+  "vinp",
+  "vinn",
+  "vbr",
+  "rep_x",
+  "vout_1",
+  "vout_2",
+  "voutp",
+  "voutn"
+ ],
+ "dont_care_notes": [
+  "series resistance on every net (nothing below ~15 MOhm is measurable)",
+  "IRN / S5 (no perturbation tested moved it by >0.3 % of its 10.8 uV margin)",
+  "P_core / S6 (38 nW of margin; only pA-class leakage touches it)",
+  "THD / S7 (HD3-dominated and mismatch-blind: 5 mV of pair dVgs costs 0.30 dB)",
+  "dc_db / S3 gain (every slope is 1e-5 dB or smaller)",
+  "in_a (xm2/xm5) matching beyond same-orientation",
+  "gmf_a (xm4/xm8) matching beyond same-orientation",
+  "C on vout_1/vout_2 below 3.3 pF per half -- park routing and MIM bottom plates here"
+ ],
+ "free_trims": [
+  {
+   "knob": "iref +-10 %",
+   "effect": "fc +-10 % (fc ~ I in weak inversion), shape unchanged",
+   "source": "PRELAYOUT.md sec.5",
+   "use": "absorbs any SYMMETRIC parasitic fc shift"
+  },
+  {
+   "knob": "C to gnd on vout_1/vout_2 (balanced)",
+   "effect": "fc +9.9e-6 Hz/fF, ripple -5.9e-5 dB/fF, a1000 -1.6e-4 dB/fF, irn -1.4e-5 uV/fF",
+   "use": "all four move the GOOD way; loading vout_1/vout_2 is free and mildly helpful"
+  }
+ ]
+}

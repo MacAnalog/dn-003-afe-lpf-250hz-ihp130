@@ -18,3 +18,7 @@ pdf/*.pdf
 # xschem netlister scratch (the .spice files ARE committed as evidence)
 signoff/schematic/*.spice.bak
 signoff/**/__pycache__/
+
+# layout lane build products (GDS/PEX/DRC outputs live in build dirs; the generator + trail are the record)
+layout/**/build/
+layout/**/iterations/*/layout.gds
