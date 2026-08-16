@@ -171,6 +171,14 @@ class Design:
     # the design farads -- see `cmim_geom`.  The design still stores farads, so
     # every fitter keeps working; the geometry is derived at emit time.
     cap_model: str = "ideal"
+    # A VERBATIM `.subckt lpf_core <PORTS> ... .ends` text that REPLACES the
+    # built netlist when set -- the layout lane's hook: a kpex-extracted
+    # post-layout netlist, or a sensitivity-injection variant of the built one,
+    # scored through the same frozen benches (`lab.metrics`, `lab.thd`,
+    # `lab.corners`) as the schematic.  Never serialised into design.json; the
+    # ledger records its sha so a post-layout row cannot masquerade as the
+    # schematic's.  Ports must match `PORTS`; `subckt()` asserts the header.
+    dut_override: str | None = None
 
     def model(self, role: str) -> str:
         """The compact model this role instantiates, honouring `lv_roles`."""
@@ -582,7 +590,13 @@ PORTS = "vinp vinn voutp voutn vbn vbp vdd"
 
 
 def subckt(d: Design, name: str = "lpf_core") -> str:
-    """The DUT as a standalone `.subckt` block."""
+    """The DUT as a standalone `.subckt` block (or `d.dut_override` verbatim)."""
+    if d.dut_override is not None:
+        import re
+        head = re.search(rf"(?im)^\.subckt\s+{name}\s+(.*)$", d.dut_override)
+        if not head or head.group(1).split() != PORTS.split():
+            raise ValueError(f"dut_override must define `.subckt {name} {PORTS}` verbatim")
+        return d.dut_override.rstrip("\n") + "\n"
     body = BUILDERS[d.topology](d)
     head = f".subckt {name} {PORTS}"
     return "\n".join([head, *(f"  {ln}" for ln in body), f".ends {name}", ""])
