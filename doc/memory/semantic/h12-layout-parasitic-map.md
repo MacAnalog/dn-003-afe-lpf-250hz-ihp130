@@ -1,8 +1,8 @@
-# 2026-08-17 — H12-pdk-cap layout — where the parasitics are, what they cost, and where the area is
+# 2026-08-16 — H12-pdk-cap layout — where the parasitics are, what they cost, and where the area is
 
 KIND: semantic overflow | type: semantic | status: live
 
-Layout of record = `layout/H12-pdk-cap/iterations/it14` (round 4, 2026-08-17):
+Layout of record = `layout/H12-pdk-cap/iterations/it14` (round 4, 2026-08-16):
 432.0 × 528.0 µm = **228 094 µm²**, DRC 0 (no waivers), LVS match, kpex CC 69 C
 (RC 69 C + 6 331 R agrees to 0.0003°). Numbers below from `scorecard_post.json`
 (post) and `signoff/post-pvt/H12-pdk-cap/scorecard.json` (pre).

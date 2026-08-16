@@ -29,7 +29,7 @@ floorplan quality.
 >    can measure. The owner's call: not worth it. `bias_dummy_rows = 1` stays a
 >    legal knob value (`BOUNDS` 0–1) and one build away; the matching debt is
 >    re-opened **as a documented, unmeasured exposure** (PLAN R2.8 Q2 note,
->    dated 2026-08-17).
+>    dated 2026-08-16).
 > 2. **The area campaign's A-best numeric knob point becomes the default.**
 >    **17 numeric knobs** move (gaps, pitches, widths, via pad); **no
 >    categorical or floorplan-mode knob moves**, so the topology the reviewer
@@ -58,7 +58,7 @@ floorplan quality.
 
 | | |
 |---|---|
-| plan | `layout/H12-pdk-cap/PLAN.md` §Round 2 (**APPROVED 2026-08-16**), **R2.8 Q2 reversed by the block owner 2026-08-17** (note in `PLAN.md`); round 4 opens no new plan gate |
+| plan | `layout/H12-pdk-cap/PLAN.md` §Round 2 (**APPROVED 2026-08-16**), **R2.8 Q2 reversed by the block owner 2026-08-16** (note in `PLAN.md`); round 4 opens no new plan gate |
 | brief | `layout/H12-pdk-cap/BRIEF.md` + `brief.json` |
 | driver | `opt/results/README.md` — area campaign 2026-08-16 (A: 300 trials, B: 300 trials, 2 single evaluations) |
 | generator | `layout/H12-pdk-cap/gen_H12_pdk_cap.py` sha256 `771468be65d24b2eb521e1aa9aa018e401774d31f61cadb6d999a252f37efb3c`, **33 knobs** (unchanged) — identical to `iterations/it14/gen.py`, the last entry of the trail |

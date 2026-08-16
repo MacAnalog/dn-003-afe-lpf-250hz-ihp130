@@ -1,4 +1,4 @@
-# 2026-08-17 — Post-layout phase in the stacked SSF cell is set by the wire on the two second-stage GATE nets (net2/net3): 0.0225 ° per fF, so a 170 µm top-metal haul cost 1.1° and a floorplan change (not routing) recovered it
+# 2026-08-16 — Post-layout phase in the stacked SSF cell is set by the wire on the two second-stage GATE nets (net2/net3): 0.0225 ° per fF, so a 170 µm top-metal haul cost 1.1° and a floorplan change (not routing) recovered it
 
 KIND: journal entry | type: semantic | status: live
 

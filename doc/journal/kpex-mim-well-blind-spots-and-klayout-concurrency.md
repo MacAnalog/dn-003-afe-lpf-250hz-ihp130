@@ -1,4 +1,4 @@
-# 2026-08-17 — Extraction blind spots and tool traps in the open layout lane: kpex 2.5D cannot extract the PDK MIM (strip it, re-add the cards), n-well junction C is in no model, kpex RC meshes are run-to-run different, and > 2 concurrent KLayout jobs produce spurious DRC/LVS failures with empty violation lists
+# 2026-08-16 — Extraction blind spots and tool traps in the open layout lane: kpex 2.5D cannot extract the PDK MIM (strip it, re-add the cards), n-well junction C is in no model, kpex RC meshes are run-to-run different, and > 2 concurrent KLayout jobs produce spurious DRC/LVS failures with empty violation lists
 
 KIND: journal entry | type: procedural | status: live
 

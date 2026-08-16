@@ -501,7 +501,7 @@ down in `LPF: layout/H12-pdk-cap/PLAN.md`.
 | — | **Round-2 delta approved** | 2026-08-16 | *"APPROVED 2026-08-16 (human sign-off), as written."* (commit `aac192f`) |
 | **Q1** | take the anti-oriented MIM split (`cap_anti_orient=True`, `cc12` 3\|1\|3)? | 2026-08-16 | **yes.** Reasoning recorded: v1 rejected it on a one-sided-C argument; the reviewer's what-if contradicted that *with a measurement* (14.2 dB of HD2), and single-orientation `xc12` plates had put `voutp` at 505.5 fF = 1.11× its pvt budget while `voutn` sat at 352.5. *"Balancing them is a budget fix, not only a linearity fix."* |
 | **Q2** | `bias_dummy_rows = 1`, costing ≈0.06° of the S1 margin? | 2026-08-16 | **yes**, explicitly *"the human's call"* on a **hand bound** (1.2 Hz of fc against a 3.27 Hz margin) |
-| **Q2** | — **REVERSED** | **2026-08-17** (as dated in `PLAN.md`) | **`bias_dummy_rows = 0`.** The area campaign *measured* the other side: the dummy rows cost **13 791 µm² (5.6 % of the cell) + 0.05° of `ph_max` + 2.1 fF on `net2`/`net3`**, against a matching benefit that *"is still a hand bound and still unmeasured (no bench in this campaign models edge/interior ΔV_T)."* Round 4 defaults then give **228 093.6 µm² (−7.7 %), `ph_max` 331.221 nominal (+0.061) and 329.821 at the failing corner (+0.070)**, DRC 0, LVS matched — *"the reversal is free on every measured axis."* F7's exposure is re-opened as a **documented, unmeasured matching debt**; `bias_dummy_rows = 1` stays a legal knob value, one build away |
+| **Q2** | — **REVERSED** | **2026-08-16** (as dated in `PLAN.md`) | **`bias_dummy_rows = 0`.** The area campaign *measured* the other side: the dummy rows cost **13 791 µm² (5.6 % of the cell) + 0.05° of `ph_max` + 2.1 fF on `net2`/`net3`**, against a matching benefit that *"is still a hand bound and still unmeasured (no bench in this campaign models edge/interior ΔV_T)."* Round 4 defaults then give **228 093.6 µm² (−7.7 %), `ph_max` 331.221 nominal (+0.061) and 329.821 at the failing corner (+0.070)**, DRC 0, LVS matched — *"the reversal is free on every measured axis."* F7's exposure is re-opened as a **documented, unmeasured matching debt**; `bias_dummy_rows = 1` stays a legal knob value, one build away |
 | **Q3** | deliver with the `cap_bcs ×0.9 / iref ×0.9` corner miss? | 2026-08-16 | **yes — report, never hide.** *"The block owner has said corners are nice-to-have, not must — so the proposed default is deliver with the miss documented"*; the follow-ups (an `iref` trim, a small C1/C2 re-allocation, the well-junction model) are **design-lane** work, not layout. The reviewer's counter-note: *"without that approved decision this row is a blocker"* |
 | **Q4** | defer the `xr2` (bridge replica) orientation split? | 2026-08-16 | **defer.** Splitting it would double its n-well count and add well junction area on exactly the nets F3 says are already unmodelled |
 | **R2.7** | defer the n-well / p-substrate junction-C model (F3) | 2026-08-16 | **defer** — *"the layout has no lever: `well_margin` is at the `NW.c` floor"*; the fix is a platform feature, `Cj(area, perimeter, Vbias)` |
@@ -514,7 +514,7 @@ down rather than buried. That is a closed loop between human judgement and
 machine measurement, not an approval rubber-stamp.
 
 > **Date to reconcile before submission:** `PLAN.md` dates the Q2 reversal
-> 2026-08-17, while the round-4 git activity is 2026-08-16. Fix one or the other.
+> 2026-08-16, while the round-4 git activity is 2026-08-16. Fix one or the other.
 
 ---
 

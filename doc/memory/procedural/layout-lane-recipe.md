@@ -1,4 +1,4 @@
-# 2026-08-17 — Layout lane recipe — certified cell → parameterized GDS → DRC/LVS/PEX → post-layout benches → review
+# 2026-08-16 — Layout lane recipe — certified cell → parameterized GDS → DRC/LVS/PEX → post-layout benches → review
 
 KIND: procedural overflow | type: procedural | status: live
 

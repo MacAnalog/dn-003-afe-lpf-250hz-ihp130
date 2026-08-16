@@ -12,7 +12,7 @@ round-2 section says so explicitly and names the finding that forced it.
 > **STATUS: APPROVED 2026-08-16 (human sign-off), as written.** R2.8 decisions:
 > **Q1 yes** (take the anti-oriented split, `cap_anti_orient=True`, `cc12` 3|1|3);
 > **Q2 yes** (`bias_dummy_rows=1`, the ~0.06° is accepted) — **REVERSED to `0` by
-> the block owner on 2026-08-17 for round 4, see the note under R2.8 Q2**; **Q3 yes** (if
+> the block owner on 2026-08-16 for round 4, see the note under R2.8 Q2**; **Q3 yes** (if
 > `cap_bcs`/`iref×0.9` still misses S1 after every lever, deliver with the corner
 > row reported, not hidden — corners are nice-to-have for this block); **Q4 yes**
 > (`xr2` split deferred). Build proceeds under R2.9's iteration protocol.
@@ -253,7 +253,7 @@ met, so the cheapest sufficient set is what ships.
    knob value and the exposure (1.2 Hz of `fc` against a 3.27 Hz margin) is a
    hand bound, not a measurement.
 
-   > **REVERSED 2026-08-17 (block owner), round 4: `bias_dummy_rows = 0`.**
+   > **REVERSED 2026-08-16 (block owner), round 4: `bias_dummy_rows = 0`.**
    > The Q2 decision was taken on a *hand bound*; the area campaign
    > (`opt/results/README.md`, 300+300 trials + two single evaluations) then
    > measured the other side of it: the dummy rows cost **13 791 µm² — 5.6 % of

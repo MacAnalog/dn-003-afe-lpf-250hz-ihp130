@@ -1,4 +1,4 @@
-# 2026-08-17 — Matching "insurance" must be priced with a build → PEX → bench evaluation: the bias array's dummy ROWS cost 5.6 % of the cell, 2 fF on the sensitive gate nets and 0.05° of phase, for a benefit that was only ever a hand bound
+# 2026-08-16 — Matching "insurance" must be priced with a build → PEX → bench evaluation: the bias array's dummy ROWS cost 5.6 % of the cell, 2 fF on the sensitive gate nets and 0.05° of phase, for a benefit that was only ever a hand bound
 
 KIND: journal entry | type: semantic | status: live
 
@@ -28,6 +28,6 @@ way any knob is: build it, extract it, run the frozen benches, and put its
 price next to its (measured, or honestly bounded) benefit. Half-height dummies
 at the same L and pitch buy the same environment for a third of the cost when
 the environment argument is real. The owner reversed the plan's Q2 on these
-numbers (PLAN.md R2.8 note, 2026-08-17).
+numbers (PLAN.md R2.8 note, 2026-08-16).
 
 Provenance: `layout/H12-pdk-cap/opt/results/{README.md,summary.json,campaign_A_trials.jsonl,campaign_B_trials.jsonl}`, `layout/H12-pdk-cap/iterations/it14`, `REPORT.md` round 4.
