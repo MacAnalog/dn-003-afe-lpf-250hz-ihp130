@@ -39,6 +39,34 @@ size — the reuse ladder is threshold-referenced, so holding ±2 % fc over a ±
 rail would need a device slope of ~1.9 V per e-fold against 0.04–0.2 V for real
 MOS. It needs a supply-independent bias, i.e. added components.
 
+
+### Layout of record — `H12-pdk-cap` (post-PVT cell, IHP MIM caps, all-hv)
+
+The post-PVT cell of experiment 023 was taken through the **layout lane**
+([`layout/H12-pdk-cap/`](layout/H12-pdk-cap/REPORT.md) — a parameterized
+gdsfactory generator whose knobs are optimizer parameters, DRC/LVS/PEX on every
+round, the block's own frozen benches on the extracted netlist, an independent
+review, and a 14-iteration audit trail with before|after pictures):
+
+| | pre-layout (schematic) | **post-layout, it14** (kpex CC) |
+|---|---|---|
+| fc | 249.77 Hz | 248.66 Hz |
+| phase max (≥ 330°) | 332.38° | 331.22° |
+| \|H\| at 1 kHz (≤ −48 dB) | −49.03 dB | −49.22 dB |
+| IRN 0.5–200 Hz | 29.20 µV | 29.19 µV |
+| THD @ 175 mVpp, 50 Hz | −50.40 dB | −49.73 dB |
+| core power | 11.91 nW | 11.91 nW |
+| mismatch yield (100 samples, paired seeds) | 82 % | 87 % |
+| worst MIM-cap corner (`cap_bcs`, iref ×0.9), phase max | 331.02° | 329.82° — the one post-layout miss, accepted |
+| cell | — | 432.0 × 528.0 µm = **0.228 mm²** (MIM 54 %), DRC 0, LVS match |
+
+Story and evidence: [`layout/H12-pdk-cap/REPORT.md`](layout/H12-pdk-cap/REPORT.md)
+(designer), [`REVIEW.md`](layout/H12-pdk-cap/REVIEW.md) + `REVIEW.png`
+(independent, round 3: PASS with notes), `iterations/` (it01–it14, one-line
+notes + diffs), `opt/results/` (600-trial area campaign: the bias dummy rows
+were 5.6 % of the cell for no measured benefit — removed in it14), and the
+paper pack [`doc/paper/`](doc/paper/README.md).
+
 ## The challenge
 
 Beat the reference baseline on noise without giving anything else back.
@@ -113,7 +141,7 @@ decisively — lv NMOS **cannot be biased at 1 nA** at these widths (17 µm/8 µ
 already carries 2.5 nA at Vgs = 0). The measured evidence is in
 `doc/pdk-notes.md`.
 
-## Layout
+## Repository layout
 
 | path | what |
 |---|---|
@@ -132,6 +160,8 @@ already carries 2.5 nA at Vgs = 0). The measured evidence is in
 | `doc/journal.md` + `doc/journal/` | learnings index + one file per entry (typed semantic/procedural, superseded-aware) |
 | `doc/memory/` | the memory model (working/episodic/semantic/procedural) + write-risk ordering |
 | `doc/experiment-log.md` | one line per experiment + open items |
+| `layout/<cell>/` | the **layout lane**: `BRIEF.md`/`brief.json` (measured budgets), `PLAN.md` (human-approved), `gen_<cell>.py` (the layout of record, as code), `asbuilt/` (LVS reference + PEX netlist), `scorecard_post.json`, `REPORT.md`, `REVIEW.md/.yaml/.png` (independent), `iterations/` (per-round snapshots + before\|after diffs), `opt/` (knob optimization: stand-alone driver + platform project) |
+| `doc/paper/` | the ISCAS / TCAD paper pack: results tables (schematic + layout) sourced from the artifacts, workflow + cost notes, figures + the scripts that made them, gap list |
 | `pdf/` | the papers + `INDEX.md` (cite by handle) |
 | `pdk/` | regenerated device-characterisation LUTs (git-ignored) |
 | `runs/` | `ledger.ndjson` — local observability, git-ignored; keeper numbers graduate into experiment READMEs |

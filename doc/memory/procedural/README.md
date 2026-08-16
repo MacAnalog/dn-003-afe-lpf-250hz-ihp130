@@ -9,7 +9,7 @@ land **human-reviewed**, and anything that proposes a change to `lab/`,
 `scripts/`, `xschem/`, an agent definition or `CLAUDE.md` goes to
 `doc/proposed-lab-fixes.md` first. **Supersede, don't delete.**
 
-*(empty — first entries land when a recipe outgrows doc/environment.md)*
+* [layout-lane-recipe.md](layout-lane-recipe.md) — the certified-cell → GDS → DRC/LVS/PEX → post-layout benches → review flow (agents, runners, gates, commands)
 
 ## What belongs here
 

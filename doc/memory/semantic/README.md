@@ -7,7 +7,7 @@ Undated distilled design knowledge, **one topic per file**, provenance required
 [../README.md](../README.md) for what belongs here versus
 `doc/design-reference.md` versus a journal entry. **Supersede, don't delete.**
 
-*(empty — first entries land when a topic outgrows a journal entry)*
+* [h12-layout-parasitic-map.md](h12-layout-parasitic-map.md) — H12-pdk-cap layout of record: pre vs post-layout, per-net C vs budget, unextracted terms, HF zero/floor, area composition
 
 ## What belongs here
 
