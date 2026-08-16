@@ -22,6 +22,6 @@ Cc1 net4 voutp cap_cmim w=49.91u l=49.91u m=16
 Cc10 net1 voutn cap_cmim w=49.91u l=49.91u m=16
 Cc12a voutn voutp cap_cmim w=48.45u l=48.45u m=4
 Cc12b voutp voutn cap_cmim w=48.45u l=48.45u m=3
-Mdumn vss vss vss vss sg13_hv_nmos w=336u l=25u
+Mdumn vss vss vss vss sg13_hv_nmos w=144u l=25u
 Mdump vdd vdd vdd vdd sg13_hv_pmos w=24u l=31u
 .ends lpf_core

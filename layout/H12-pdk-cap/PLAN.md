@@ -11,7 +11,8 @@ round-2 section says so explicitly and names the finding that forced it.
 
 > **STATUS: APPROVED 2026-08-16 (human sign-off), as written.** R2.8 decisions:
 > **Q1 yes** (take the anti-oriented split, `cap_anti_orient=True`, `cc12` 3|1|3);
-> **Q2 yes** (`bias_dummy_rows=1`, the ~0.06° is accepted); **Q3 yes** (if
+> **Q2 yes** (`bias_dummy_rows=1`, the ~0.06° is accepted) — **REVERSED to `0` by
+> the block owner on 2026-08-17 for round 4, see the note under R2.8 Q2**; **Q3 yes** (if
 > `cap_bcs`/`iref×0.9` still misses S1 after every lever, deliver with the corner
 > row reported, not hidden — corners are nice-to-have for this block); **Q4 yes**
 > (`xr2` split deferred). Build proceeds under R2.9's iteration protocol.
@@ -251,6 +252,23 @@ met, so the cheapest sufficient set is what ships.
    than 2.3 fF), but it is the human's call: `bias_dummy_rows = 0` is a legal
    knob value and the exposure (1.2 Hz of `fc` against a 3.27 Hz margin) is a
    hand bound, not a measurement.
+
+   > **REVERSED 2026-08-17 (block owner), round 4: `bias_dummy_rows = 0`.**
+   > The Q2 decision was taken on a *hand bound*; the area campaign
+   > (`opt/results/README.md`, 300+300 trials + two single evaluations) then
+   > measured the other side of it: the dummy rows cost **13 791 µm² — 5.6 % of
+   > the cell — plus 0.05° of `ph_max` and 2.1 fF on `net2`/`net3`**, against a
+   > matching benefit that is still a hand bound and still unmeasured (no bench
+   > in this campaign models edge/interior ΔV_T). The owner's call is that 5.6 %
+   > of area and 0.07° at the failing corner is the wrong price for it. Taken
+   > together with the campaign's A-best numeric knob point, round 4's defaults
+   > give **228 093.6 µm² (−7.7 % vs round 3), `ph_max` 331.221 nominal
+   > (+0.061) and 329.821 at `cap_bcs` ×0.9 / `iref ×0.9` (+0.070)**, DRC 0,
+   > LVS matched — i.e. the reversal is free on every measured axis. F7's
+   > exposure is re-opened as a **documented, unmeasured** matching debt on the
+   > bias common-centroid array's outer rows; `bias_dummy_rows = 1` remains a
+   > legal knob value (BOUNDS 0–1) and one build away. R2.8 Q1, Q3 and Q4 are
+   > unchanged.
 3. **Q3 — what if `cap_bcs`/`iref ×0.9` still misses after all levers?** The
    plan's rule is **report, never hide**: the corner row goes in REPORT §5 with
    its measured value and the attribution. The block owner has said corners are

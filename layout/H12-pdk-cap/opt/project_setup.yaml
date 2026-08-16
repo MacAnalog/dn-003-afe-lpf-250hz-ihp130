@@ -10,7 +10,8 @@
 #   cd spicexplorer-platform
 #   uv run spicexplorer-optimize ../external/agentic-design-250hz-lpf-ihp130/layout/H12-pdk-cap/opt/project_setup.yaml \
 #       --budget 3 --workers 3 --outdir /path/to/scratch/h12_layoutopt
-# Trial 0 is the `init` point (seed_from_init) and must reproduce round 3:
+# The `init` point (seed_from_init; usually trial 0 — suggest() is a hint, with parallel
+# workers it may land a few trials in) must reproduce round 3:
 #   area 247136.9 um2, ph_max_deg 331.1595, c_net2_ff 32.328 / c_net3_ff 32.329.
 project:
   name: H12-PDK-CAP-LAYOUT
@@ -73,7 +74,7 @@ project:
     name: TwoPointsDE
     budget: 240                # CLI: --budget N
     random_seed: 0
-    seed_from_init: true       # trial 0 = the round-3 layout of record (parity point)
+    seed_from_init: true       # the round-3 layout of record is evaluated early (parity point; usually trial 0)
     optimizer_kwargs: { num_workers: 8 }   # CLI: --workers K (Nevergrad batch hint; trials run sequentially)
     lin_variable_bounds: { min: 0, max: 1 }
     log_variable_bounds: { min: 1, max: 100 }
