@@ -1,12 +1,17 @@
-"""Poles, zeros and H(jw) of a netlist2tf MNA system, exactly, by matrix pencils.
+"""Numeric H(jw) and Z(jw) sweeps over a netlist2tf MNA system, by direct dense solves.
 
-Why not `extract_tf` + `sympy.roots` for this: the full differential cell is a 13-node
-system whose `Fidelity.FULL` model puts a capacitance on almost every branch, so the
-symbolic Berkowitz determinant `extract_tf` computes does not finish in useful time, and
-even when it does, expanding a degree-15 polynomial whose coefficients span 40 decades
+The pole/zero half of this module has been **upstreamed**: `solve()` is now a thin adapter
+over `spicexplorer_netlist2tf.poles_zeros`, which does the pencil eigen-solve the platform
+package now owns.  What stays here is what the package does not provide -- evaluating
+`H(s)` and a transimpedance `Z_T(s)` numerically over a frequency vector, which the noise
+and distortion budgets sweep thousands of times.
+
+Why a pencil at all, rather than `extract_tf` + `sympy.roots`: the full differential cell is
+a 13-node system whose `Fidelity.FULL` model puts a capacitance on almost every branch, so
+the symbolic Berkowitz determinant `extract_tf` computes does not finish in useful time,
+and even when it does, expanding a degree-15 polynomial whose coefficients span 40 decades
 loses the low-frequency roots to float cancellation.  `extract_tf` remains the right tool
-on the DM half-circuit (5 nodes, and it is the SYMBOLIC form the paper quotes) -- this
-module is its exact numeric counterpart on the full cell.
+on the DM half-circuit (5 nodes, and it is the SYMBOLIC form the paper quotes).
 
 The mathematics is one line.  netlist2tf's stamped matrix is exactly affine in `s`,
 
@@ -30,9 +35,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-import scipy.linalg as la
 import sympy as sp
 
+from spicexplorer_netlist2tf import poles_zeros
 from spicexplorer_netlist2tf.tf import S
 
 
@@ -66,58 +71,41 @@ class PZ:
     n_states: int
 
 
-def _finite(ev: np.ndarray, *, huge: float = 1e18) -> np.ndarray:
-    ev = ev[np.isfinite(ev)]
-    return ev[np.abs(ev) < huge]
-
-
-def _pencil_eig(A: np.ndarray, B: np.ndarray) -> np.ndarray:
-    """Finite eigenvalues of det(A + s B) = 0, computed as a QZ generalized problem.
-
-    Solved in the homogeneous form so an infinite eigenvalue (an algebraic constraint --
-    every node with no capacitance to anywhere produces one) is reported as `beta == 0`
-    and discarded, rather than overflowing.
-    """
-    al, be = la.eig(-A, B, right=False, homogeneous_eigvals=True)
-    keep = np.abs(be) > 1e-14 * max(1.0, float(np.max(np.abs(al))))
-    return al[keep] / be[keep]
-
-
 def solve(system, out: tuple[str, str], drive: dict[str, float]) -> PZ:
     """Poles and zeros of the transfer from `drive` (node -> excitation) to `out`.
 
     `drive` names the nodes held by ideal sources and the level each is held at:
-    `{"vinp": +0.5, "vinn": -0.5}` is the bench's differential convention.
+    `{"vinp": +0.5, "vinn": -0.5}` is the bench's differential convention -- which is
+    exactly the package's `drive="dm"`, and `{a: +1, b: +1}` its `drive="cm"`.
+
+    Thin adapter over `spicexplorer_netlist2tf.poles_zeros`; the roots are unpacked back
+    into the flat complex arrays the rest of this pack sweeps over.  `gain_dc` still comes
+    from `h_at` rather than the package's real-valued `dc_gain`, because the callers here
+    want the complex value.
     """
-    G, C, _ = split_gc(system)
-    n = G.shape[0]
-    idx_in = [system.row_of(k) for k in drive]
-    if any(i is None for i in idx_in):
+    ports = list(drive)
+    if len(ports) != 2:
+        raise ValueError(f"expected two driven nodes, got {drive}")
+    levels = [drive[k] for k in ports]
+    if levels == [0.5, -0.5]:
+        mode = "dm"
+    elif levels == [1.0, 1.0]:
+        mode = "cm"
+    else:
+        raise ValueError(
+            f"drive {drive} is neither the dm (+/-0.5) nor the cm (+1,+1) convention "
+            "netlist2tf.poles_zeros accepts"
+        )
+    if any(system.row_of(k) is None for k in ports):
         raise ValueError(f"a driven node is at ac ground: {drive}")
-    u = np.array([drive[k] for k in drive], dtype=float)
-    rest = [i for i in range(n) if i not in idx_in]
 
-    Grr, Crr = G[np.ix_(rest, rest)], C[np.ix_(rest, rest)]
-    Gri, Cri = G[np.ix_(rest, idx_in)], C[np.ix_(rest, idx_in)]
-
-    L = np.zeros(len(rest))
-    for net, sign in ((out[0], 1.0), (out[1], -1.0)):
-        r = system.row_of(net)
-        if r is not None:
-            L[rest.index(r)] = sign
-
-    poles = _pencil_eig(Grr, Crr)
-
-    m = len(rest)
-    M0 = np.zeros((m + 1, m + 1))
-    M1 = np.zeros((m + 1, m + 1))
-    M0[:m, :m], M1[:m, :m] = Grr, Crr
-    M0[:m, m], M1[:m, m] = Gri @ u, Cri @ u
-    M0[m, :m] = L
-    zeros = _pencil_eig(M0, M1)
-
-    return PZ(poles=poles, zeros=zeros, gain_dc=h_at(system, out, drive, 0.0),
-              n_states=len(poles))
+    res = poles_zeros(system, out, (ports[0], ports[1]), drive=mode)
+    unpack = lambda rs: np.array(  # noqa: E731
+        [complex(r.value_real, r.value_imag) for r in rs for _ in range(r.multiplicity)]
+    )
+    poles = unpack(res.poles)
+    return PZ(poles=poles, zeros=unpack(res.zeros),
+              gain_dc=h_at(system, out, drive, 0.0), n_states=len(poles))
 
 
 def h_at(system, out: tuple[str, str], drive: dict[str, float],
@@ -129,7 +117,7 @@ def h_at(system, out: tuple[str, str], drive: dict[str, float],
     u = np.array([drive[k] for k in drive], dtype=float)
     rest = [i for i in range(n) if i not in idx_in]
     Y = G + s_val * C
-    v = la.solve(Y[np.ix_(rest, rest)], -Y[np.ix_(rest, idx_in)] @ u)
+    v = np.linalg.solve(Y[np.ix_(rest, rest)], -Y[np.ix_(rest, idx_in)] @ u)
     got = 0j
     for net, sign in ((out[0], 1.0), (out[1], -1.0)):
         r = system.row_of(net)
@@ -214,5 +202,5 @@ def z_transfer(system, out: tuple[str, str], inject: tuple[str, str],
     Gr, Cr = G[np.ix_(rest, rest)], C[np.ix_(rest, rest)]
     z = np.empty(len(f), dtype=complex)
     for k, x in enumerate(f):
-        z[k] = L @ la.solve(Gr + 2j * np.pi * float(x) * Cr, rhs)
+        z[k] = L @ np.linalg.solve(Gr + 2j * np.pi * float(x) * Cr, rhs)
     return z

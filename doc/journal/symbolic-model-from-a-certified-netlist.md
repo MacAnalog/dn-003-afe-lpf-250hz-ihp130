@@ -52,3 +52,24 @@ simulation data alone.
 have to land on DFT bins; an odd spacing puts them on half-bins and the "IMD3"
 that comes back is scalloping (measured once at −0.79 dBc, which no circuit
 produces). Keep the rect-vs-Hann agreement guard on every coherent transient.
+
+## Addendum (2026-08-28) — the pencil math is now upstream
+
+The matrix-pencil pole/zero solve described above no longer lives in this repo. It was
+contributed to the platform as `spicexplorer_netlist2tf.poles_zeros`, and
+`signoff/paper-draft/scripts/pencil.py` is now a thin adapter over it. What stays local is
+what the package does not provide: numeric `H(jω)` and `Z_T(jω)` sweeps.
+
+Two things came out of that move, both worth carrying forward:
+
+* **Reuse found a bug in the local version.** The pack bordered the *partitioned* `Y_rr`
+  by hand; the package borders the *augmented* matrix, where the source constraint is
+  explicit. On the capacitance-ablation diagnostic the two disagreed about a near-exact
+  pole–zero pair at ~200 kHz — a classification flip either side of the 1e-4 cancellation
+  threshold, three orders of magnitude outside the band, but a difference that only
+  appeared because a second implementation existed to disagree.
+* **Verify a root, don't trust a solver.** `σ_min(G + sC)/σ_max` is ~0 at a real root and
+  sits at the noise floor at a non-root, and that test is independent of how the root was
+  found. It is what settled the disagreement, and it is now a test in the platform package.
+  Evaluate it at the **complex** root, not at `2πjf` of its magnitude — doing the latter
+  cost an hour and produced a confident wrong conclusion.

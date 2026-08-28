@@ -128,8 +128,10 @@ $PF signoff/paper-draft/scripts/tf_analysis.py
 $PF signoff/paper-draft/scripts/noise_analysis.py
 $PF signoff/paper-draft/scripts/linearity_analysis.py
 # 4. the pack
-$PF signoff/paper-draft/scripts/report.py      # rewrites validation.md
-$PF signoff/paper-draft/scripts/figures.py     # rewrites figures/
+#    report.py is stdlib-only but needs Python >= 3.12 (it uses backslash escapes inside
+#    f-string expressions), so it runs in the REPO venv, not the platform's 3.11 one.
+.venv/bin/python signoff/paper-draft/scripts/report.py   # rewrites validation.md
+$PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
 ```
 
 | script | role |

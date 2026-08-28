@@ -6,7 +6,7 @@ holds everything that is a MEASUREMENT, and it is generated rather than written 
 number in the prose can never drift from the JSON that produced it.  Re-run after any
 re-extraction:
 
-    spicexplorer-platform/.venv/bin/python signoff/paper-draft/scripts/report.py
+    .venv/bin/python signoff/paper-draft/scripts/report.py   # repo venv: needs >= 3.12
 
 It reads only `signoff/paper-draft/data/*.json` -- it never calls the simulator and never
 touches the small-signal model.
@@ -248,7 +248,10 @@ capacitance symbols is zeroed in turn and the pencil re-solved on the same matri
 {tf['cases']['pre_mim']['cap_ablation'][1]['pole_f_hz'][0]:.2f} Hz — the closed form's
 {tf['cases']['pre_mim']['closed_form']['f_c_geometric_hz']:.2f} Hz to within
 {abs(tf['cases']['pre_mim']['cap_ablation'][1]['pole_f_hz'][0] - tf['cases']['pre_mim']['closed_form']['f_c_geometric_hz']):.2f} Hz —
-and the two out-of-band zero pairs disappear with them.  `cgd` moves nothing at all
+and the two out-of-band zero pairs disappear with them.  (The kept-zero column can still
+show a root in the 10 kHz–1 MHz range: with `cgs` gone the model has almost no state left
+up there, and what survives is near-cancelling pole/zero residue three to four orders of
+magnitude above the band — it is listed for completeness, not read as a filter feature.)  `cgd` moves nothing at all
 (it is {jload('bench_pre_mim.json')['op']['m2']['cgd'] * 1e18:.1f} aF on the input device:
 in weak inversion the channel is not formed, so there is no Miller path), and `cdb`
 moves `fc` by {abs(tf['cases']['pre_mim']['cap_ablation'][3]['pole_f_hz'][0] - tf['cases']['pre_mim']['pz']['poles'][0]['f0_hz']):.2f} Hz.
@@ -906,7 +909,7 @@ def main() -> None:
 **[GENERATED]** by `scripts/report.py` from `data/*.json`.  Do not hand-edit: re-run
 
 ```
-spicexplorer-platform/.venv/bin/python signoff/paper-draft/scripts/report.py
+.venv/bin/python signoff/paper-draft/scripts/report.py
 ```
 
 The derivations these numbers check live in [theory.md](theory.md); the map from the

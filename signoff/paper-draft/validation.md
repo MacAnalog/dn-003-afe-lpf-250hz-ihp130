@@ -3,7 +3,7 @@
 **[GENERATED]** by `scripts/report.py` from `data/*.json`.  Do not hand-edit: re-run
 
 ```
-spicexplorer-platform/.venv/bin/python signoff/paper-draft/scripts/report.py
+.venv/bin/python signoff/paper-draft/scripts/report.py
 ```
 
 The derivations these numbers check live in [theory.md](theory.md); the map from the
@@ -165,7 +165,7 @@ capacitance symbols is zeroed in turn and the pencil re-solved on the same matri
 | capacitance zeroed | symbols zeroed | pole f₀ (Hz) | kept zero f₀ (Hz) |
 |---|---|---|---|
 | (none: the full model) | 0 | 249.72, 251.08 | 3854, 5045 |
-| `cgs` | 16 | 254.65, 254.66 | 13253 |
+| `cgs` | 16 | 254.65, 254.66 | 13253, 1107233 |
 | `cgd` | 16 | 249.72, 251.08 | 3854, 5045 |
 | `cdb` | 16 | 249.84, 251.40 | 3858, 5457 |
 
@@ -173,7 +173,10 @@ capacitance symbols is zeroed in turn and the pencil re-solved on the same matri
 254.65 Hz — the closed form's
 254.83 Hz to within
 0.18 Hz —
-and the two out-of-band zero pairs disappear with them.  `cgd` moves nothing at all
+and the two out-of-band zero pairs disappear with them.  (The kept-zero column can still
+show a root in the 10 kHz–1 MHz range: with `cgs` gone the model has almost no state left
+up there, and what survives is near-cancelling pole/zero residue three to four orders of
+magnitude above the band — it is listed for completeness, not read as a filter feature.)  `cgd` moves nothing at all
 (it is 3.1 aF on the input device:
 in weak inversion the channel is not formed, so there is no Miller path), and `cdb`
 moves `fc` by 0.12 Hz.
@@ -294,7 +297,7 @@ differential output cannot see — the replica branch and the bias diode account
 them — and they are *reported*, not silently dropped.  Cancellation is declared at 10⁻⁴
 relative separation because the two sets come from two separately conditioned
 eigenproblems; the worst residual separation actually observed here is
-**1.5e-11** relative, i.e. 0.00 % of the declaration threshold.
+**1.4e-11** relative, i.e. 0.00 % of the declaration threshold.
 
 **Poles** (dc gain -0.008148 dB)
 
