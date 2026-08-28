@@ -126,6 +126,32 @@ def h_at(system, out: tuple[str, str], drive: dict[str, float],
     return complex(got)
 
 
+def node_response(system, drive: dict[str, float], s_val: complex) -> dict[str, complex]:
+    """EVERY node's complex response at one `s`, for a unit drive, as {net: phasor}.
+
+    `h_at` solves exactly this system and then keeps one difference; a distortion
+    analysis needs the interior, because the harmonic a device generates is set by ITS
+    OWN terminal swing and not by the output.  Driven nodes come back at their drive
+    value and the ground node is absent, so a caller reading `v(d) - v(s)` must treat a
+    missing net as 0 V.
+    """
+    G, C, _order = split_gc(system)
+    n = G.shape[0]
+    idx_in = [system.row_of(k) for k in drive]
+    u = np.array([drive[k] for k in drive], dtype=float)
+    rest = [i for i in range(n) if i not in idx_in]
+    Y = G + s_val * C
+    v = np.linalg.solve(Y[np.ix_(rest, rest)], -Y[np.ix_(rest, idx_in)] @ u)
+    # `system.index` is the authoritative net -> row map.  `split_gc`'s third return is
+    # built from a `nets` attribute this system class does not have, so it comes back
+    # all-`None`; its callers only ever use G and C, which is why that has never shown.
+    by_row = {r: net for net, r in system.index.items()}
+    out: dict[str, complex] = {by_row[r]: complex(v[j])
+                               for j, r in enumerate(rest) if r in by_row}
+    out.update({k: complex(val) for k, val in drive.items()})
+    return out
+
+
 def h_over(system, out: tuple[str, str], drive: dict[str, float],
            f: np.ndarray) -> np.ndarray:
     """H(j2*pi*f) over a frequency grid (one factorization per point; the systems here

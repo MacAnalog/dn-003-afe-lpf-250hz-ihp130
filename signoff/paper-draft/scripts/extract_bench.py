@@ -19,6 +19,7 @@ metric: the scorecard is scored by `lab.metrics.score_plots`, exactly as sign-of
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -36,10 +37,12 @@ os.environ.setdefault("LPF_NGSPICE", os.path.expanduser("~/local/bin/ngspice"))
 
 import numpy as np  # noqa: E402
 
-from lab import config as C, metrics as M, ngspice as ng, raw as R  # noqa: E402
+from lab import config as C, corners as K, metrics as M, ngspice as ng, raw as R  # noqa: E402
 from lab.deck import _bias, _core, _libs, _stim_ac  # noqa: E402
 from lab.dut import INSTANCES, Design, Dev, subckt  # noqa: E402
 from lab.oppoint import PARAMS  # noqa: E402
+from lab.mc import _seeded  # noqa: E402
+from lab.parallel import batch, jobs  # noqa: E402
 
 SIGNOFF = REPO / "signoff/post-pvt"
 PEX = REPO / "layout/H12-pdk-cap/asbuilt/core_pex.sp"
@@ -123,15 +126,30 @@ def op_probe_lines(d: Design) -> tuple[list[str], list[str], dict]:
     return saves, prints, index
 
 
-def build_deck(d: Design) -> tuple[str, dict]:
+def node_saves(index: dict) -> list[str]:
+    """`save` entries for every net a device terminal touches.
+
+    `save all` covers the TOP-LEVEL nodes only -- a subcircuit's internal nets have to
+    be named, and an unsaved one is silently absent rather than an error.  These are
+    what `parse_nodes` reads, and what lets a probe deck reproduce a device's bias from
+    absolute node voltages instead of from a sign-folded `vgs`/`vds`.
+    """
+    top = {"vinp", "vinn", "voutp", "voutn", "vbn", "vbp", "vdd", "0"}
+    nets = {n for m in index.values() for n in m["nets"].values()}
+    return ([f"v({n})" for n in sorted(nets & top) if n != "0"]
+            + [f"v(xdut.{n})" for n in sorted(nets - top)])
+
+
+def build_deck(d: Design, c: K.Corner = K.NOMINAL) -> tuple[str, dict]:
     saves, prints, index = op_probe_lines(d)
+    saves = saves + node_saves(index)
     deck = f""".title lpf {d.topology} -- reviewer analysis bench (op + ac + noise)
-{_libs(C.CORNER_NOM, d)}
+{_libs(c.process, d)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=c.vdd)}
 {_bias(d)}
 {_stim_ac(d.vicm)}
-.temp {C.TEMP_NOM}
+.temp {c.temp}
 .control
 set filetype=binary
 set appendwrite
@@ -145,16 +163,16 @@ write sim.raw
     return deck, index
 
 
-def build_acnoise_deck(d: Design) -> str:
+def build_acnoise_deck(d: Design, c: K.Corner = K.NOMINAL) -> str:
     """AC + noise WITH the per-device noise summary.  Kept separate from the op deck because
     an explicit `save` starves the noise analysis (`lab.deck` documents the trap)."""
     return f""".title lpf {d.topology} -- ac + noise with per-device contributions
-{_libs(C.CORNER_NOM, d)}
+{_libs(c.process, d)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=c.vdd)}
 {_bias(d)}
 {_stim_ac(d.vicm)}
-.temp {C.TEMP_NOM}
+.temp {c.temp}
 .control
 set filetype=binary
 set appendwrite
@@ -191,6 +209,34 @@ def parse_op(rundir: Path, index: dict) -> dict:
     return ops
 
 
+def parse_nodes(rundir: Path, index: dict) -> dict:
+    """Every node's dc voltage at the operating point, by ABSOLUTE name.
+
+    The PSP op-vars give each device a `vgs`/`vds`, but for a p-channel those are
+    reported in the model's own source-referenced convention, and rebuilding a device's
+    bias from them means re-deriving that convention correctly for every flavour.  The
+    node voltages carry no convention at all: a probe deck that pins d/g/s/b to these
+    numbers reproduces the device's operating point whatever the model does internally.
+    """
+    plot = R.pick(ng.plots(rundir), "op")
+    # `save all` on an OSDI model also dumps every Verilog-A internal node
+    # (`xm0.nsg13_hv_pmos#int1`, ...).  Keep only the nets a device terminal names --
+    # the rest is model plumbing, and storing it would triple the record for nothing.
+    want = {n for m in index.values() for n in m["nets"].values()} - {"0"}
+    out = {}
+    for name in plot.vectors:
+        low = name.lower()
+        if not (low.startswith("v(") and low.endswith(")")) or "@" in low:
+            continue                      # `v(@inst[param])` is an op-var, not a node
+        net = low[2:-1].split("xdut.")[-1]
+        if net in want:
+            out[net] = float(np.real(np.asarray(plot[name])).ravel()[0])
+    missing = want - set(out)
+    if missing:
+        raise ValueError(f"node voltages missing from the op plot: {sorted(missing)}")
+    return out
+
+
 def parse_noise(plots) -> dict:
     n1 = R.pick(plots, "noise")
     f = np.asarray(n1.x, dtype=float)
@@ -209,54 +255,222 @@ def parse_noise(plots) -> dict:
     }
 
 
+def dut_design(label: str) -> tuple[Design, str, object]:
+    """The `Design` for one DUT label, with the override already applied."""
+    cell, override = DUTS[label]
+    d = design_of(cell)
+    if override == "LUMPED":
+        d = d.with_(dut_override=post_lumped_netlist())
+    elif override is not None:
+        # `$` is the ngspice control-language variable sigil, so a `save`/`print` of
+        # `@n.xdut.xm$1...` silently expands to nothing and the op probe reads no
+        # device at all.  kpex names every extracted instance `XM$n`, so they are
+        # renamed `XM_n` here.  A reference-designator rename cannot change the
+        # circuit -- and `--check-post` asserts it does not, by scoring this netlist
+        # against the certified post-layout scorecard.
+        d = d.with_(dut_override=Path(override).read_text().replace("$", "_"))
+    return d, cell, override
+
+
+def extract(label: str, c: K.Corner = K.NOMINAL, *, tag: str | None = None,
+            seed: int | None = None) -> dict:
+    """One DUT at one PVT point: op + ac + noise, as the record every analysis reads.
+
+    `c = NOMINAL` reproduces the nominal deck byte-for-byte, so the four committed
+    analyses are unaffected by the corner axis existing.
+    """
+    d, cell, override = dut_design(label)
+    tag = tag or label
+    deck, index = build_deck(d, c)
+    if seed is not None:
+        deck = _seeded(deck, seed)
+    rd = ng.run(deck, f"rev_op_{tag}")
+    ops = parse_op(rd, index)
+    nodes = parse_nodes(rd, index)
+
+    acn = build_acnoise_deck(d, c)
+    plots = ng.plots(ng.run(_seeded(acn, seed) if seed is not None else acn,
+                            f"rev_acn_{tag}"))
+    f, h = R.diff_tf(R.pick(plots, "ac"), C.OUT_P, C.OUT_N)
+    score = M.score_plots(plots, d)
+    return {
+        "label": label,
+        "cell": cell,
+        "dut": {"LUMPED": "post-layout: schematic devices + extracted Cext",
+                None: "schematic"}.get(override, "post-layout kpex CC"),
+        "corner": c.as_dict(),
+        "bias_alpha": C.BIAS_ALPHA,
+        "seed": seed,
+        "op": ops,
+        "nodes": nodes,
+        "ac": {"f": f.tolist(), "re": h.real.tolist(), "im": h.imag.tolist()},
+        "noise": parse_noise(plots),
+        "scorecard": {k: (None if v is None else float(v))
+                      for k, v in score.values.items()},
+        "caps_f": {n: d.cap(n) for n in ("c1_a", "c2_a", "c1_b", "c2_b")},
+    }
+
+
+def _line(rec: dict, what: str) -> str:
+    s = rec["scorecard"]
+    return (f"[{what}] {len(rec['op'])} instances, "
+            f"{len(rec['noise']['contrib'])} noise vectors, "
+            f"fc={s.get('fc_hz'):.3f} Hz, IRN={s.get('irn_uv'):.3f} uV, "
+            f"ph_max={s.get('ph_max_deg'):.3f} deg")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     summary = {}
-    for label, (cell, override) in DUTS.items():
-        d = design_of(cell)
-        if override == "LUMPED":
-            d = d.with_(dut_override=post_lumped_netlist())
-        elif override is not None:
-            # `$` is the ngspice control-language variable sigil, so a `save`/`print` of
-            # `@n.xdut.xm$1...` silently expands to nothing and the op probe reads no
-            # device at all.  kpex names every extracted instance `XM$n`, so they are
-            # renamed `XM_n` here.  A reference-designator rename cannot change the
-            # circuit -- and `--check-post` asserts it does not, by scoring this netlist
-            # against the certified post-layout scorecard.
-            d = d.with_(dut_override=Path(override).read_text().replace("$", "_"))
-        deck, index = build_deck(d)
-        rd = ng.run(deck, f"rev_op_{label}")
-        ops = parse_op(rd, index)
-
-        rd2 = ng.run(build_acnoise_deck(d), f"rev_acn_{label}")
-        plots = ng.plots(rd2)
-        ac = R.pick(plots, "ac")
-        f, h = R.diff_tf(ac, C.OUT_P, C.OUT_N)
-        score = M.score_plots(plots, d)
-
-        rec = {
-            "label": label,
-            "cell": cell,
-            "dut": {"LUMPED": "post-layout: schematic devices + extracted Cext",
-                    None: "schematic"}.get(override, "post-layout kpex CC"),
-            "op": ops,
-            "ac": {"f": f.tolist(), "re": h.real.tolist(), "im": h.imag.tolist()},
-            "noise": parse_noise(plots),
-            "scorecard": {k: (None if v is None else float(v))
-                          for k, v in score.values.items()},
-            "caps_f": {n: d.cap(n) for n in ("c1_a", "c2_a", "c1_b", "c2_b")},
-        }
+    for label in DUTS:
+        rec = extract(label)
         (OUT / f"bench_{label}.json").write_text(json.dumps(rec))
         summary[label] = {"scorecard": rec["scorecard"],
-                          "n_instances": len(ops),
+                          "n_instances": len(rec["op"]),
                           "n_noise_vectors": len(rec["noise"]["contrib"])}
-        print(f"[{label}] {len(ops)} instances, "
-              f"{len(rec['noise']['contrib'])} noise vectors, "
-              f"fc={rec['scorecard'].get('fc_hz'):.3f} Hz, "
-              f"IRN={rec['scorecard'].get('irn_uv'):.3f} uV, "
-              f"ph_max={rec['scorecard'].get('ph_max_deg'):.3f} deg")
+        print(_line(rec, label))
     (OUT / "bench_summary.json").write_text(json.dumps(summary, indent=1))
 
 
+# --------------------------------------------------------------------- PVT --
+
+#: The corner sets this script will sweep.  `reduced` is the 22-point screen the
+#: delivered cells' certified scorecards were measured on, so every analytical row
+#: lands beside an existing scorecard row; `axes` is the 9-point one-axis-at-a-time
+#: diagnostic, which is what separates a process shift from a headroom shift.
+#: The window `H12-pdk-cap` is actually certified over, from `signoff/post-pvt/README.md`:
+#: process at 27 C / 1.5 V, supply **1.40-1.65 V at 27 C**, temperature **0..+70 C at
+#: 1.5 V**, with `LPF_BIAS_ALPHA=1.1` on the temperature rows.  Note the shape of that
+#: claim: it is ONE AXIS AT A TIME, like `lab.corners.AXES`, not a box.  It is also
+#: narrower than the harness default (which sweeps +-10 % of 1.5 V and -40..+125 C) --
+#: every failing grid corner of the delivered cells contains 1.35 V or a sub-zero
+#: temperature, so sweeping the harness box alone answers a question about a part
+#: nobody is shipping.
+CERT_VDDS = (1.40, 1.65)
+CERT_TEMPS = (0.0, 70.0)
+CERT_AXES: tuple[K.Corner, ...] = (
+    (K.NOMINAL,)
+    + tuple(K.Corner(p, C.TEMP_NOM, C.VDD) for p in K.PROCESSES if p != C.CORNER_NOM)
+    + tuple(K.Corner(C.CORNER_NOM, C.TEMP_NOM, v) for v in CERT_VDDS)
+    + tuple(K.Corner(C.CORNER_NOM, t, C.VDD) for t in CERT_TEMPS))
+
+#: The CROSS PRODUCT of the same endpoints -- 45 points that were never certified.
+#: Sweeping it asks whether the one-axis-at-a-time claim superposes.  It does not,
+#: and that is a result rather than a failure: see the PVT section of `validation.md`.
+CERT_BOX: tuple[K.Corner, ...] = K.grid(temps=(CERT_TEMPS[0], C.TEMP_NOM, CERT_TEMPS[1]),
+                                        vdds=(CERT_VDDS[0], C.VDD, CERT_VDDS[1]))
+
+SETS = {"reduced": K.REDUCED, "axes": K.AXES, "full": K.CORNERS,
+        "cert-axes": CERT_AXES, "cert-box": CERT_BOX,
+        "both": tuple(dict.fromkeys(K.REDUCED + K.AXES))}
+
+
+def alpha_tag() -> str:
+    """`LPF_BIAS_ALPHA` is part of a temperature measurement's identity.
+
+    `alpha = 0` (constant reference current) makes `gm`, and therefore `fc`, CTAT;
+    `alpha = 1.1` is the constant-gm shaping the delivered cells were certified with
+    (experiment 023).  At 27 C the two are the same current, so the nominal bench is
+    unaffected -- but every temperature corner differs, and a sweep that silently used
+    the default would report an UNCOMPENSATED cell as if it were the delivered one.
+    """
+    return "" if not C.BIAS_ALPHA else f"_a{C.BIAS_ALPHA:g}".replace(".", "p")
+
+
+def pvt(which: str = "both", label: str = "pre_mim", workers: int | None = None) -> None:
+    """Extract one DUT over a corner set, one bench JSON per point.
+
+    Only the analytical quantities need this: the poles, the per-biquad Q and the
+    noise budget are functions of the operating point, so each corner needs its own
+    `op` + per-generator noise extraction.  The scorecard columns come along free and
+    are asserted against `lab.corners` scoring the same point.
+    """
+    cs = SETS[which]
+    a = alpha_tag()
+    OUT.mkdir(parents=True, exist_ok=True)
+    print(f"PVT: {len(cs)} corners x {label}, bias alpha={C.BIAS_ALPHA:g}, "
+          f"{workers or jobs()} workers")
+
+    def one(c: K.Corner) -> dict:
+        rec = extract(label, c, tag=f"pvt_{label}{a}_{c.slug}")
+        (OUT / f"bench_pvt_{label}{a}_{c.slug}.json").write_text(json.dumps(rec))
+        return rec
+
+    recs = batch(list(cs), one, workers=workers)
+    index, bad = [], []
+    for c, r in zip(cs, recs):
+        if isinstance(r, BaseException):
+            bad.append((c, r))
+            print(f"[{c.slug}] FAILED: {r!r}")
+            continue
+        index.append({"slug": c.slug, "corner": c.as_dict(),
+                      "file": f"bench_pvt_{label}{a}_{c.slug}.json",
+                      "scorecard": r["scorecard"]})
+        print(_line(r, c.slug))
+    (OUT / f"pvt_index_{label}{a}_{which}.json").write_text(json.dumps(
+        {"dut": label, "set": which, "bias_alpha": C.BIAS_ALPHA,
+         "n_ok": len(index), "n_failed": len(bad),
+         "failed": [c.slug for c, _ in bad], "corners": index}, indent=1))
+    print(f"\n{len(index)}/{len(cs)} corners extracted"
+          + (f", {len(bad)} failed" if bad else ""))
+
+
+def mc(n: int = 64, label: str = "pre_mim", workers: int | None = None) -> None:
+    """One FULL extraction per mismatch draw, so the analytical pipeline runs unchanged.
+
+    The alternative -- fitting a 4-pole rational to each sample's ac sweep -- is cheaper
+    but ill-posed here: `tf_analysis.fit_poles_from_sim` documents that the (f0, Q) split
+    of two nearly co-located pairs is weakly determined by the response, so a Q
+    DISTRIBUTION built that way would mostly measure the fit's conditioning.  Extracting
+    the operating point per draw and running the same pencil solve as every other number
+    in this pack costs about two seconds a draw on a many-core host, which is cheap
+    enough that the well-posed route is also the practical one.
+    """
+    corner = C.mismatch_corner(C.CORNER_NOM)
+    OUT.mkdir(parents=True, exist_ok=True)
+    print(f"MC: {n} draws x {label} at {corner} / {C.TEMP_NOM:g} C, "
+          f"{workers or jobs()} workers")
+    c = K.Corner(corner, C.TEMP_NOM, C.VDD)
+
+    def one(seed: int) -> dict:
+        rec = extract(label, c, tag=f"mc_{label}_s{seed:05d}", seed=seed)
+        (OUT / f"bench_mc_{label}_s{seed:05d}.json").write_text(json.dumps(rec))
+        return rec
+
+    seeds = list(range(1, n + 1))
+    recs = batch(seeds, one)
+    index, bad = [], []
+    for s, r in zip(seeds, recs):
+        if isinstance(r, BaseException):
+            bad.append(s)
+            continue
+        index.append({"seed": s, "corner": c.as_dict(),
+                      "file": f"bench_mc_{label}_s{seed_name(s)}.json",
+                      "scorecard": r["scorecard"]})
+    (OUT / f"mc_index_{label}.json").write_text(json.dumps(
+        {"dut": label, "corner": c.as_dict(), "n_ok": len(index), "n_failed": len(bad),
+         "failed": bad, "draws": index}, indent=1))
+    print(f"{len(index)}/{n} draws extracted" + (f", {len(bad)} failed" if bad else ""))
+
+
+def seed_name(s: int) -> str:
+    return f"{s:05d}"
+
+
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--pvt", choices=sorted(SETS), default=None,
+                    help="sweep a corner set instead of the four nominal DUTs")
+    ap.add_argument("--dut", default="pre_mim", choices=sorted(DUTS),
+                    help="which DUT to sweep over corners (default: the pre-layout "
+                         "DUT of record)")
+    ap.add_argument("--mc", type=int, default=None,
+                    help="mismatch draws to extract instead of the nominal DUTs")
+    ap.add_argument("--workers", type=int, default=None)
+    a = ap.parse_args()
+    if a.mc:
+        mc(a.mc, a.dut, a.workers)
+    elif a.pvt:
+        pvt(a.pvt, a.dut, a.workers)
+    else:
+        main()
