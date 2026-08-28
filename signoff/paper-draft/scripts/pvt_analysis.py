@@ -278,9 +278,12 @@ def main() -> None:
                   f"[{v['min']:10.4f} .. {v['max']:10.4f}]")
         print(f"  two complex pairs at {s['n_two_pair']}/{s['n_draws']} draws")
     for which in (a.sets or []):
-        print(f"=== {which} ===")
-        out[which] = run(which, a.dut, a.alpha)
-        s = out[which]["summary"]
+        print(f"=== {which} ({a.dut}) ===")
+        # The pre-layout DUT keeps the bare key so every earlier reference to it stays
+        # valid; any other DUT is namespaced rather than overwriting it.
+        key = which if a.dut == "pre_mim" else f"{which}:{a.dut}"
+        out[key] = run(which, a.dut, a.alpha)
+        s = out[key]["summary"]
         print(f"  -> fc {s['fc_hz']['span_x']:.3f}x, "
               f"Q_lo {s['Q_lo']['span_x']:.3f}x, Q_hi {s['Q_hi']['span_x']:.3f}x, "
               f"noise closure {s['noise_closure_max_pct']:.2e} %\n"

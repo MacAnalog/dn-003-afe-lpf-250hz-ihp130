@@ -55,9 +55,13 @@ def _ac(plots) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return f, vp - vn, 0.5 * (vp + vn)
 
 
+def _db(y: np.ndarray) -> np.ndarray:
+    return 20 * np.log10(np.maximum(np.abs(y), 1e-300))
+
+
 def _at(f: np.ndarray, y: np.ndarray, spots=SPOTS) -> dict:
     """|y| in dB at each spot frequency, interpolated in log-frequency."""
-    mag = 20 * np.log10(np.maximum(np.abs(y), 1e-300))
+    mag = _db(y)
     return {f"{s:g}": float(np.interp(np.log10(s), np.log10(f), mag)) for s in spots}
 
 
@@ -95,9 +99,17 @@ def measure(d, *, corner: str, temp: float, vdd: float | None, tag: str,
         "a_dm_db": _at(f, dm),
         "cmrr_db": _at(f, cmrr), "psrr_db": _at(f, psrr),
         "cm_to_cm_db": _at(f, cm2cm), "supply_to_cm_db": _at(f, ps2cm),
+        # The spot values above are what the tables quote; the full sweep is what a
+        # rejection plot needs.  Four interpolated points drawn as a line would imply a
+        # shape between them that was never measured.
+        "curves": {"f": f.tolist(),
+                   **{k: _db(v).tolist() for k, v in
+                      (("a_dm_db", dm), ("cmrr_db", cmrr), ("psrr_db", psrr),
+                       ("cm_to_cm_db", cm2cm), ("supply_to_cm_db", ps2cm))}},
         "offset_out_v": off,
         "offset_in_v": off / gdc if gdc else None,
         "dc_gain": gdc,
+        "seed": seed,
     }
 
 
@@ -141,6 +153,16 @@ def main() -> None:
     mm = {"n_draws": len(draws), "n_failed": nfail,
           "offset_in_uv": stat(lambda r: 1e6 * r["offset_in_v"]),
           "offset_in_abs_uv": stat(lambda r: abs(1e6 * r["offset_in_v"]))}
+    # The draws themselves, not only their moments: a rejection distribution set by
+    # mismatch is not Gaussian in dB, so a mean and a sigma do not reconstruct it and a
+    # reader plotting the spread needs the samples.
+    mm["draws"] = [{"seed": r["seed"], "offset_in_uv": 1e6 * r["offset_in_v"],
+                    **{f"{k}_{s}hz": r[k][s] for k in ("cmrr_db", "psrr_db")
+                       for s in map(lambda x: f"{x:g}", SPOTS)}}
+                   for r in draws]
+    mm["curves"] = {"f": draws[0]["curves"]["f"],
+                    "cmrr_db": [r["curves"]["cmrr_db"] for r in draws],
+                    "psrr_db": [r["curves"]["psrr_db"] for r in draws]}
     for k in ("cmrr_db", "psrr_db"):
         mm[k] = {s: stat(lambda r, s=s, k=k: r[k][s]) for s in map(lambda x: f"{x:g}", SPOTS)}
     for k, s in (("cmrr_db", "0.1"), ("psrr_db", "0.1")):

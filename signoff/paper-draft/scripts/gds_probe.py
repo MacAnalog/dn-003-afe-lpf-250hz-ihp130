@@ -25,6 +25,13 @@ device's own operating point by ABSOLUTE NODE VOLTAGES (never PSP's sign-folded 
 swept in V_DS, with a cubic fitted to the drain current.  `gds_residual.py` does the
 propagation half in the symbolic lane.
 
+It also writes one WIDE, DENSE sweep per device -- the raw I_D(V_DS) curve itself, not a
+fit.  The cubic coefficients above depend on the window they are fitted over (`in_a`
+moves 5.4x between the 15 mV and 60 mV windows), which is the honest statement that I_D
+is not locally cubic and the reason the magnitude test could not settle.  The stored
+curve lets `gds_residual.py` extract the third harmonic over the swing the device
+actually sees, with no window to choose.
+
     LPF_NGSPICE=... PDK_ROOT=... .venv/bin/python \\
         signoff/paper-draft/scripts/gds_probe.py
 """
@@ -60,6 +67,10 @@ LABEL = "pre_mim"
 #: the spread across these windows is reported so the reader can see which it is.
 WINDOWS = (0.015, 0.030, 0.060)
 NPTS = 81
+#: The raw-curve sweep: wide enough to contain any drain swing in the pack (the largest
+#: is ~11 mV at the 21.875 mV drive) with room to spare, and fine enough that the
+#: harmonic extraction in `gds_residual.py` is limited by the simulator, not the grid.
+CURVE_WIN, CURVE_NPTS = 0.060, 481
 
 
 def cards(d) -> dict[str, dict]:
@@ -72,7 +83,7 @@ def cards(d) -> dict[str, dict]:
     return out
 
 
-def probe_deck(d, card: dict, v: dict, win: float) -> str:
+def probe_deck(d, card: dict, v: dict, win: float, npts: int = NPTS) -> str:
     """One device, pinned at its in-circuit bias, swept in V_DS.
 
     Every terminal is driven by an absolute-voltage source taken from the DUT's own
@@ -90,7 +101,7 @@ vb nb 0 {v['b']:.9g}
 {card['ref']} nd ng ns nb {card['model']} {card['params']}
 .control
 set filetype=binary
-dc vd {lo:.9g} {hi:.9g} {(hi - lo) / (NPTS - 1):.9g}
+dc vd {lo:.9g} {hi:.9g} {(hi - lo) / (npts - 1):.9g}
 write sim.raw
 .endc
 .end
@@ -119,15 +130,21 @@ def main() -> None:
     bench = json.loads((OUT / f"bench_{LABEL}.json").read_text())
     nodes, ops, cs = bench["nodes"], bench["op"], cards(d)
 
-    jobs = [(inst, cs[inst], w) for inst in ops if inst in cs for w in WINDOWS]
+    jobs = ([(inst, cs[inst], w, False) for inst in ops if inst in cs for w in WINDOWS]
+            + [(inst, cs[inst], CURVE_WIN, True) for inst in ops if inst in cs])
 
     def one(job):
-        inst, card, w = job
+        inst, card, w, raw = job
         v = {t: (0.0 if n == "0" else nodes[n]) for t, n in card["nets"].items()}
-        plots = ng.plots(ng.run(probe_deck(d, card, v, w), f"gds_{inst}_w{w*1e3:.0f}"))
+        plots = ng.plots(ng.run(probe_deck(d, card, v, w, CURVE_NPTS if raw else NPTS),
+                                f"gds_{inst}_{'curve' if raw else 'w'}{w*1e3:.0f}"))
         dc = R.pick(plots, "dc")
         vv = np.asarray(np.real(dc["v(nd)"]), float)
         ii = -np.asarray(np.real(dc["i(vd)"]), float)
+        if raw:
+            # x is referred to the device's own operating point, so the consumer never
+            # has to re-derive v0.
+            return inst, None, {"x": (vv - v["d"]).tolist(), "i": ii.tolist()}
         return inst, w, fit_cubic(vv, ii, v["d"])
 
     devs: dict[str, dict] = {}
@@ -141,7 +158,10 @@ def main() -> None:
                                "nets": cs[inst]["nets"],
                                "gds_op": ops[inst]["gds"],
                                "ids_op": ops[inst]["ids"], "windows": {}})
-        devs[inst]["windows"][f"{w:g}"] = fit
+        if w is None:
+            devs[inst]["curve"] = fit
+        else:
+            devs[inst]["windows"][f"{w:g}"] = fit
 
     print(f"{'inst':6s} {'role':14s} {'g1 (S)':>12s} {'gds op':>12s} "
           f"{'g3 (A/V3)':>12s} {'g3 spread':>10s} {'fit resid':>10s}")
@@ -161,6 +181,7 @@ def main() -> None:
           f"-- the probe reproduces the in-circuit operating point")
     (OUT / "gds_taylor.json").write_text(json.dumps(
         {"cell": cell, "label": LABEL, "windows_v": list(WINDOWS), "npts": NPTS,
+         "curve_win_v": CURVE_WIN, "curve_npts": CURVE_NPTS,
          "worst_g1_vs_gds_op_pct": worst, "devices": devs}, indent=1))
     print(f"wrote {(OUT / 'gds_taylor.json').relative_to(REPO)}")
 

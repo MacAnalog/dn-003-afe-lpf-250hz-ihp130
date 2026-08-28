@@ -28,6 +28,22 @@ There are no comment lines, no units row and no blank first line, so the default
 | **HD2 vs frequency** | `thd_vs_frequency_175mvpp.csv` | `fin_hz` | `hd2_db_*` |
 | **IIP3 — output dBVp vs input dBVp** | `iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
 
+The files behind [`../validation.md`](../validation.md) §8–§10 — PVT, mismatch, rejection
+and the corner sweeps:
+
+| you asked for | file | x | y |
+|---|---|---|---|
+| **`fc` and `Q` over the certified window** | `pvt_certified_axes.csv` | `corner` (text) | `fc_hz_pre`, `q_lo_pre`, `q_hi_pre`, and the `_post` twins |
+| **the 45-point cross product, and where a pole pair is lost** | `pvt_cert_box.csv` | `corner` (text) | `fc_hz`, `q_hi`, `n_complex_pairs` |
+| **the mismatch distributions** | `mc_draws.csv` | `seed` | `fc_hz`, `q_lo`, `q_hi`, `offset_out_uv` |
+| **PSRR and CMRR vs frequency** | `rejection_nominal.csv` | `freq_hz` | `psrr_db`, `cmrr_db` |
+| **supply → common-mode and CM → CM** | `rejection_nominal.csv` | `freq_hz` | `supply_to_cm_db`, `cm_to_cm_db` |
+| **the mismatch-limited rejection band** | `rejection_mismatch_curves.csv` | `freq_hz` | `psrr_db_mean` with `_min` / `_max` |
+| **offset, per draw** | `rejection_mismatch_draws.csv` | `seed` | `offset_in_uv` |
+| **IIP3 over corners** | `iip3_corners.csv` | `corner` (text) | `iip3_dbv`, `imd3_slope_db_per_decade` |
+| **the THD ladder over corners** | `thd_corners.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
+| **the low-frequency residual, and what explains it** | `gds_residual.csv` | `fin_hz` | `v3_unexplained_uv`, `v3_gds_cubic_uv`, `v3_gds_exact_uv` |
+
 The remaining files support those:
 
 * `thd_vs_frequency_43p75mvpp.csv` — the same harmonic-vs-frequency sweep at 43.75 mVpp
@@ -38,6 +54,9 @@ The remaining files support those:
   and `imd3_line_dbvp_*` (slope 3) against `x_dbvp_*`; they meet at the published intercept.
 * `ac_response_model.csv` — the closed-form model next to the simulation, the data behind
   `figures/bode_model_vs_sim.png`.  Columns come in `_sim_` / `_model_` pairs.
+* `rejection_mismatch_draws.csv` — each mismatch draw's CMRR and PSRR at the four spot
+  frequencies the tables quote, next to its offset.  Use it for a histogram; use
+  `rejection_mismatch_curves.csv` for the band against frequency.
 
 ## Reading the column names
 
@@ -59,7 +78,15 @@ Units are in the name: `_hz`, `_db` (dB), `_dbc` (dB relative to the fundamental
 `_dbvp` (dB relative to 1 V peak), `_ms`, `_v`, `_vpp`, `_v_per_rthz` (V/√Hz).
 Phase is in degrees and **negative means lag**, as in the pack's figures.
 
-## Two things worth knowing before you plot
+## Three things worth knowing before you plot
+
+**The corner files have a text first column.**  `pvt_certified_axes.csv`,
+`pvt_cert_box.csv` and `iip3_corners.csv` start with `corner`, `process` — corner names,
+not numbers.  Veusz imports those as text datasets, which is what you want: use them as
+point labels, and plot against the row index or against `temp_c` / `vdd_v`, which are
+numeric.  `pvt_cert_box.csv` also carries blank `q_lo` / `q_hi` cells at the seven points
+that have lost a complex pole pair — the gap is the finding, so those rows are kept rather
+than dropped.
 
 **Blank cells are deliberate.**  In `ac_response.csv` and `group_delay.csv` the phase and
 group-delay columns stop at 3.0 kHz — the last 76 of 301 rows are empty.  Past that point
@@ -76,8 +103,9 @@ is averaged into the published number.  That average is **−3.281 dBVp** pre-la
 
 ## Regenerating
 
-From the repository root, after step 1 of
-[the pack README §5](../README.md#5-regenerating-everything):
+From the repository root, after steps 1 and 6 of
+[the pack README §5](../README.md#5-regenerating-everything) — step 1 for the AC, noise and
+group-delay files, step 6 for the PVT, rejection and corner ones:
 
 ```bash
 .venv/bin/python signoff/paper-draft/scripts/export_csv.py

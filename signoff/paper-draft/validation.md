@@ -813,9 +813,18 @@ would report an uncompensated cell as if it were this one.
 
 The certified window is **one axis at a time** — process at 27 °C/1.5 V, supply 1.40–1.65 V
 at 27 °C, temperature 0–70 °C at 1.5 V — which is how `signoff/post-pvt/README.md` states
-it.  On those nine points the scale moves 1.022× and **the shape does not move at all**:
-`Q` holds to 0.2 % and 2.7 %, the two pairs stay coincident to 2.3 %, and both
-complex pairs are present at every point.
+it.  On those nine points the scale moves 1.022×, and **both complex pairs survive every
+one of them** — the S1 property itself never comes close to failing.
+
+The two pairs then behave differently, and the table says so.  The LOW-Q pair is the pure
+ratio the framing predicts: its `Q` holds to 0.16 %, 1× stiffer than the scale beside it.
+The HIGH-Q pair is not: its `Q` moves 2.7 %, which is as much as `fc` moves and slightly
+more.  Splitting that by axis shows where it comes from — 0.8 % over process,
+0.2 % over supply, 2.7 % over temperature — so it is a temperature effect, and it
+persists under the constant-`gm` bias that is supposed to remove temperature from `gm`.
+The honest summary is therefore narrower than "shape is invariant": the filter stays two
+biquads and the low-Q damping is fixed, while the high-Q damping carries a residual
+temperature dependence of the same order as the cutoff's (1.1 % over the same axis).
 
 **The axes do not superpose, and that is a result.**  The middle column is the CROSS
 PRODUCT of the same endpoints — 45 points, none of them ever certified.  7 of them have
@@ -854,16 +863,45 @@ response, so a `Q` distribution built that way would mostly measure the fit's co
 | IRN (µV) | 29.211 | 0.193 | 28.853 … 29.678 |
 | output offset (µV) | +95.0 | 1974.9 | -3986.2 … +4478.7 |
 
-Both complex pairs survive **64/64** draws.  The shape is again the robust part: `Q`
-scatters by 0.24 % and 1.27 % where `fc` scatters by 1.35 %.  σ(`fc`) = 3.37 Hz here
+Both complex pairs survive **64/64** draws.  The low-Q pair is again the stiff one — `Q`
+scatters by 0.24 % against 1.35 % for `fc` — but the high-Q pair scatters 1.27 %, i.e. as
+much as the scale does.  That is the expected shape of the difference: a PVT corner shifts
+every device the same way, so ratios can hold while scale moves, whereas a mismatch draw
+shifts each device independently and a ratio has no reason to survive it.  σ(`fc`) = 3.37 Hz here
 against the 3.7 Hz the certified 100-sample scorecard MC reports, which is the agreement
 that says these draws are the same population.
+
+`figures/pvt_axes.png` plots the nine points and the 45-point box; `figures/mc_mismatch.png`
+plots the three distributions.
 
 One caveat on the pole COUNT.  At nominal the cell is symmetric and seven pole/zero pairs
 cancel exactly; under mismatch those become near-cancellations, so the raw solve returns
 the doublets separately plus a parasitic pair near 10 kHz from the device capacitances.
 The filter's poles are the two nearest the origin and are selected that way
 (`pvt_analysis._pairs`); the doublets are reported in `n_complex_pairs_all`.
+
+### 8.4 Does any of this transfer to the post-layout cell?
+
+Everything above is measured on the pre-layout DUT.  Section 7 argues the sensitivity
+carries over to the extracted cells because layout adds capacitance and the capacitance
+ratios are what set `Q`.  That argument is now measured rather than asserted: the same nine
+certified axes, re-extracted on `post_lumped`.
+
+| quantity | pre-layout (`pre_mim`) | post-layout (`post_lumped`) |
+|---|---|---|
+| `fc` span | 1.0220× | 1.0224× |
+| `Q` low pair span | 1.0016× | 1.0016× |
+| `Q` high pair span | 1.0271× | 1.0271× |
+| `f₀` ratio span | 1.0232× | 1.0232× |
+| two complex pairs | 9/9 | 9/9 |
+| IRN over the axes (µV) | 27.681 … 31.708 | 27.675 … 31.705 |
+| Σ generators vs IRN | 1.1e-06 % | 1.1e-06 % |
+
+The two columns agree to the third decimal on every span, and the post-layout cell keeps
+two complex pairs at all 9/9 points.  `fc` sits about 0.45 % lower everywhere — the
+layout capacitance the extraction adds — but the SENSITIVITY, which is what this section is
+about, is the same measurement.  The post-layout `fc` is drawn as hollow circles in
+`figures/pvt_axes.png`.
 
 ## 9. Supply rejection, common-mode rejection, and offset
 
@@ -904,6 +942,9 @@ but it bounds what may sit downstream of this filter on the same supply.
 
 Rejection falls with frequency in both paths, as the loop gain that produces it falls.
 
+`figures/rejection.png` plots both: panel (a) the nominal common-mode transfers with
+their envelope over the nine certified axis points, panel (b) the mismatch band.
+
 ### 9.3 Input-referred offset
 
 Zero by symmetry at nominal, so it is a mismatch quantity and only a distribution.  Over
@@ -916,7 +957,7 @@ of a full extraction rather than from this bench's `op` — and gets mean +95.0 
 σ **1974.9 µV**.  The two σ agree to 2.6 %, and both means sit inside one
 standard error of zero, which is what a symmetric cell should give.
 
-## 10. The sub-35 Hz residual, and IIP3 over corners
+## 10. The sub-35 Hz residual, and linearity over corners
 
 ### 10.1 A named mechanism for the residual
 
@@ -966,11 +1007,37 @@ drain swing: its `g₃` moves 5.4× across the three fit windows, against ≤ 1.
 other device.  Carrying that through, the predicted band is **0.0365 … 0.2697 µV** against a
 measured residual of **0.1753 … 0.2780 µV** — the bands overlap.
 
-**So:** drain-conductance curvature is established as *a* contributor with the right
-frequency dependence, and is not established as the whole of it.  Closing the gap needs a
-`g₃` for `in_a` that does not depend on the fit window, which means a device model
-evaluated over the actual excursion rather than a local polynomial — a bigger change than
-this pack's model makes, and it is left open rather than fitted.
+**The window dependence is now removed, and it does not rescue the magnitude.**  `g₃A³/24`
+is the first term of a series and `g₃` is a fit, so the number it produces depends on the
+interval it was fitted over.  Replacing it: expand the MEASURED `I_D(V_DS)` in Chebyshev
+polynomials over exactly the swing the device sees, `[-A, +A]`.  Substituting
+`x = A·cos θ` turns `T_n(x/A)` into `cos nθ`, so the Chebyshev coefficients ARE the Fourier
+coefficients of the current waveform and `c₃` is the third harmonic exactly — no window is
+chosen and no series is truncated.  The extractor is checked against synthetic curves whose
+answer is known in closed form, including one carrying a fifth-order term that a cubic
+truncation would drop; worst error 1.6e-13.  (5 of the 15 devices swing too little
+across the stored curve to condition the fit; they keep the cubic term, which is the
+correct expansion in exactly that limit, and together they are 0.0043 % of the total.)
+
+| | prediction below 35 Hz | worst factor vs the residual | flatness |
+|---|---|---|---|
+| cubic, mid window (pre-registered) | 0.0506 … 0.0702 µV | 3.96× | 1.39× |
+| cubic, across the three windows | 0.0365 … 0.2697 µV | — | — |
+| **window-free, over each device's own swing** | **0.0350 … 0.0491 µV** | **5.66×** | 1.40× |
+
+The window-free number is SMALLER, not larger.  It covers 18 % of the residual, keeps the
+flat frequency signature, and removes the band overlap that the cubic's window ambiguity had
+produced.  So the ambiguity is resolved in the direction that sharpens the conclusion rather
+than the one that would have rescued it.
+
+**So:** drain-conductance curvature is established as *a* contributor — the right frequency
+dependence and about a fifth of the magnitude — and is excluded as the whole of it.  The
+probe pins the gate and sweeps only the drain, so the one mechanism it cannot see by
+construction is the cross-term, gate and drain swinging together, which in a source follower
+they do.  That is where the remaining 82 % is expected to sit; testing it needs a
+two-dimensional device probe this pack does not have, and it is left open rather than fitted.
+
+`figures/gds_residual.png` plots both panels of this argument.
 
 ### 10.2 IIP3 over the certified axes
 
@@ -997,3 +1064,42 @@ not an extrapolation from an unverified law.  The worst is the hot corner.  The 
 differs from Section 6.3's -3.250 dBVp at the same amplitude in the third decimal because the `alpha = 1.1`
 bias makes the reference a behavioural source even at 27 °C, where it carries the same
 current.
+
+`figures/iip3_corners.png` plots the intercepts and the measured slopes.
+
+### 10.3 THD over the certified axes
+
+Section 6.1 measures the THD amplitude ladder at nominal.  The same ladder, re-run at every
+certified axis point: 6 amplitudes × 9 corners at `fin` = 50 Hz, open loop — an explicit
+drive with no servo, because servoing the output to a constant level would remove the
+amplitude dependence the ladder exists to measure.
+
+**This table is characterisation, not a spec line.**  S7 is defined at one point —
+175 mVpp, 50 Hz, nominal — and it is scored there by `lab.metrics` in `make check`.
+What a corner row says is how much margin the delivered cell carries away from nominal.
+
+| corner | `fc` (Hz) | 43.75 mVpp | 87.5 mVpp | 175 mVpp | 350 mVpp | 525 mVpp | 700 mVpp | HD3 slope (dB/dB) |
+|---|---|---|---|---|---|---|---|---|
+| `tt_27c_1v500` | 249.775 | -76.19 | -64.19 | -50.40 | -23.86 | -18.74 | -16.57 | 1.99 |
+| `ss_27c_1v500` | 247.365 | -75.61 | -62.45 | -47.68 | -29.40 | -23.13 | -20.28 | 2.18 |
+| `ff_27c_1v500` | 252.502 | -76.57 | -64.25 | -50.60 | -23.93 | -19.12 | -16.70 | 2.05 |
+| `sf_27c_1v500` | 249.890 | -74.45 | -61.56 | -51.90 | -27.46 | -17.47 | -15.43 | 2.14 |
+| `fs_27c_1v500` | 248.836 | -76.60 | -64.07 | -50.07 | -23.85 | -21.06 | -18.59 | 2.08 |
+| `tt_27c_1v400` | 249.613 | -74.72 | -61.47 | -47.28 | -30.10 | -24.00 | -20.86 | 2.20 |
+| `tt_27c_1v650` | 249.920 | -76.07 | -64.17 | -50.43 | -23.91 | -18.69 | -16.45 | 1.98 |
+| `tt_0c_1v500` | 249.449 | -74.80 | -62.18 | -47.29 | -22.87 | -20.40 | -18.06 | 2.10 |
+| `tt_70c_1v500` | 247.056 | -68.46 | -57.58 | -48.56 | -38.35 | -21.05 | -17.64 | 1.81 |
+
+At the spec amplitude the nine corners span **-51.901 … -47.280 dB**, so the WORST of them
+(-47.28 dB, at `tt_27c_1v400`) still clears the -40 dB limit by 7.28 dB.  HD2 is 24 dB below HD3 in every
+row, so each of these numbers is third-order distortion and not an even-order artefact.
+
+The corners do not simply translate the nominal ladder.  `tt_70c_1v500` sits +7.73 dB
+relative to nominal at the lowest drive but only +1.84 dB at the spec amplitude, and its
+HD3 slope over the two lowest points, 1.81 dB/dB, is the furthest of the nine from
+the cubic law's 2.  A low-drive point lifted above a cubic extrapolation is the signature of
+an additive third-harmonic term that does NOT scale with `A³` — which is what Section 10.1
+measures at nominal.  Whether that mechanism also carries this temperature dependence is not
+tested here; the ladder measures it, it does not explain it.
+
+`figures/thd_corners.png` plots the ladder at every corner and the margin at the spec point.

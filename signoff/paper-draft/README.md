@@ -16,13 +16,13 @@ You do not need to read all of this, or to run anything.
    holds the derivations behind them.  Follow the links in §1 rather than reading either
    file in order.
 3. **[`csv/`](csv/README.md)** is every curve as a plain CSV for Veusz — magnitude, phase,
-   noise, group delay, THD/HD2/HD3 and IIP3.  Open [`csv/README.md`](csv/README.md) for one
-   line per plot; §4 below summarises it.
+   noise, group delay, THD/HD2/HD3, IIP3, and everything in §8–§10 below.  Open
+   [`csv/README.md`](csv/README.md) for one line per plot; §4 below summarises it.
 4. `figures/` holds the same curves plotted, as PNG and PDF.
 5. **[validation §8–§10](validation.md#8-the-analytical-results-over-pvt-and-mismatch)**
-   answer questions you did not ask: how the poles, `Q`, the noise budget and IIP3 move
-   over PVT and mismatch; PSRR, CMRR and offset; and a test of the mechanism behind the
-   low-frequency residual §6.2 reports.
+   answer questions you did not ask: how the poles, `Q`, the noise budget, IIP3 and THD
+   move over PVT and mismatch, pre- and post-layout; PSRR, CMRR and offset; and a test of
+   the mechanism behind the low-frequency residual §6.2 reports.
 
 §5–§7 are for reproducing the pack and are not needed to review it.
 
@@ -30,7 +30,7 @@ You do not need to read all of this, or to run anything.
 |---|---|
 | [`theory.md`](theory.md) | **the derivations** — `H(s)`, the noise equation, the distortion equation, IMD3/IIP3, and the list of assumptions.  Hand-written; symbolic; not regenerated. |
 | [`validation.md`](validation.md) | **every number, and what checks it** — DC operating point, poles/zeros, model-vs-simulation, the noise budget, the linearity tables.  **Generated** by `scripts/report.py`; do not hand-edit. |
-| `figures/` | the six figures, PNG + PDF |
+| `figures/` | the twelve figures, PNG + PDF |
 | `scripts/` | the generating scripts (§5) |
 | [`csv/`](csv/README.md) | **every curve as a plain CSV for plotting** (§4) |
 | `data/` | the extracted and analysed JSON (§6) |
@@ -117,6 +117,12 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 | `figures/noise_budget.png` | `S_out(f)`, the sum of generators, and the top contributors | `scripts/figures.py::fig_noise` |
 | `figures/distortion.png` | HD3 vs amplitude and vs frequency, measured against the equation | `scripts/figures.py::fig_thd` |
 | `figures/iip3.png` | the two-tone ladder and the IIP3 extrapolation | `scripts/figures.py::fig_iip3` |
+| `figures/pvt_axes.png` | `fc` and both `Q` over the nine certified points, pre- and post-layout; and the 45-point box with the lost pairs marked | `scripts/figures.py::fig_pvt` |
+| `figures/mc_mismatch.png` | the mismatch distributions of `fc`, `Q` and offset | `scripts/figures.py::fig_mc` |
+| `figures/rejection.png` | the nominal common-mode transfers and the mismatch-limited CMRR/PSRR band | `scripts/figures.py::fig_rejection` |
+| `figures/gds_residual.png` | what §6.2 leaves unexplained, and the two `g_ds` predictions against it | `scripts/figures.py::fig_residual` |
+| `figures/iip3_corners.png` | IIP3 and the measured IMD3 slope at every certified corner | `scripts/figures.py::fig_iip3_corners` |
+| `figures/thd_corners.png` | the THD amplitude ladder at every certified corner, and the margin at the spec point | `scripts/figures.py::fig_thd_corners` |
 
 ---
 
@@ -134,12 +140,21 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
+| `fc` and `Q` over the certified axes, pre- and post-layout | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_*`, `q_lo_*`, `q_hi_*` |
+| the same over the 45-point box | `csv/pvt_cert_box.csv` | `corner` | `fc_hz`, `q_hi`, `n_complex_pairs` |
+| the mismatch draws | `csv/mc_draws.csv` | `seed` | `fc_hz`, `q_hi`, `offset_out_uv` |
+| PSRR / CMRR / common-mode transfers vs frequency | `csv/rejection_nominal.csv` | `freq_hz` | `psrr_db`, `cmrr_db`, `supply_to_cm_db`, … |
+| the mismatch-limited rejection band | `csv/rejection_mismatch_curves.csv` | `freq_hz` | `psrr_db_mean`, `psrr_db_min`, `psrr_db_max`, … |
+| IIP3 over corners | `csv/iip3_corners.csv` | `corner` | `iip3_dbv`, `imd3_slope_db_per_decade` |
+| the THD ladder over corners | `csv/thd_corners.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
+| the low-frequency residual and both `g_ds` predictions | `csv/gds_residual.csv` | `fin_hz` | `v3_unexplained_uv`, `v3_gds_cubic_uv`, `v3_gds_exact_uv` |
 
-Three more files support those: the harmonic-vs-frequency sweep repeated at the
-small-signal drive, the 1:1 / 3:1 IIP3 extrapolation lines, and the model-vs-simulation
-Bode pair.  [`csv/README.md`](csv/README.md) covers all nine, plus two points to note
-before plotting: why the phase and group-delay columns are blank above 3 kHz, and which
-two-tone points the published IIP3 is fitted on.
+Four more files support those: the modelled Bode curves that overlay the simulated
+ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
+IIP3 extrapolation lines, and the per-draw rejection samples.
+[`csv/README.md`](csv/README.md) covers all eighteen, plus three points to note before
+plotting: why the phase and group-delay columns are blank above 3 kHz, which two-tone
+points the published IIP3 is fitted on, and why the corner files carry a text column.
 
 `export_csv.py` writes them.  It runs no simulation and re-defines no metric: it
 re-serialises the same JSON the figures and tables are built from, and asserts that the
@@ -187,12 +202,18 @@ for s in cert-axes cert-box both; do
   LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt $s --dut pre_mim
 done
 .venv/bin/python $E/extract_bench.py --mc 64 --dut pre_mim
+LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt cert-axes --dut post_lumped
 .venv/bin/python $E/psrr_cmrr.py --seeds 32
 .venv/bin/python $E/gds_probe.py
 LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/iip3_corners.py
+LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/thd_corners.py    # 54 transients, ~20 min
 $PF $E/pvt_analysis.py --mc --set cert-axes --set cert-box --set both
+$PF $E/pvt_analysis.py --set cert-axes --dut post_lumped
 $PF $E/gds_residual.py
 ```
+
+Steps 4 and 5 come last: `report.py`, `figures.py` and `export_csv.py` all read the JSON
+step 6 writes.
 
 | script | role |
 |---|---|
@@ -208,8 +229,9 @@ $PF $E/gds_residual.py
 | `export_csv.py` | renders `csv/` — every curve as a plain CSV, with the cross-checks that tie them to the certified numbers |
 | `pvt_analysis.py` | the poles, per-biquad `Q` and noise budget at every corner and every mismatch draw (§8) |
 | `psrr_cmrr.py` | PSRR, CMRR and input-referred offset, nominal and mismatch-limited (§9) |
-| `gds_probe.py`, `gds_residual.py` | the drain-conductance distortion test: `g₃` per device, then its propagation (§10.1) |
+| `gds_probe.py`, `gds_residual.py` | the drain-conductance distortion test: per-device `I_D(V_DS)` curves, then the third harmonic they generate, propagated (§10.1) |
 | `iip3_corners.py` | IIP3 over the certified axes, two amplitudes per corner (§10.2) |
+| `thd_corners.py` | the THD amplitude ladder over the certified axes (§10.3) |
 
 ---
 
@@ -218,8 +240,8 @@ $PF $E/gds_residual.py
 Committed: the scripts, the figures, the CSVs, `validation.md`, `theory.md`, and the small
 analysis JSON (`tf.json`, `noise.json`, `linearity*.json`, `twotone_spacing.json`, `hd3_vs_fin.json`,
 `post_lumped_core.sp`, and for §8–§10 `pvt.json`, `psrr_cmrr.json`, `gds_taylor.json`,
-`gds_residual.json`, `iip3_corners.json`, `pvt_index_*.json`, `mc_index_*.json`).  **Not committed**: `data/bench_*.json` — the raw op + ac + noise
-vectors, 2.7 MB for the four nominal DUTs and ~90 MB more for the 147 per-corner and
+`gds_residual.json`, `iip3_corners.json`, `thd_corners.json`, `pvt_index_*.json`, `mc_index_*.json`).  **Not committed**: `data/bench_*.json` — the raw op + ac + noise
+vectors, 2.7 MB for the four nominal DUTs and ~90 MB more for the 156 per-corner and
 per-draw extractions, regenerated by steps 1 and 6 above, and simulator output under the
 repo's never-commit rule.  If they are absent, every downstream script names the missing
 path: `tf_analysis.py` prints `[<case>] SKIPPED` and continues, and the `report.py` render
@@ -236,19 +258,23 @@ The four DUTs — two pre-layout, two post-layout — and why each exists are in
   measured third harmonic exceeds the distortion equation by **0.18–0.28 µV, constant in
   volts**, while the equation's own prediction moves by a factor of 39 over the same span.
   §10.1 tests the mechanism named for it.  Drain-conductance curvature reproduces the flat
-  frequency signature — the prediction varies 1.39× where the residual varies 1.59× — and
-  its predicted amplitude band overlaps the measured one, but the pre-registered
-  point-estimate test is INCONCLUSIVE at 3.96×, because the sum is dominated by `in_a`,
-  whose `g₃` moves 5.4× with the fit window.  The mechanism is established as *a*
-  contributor with the right frequency dependence, not as the whole of it.  The residual
-  still sits **61.7 dB below** the 256 µV third harmonic this cell produces at the S7
-  operating point, so it remains a modelling gap and not a performance one.
+  frequency signature — the prediction varies 1.39× where the residual varies 1.59× — but
+  not the size.  The `g₃` the pre-registered test used moves 5.4× with the interval it is
+  fitted over, so §10.1 also evaluates the third harmonic **without a fit window**, over
+  each device's own drain swing.  That resolves the ambiguity and makes the answer smaller:
+  the mechanism accounts for about **a fifth** of the residual, so it is established as *a*
+  contributor and excluded as the whole of it.  The probe pins the gate by construction, so
+  the untested candidate for the rest is the gate–drain cross-term.  The residual still sits
+  **61.7 dB below** the 256 µV third harmonic this cell produces at the S7 operating point,
+  so it remains a modelling gap and not a performance one.
 * **Corners and Monte Carlo — measured for the analytical quantities.**  §8 gives the
   poles, per-biquad `Q`, the pair-coincidence ratio and the noise budget over the certified
-  window and 64 mismatch draws; §10.2 gives IIP3 over the certified axes.  What stays open
-  is the post-layout DUT: this work is on `pre_mim`, on the stated assumption that a
-  nominal pre→post pole shift of ~1.5 Hz lets the *sensitivity* transfer even though the
-  absolute values move.
+  window and 64 mismatch draws; §10.2 gives IIP3 and §10.3 the THD amplitude ladder over
+  the certified axes.  The post-layout DUT is no longer an assumption: §8.4 re-runs the
+  nine certified axes on `post_lumped` and the sensitivity spans agree with the pre-layout
+  ones to the third decimal.  What §8 does report as a narrowing of the earlier claim is
+  that only the LOW-Q pair's damping is stiff — the high-Q pair's `Q` moves about as much
+  as `fc` does, and almost all of it over the temperature axis.
 * **The certified window is one axis at a time, and the axes do not superpose.**  §8.1:
   7 of the 45 cross-product points lose a complex pole pair, including `tt / 0 °C /
   1.40 V`, whose three coordinates are each individually inside the certified window.

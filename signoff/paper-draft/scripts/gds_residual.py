@@ -18,6 +18,20 @@ so it propagates to the output through the same `Z_T` and needs no new machinery
 comes from `gds_probe.py`; `A` and its phase come from the MNA node solve, not from an
 estimate of the swing.
 
+THE WINDOW PROBLEM, AND WHAT REPLACES IT.  `g3*A^3/24` is the first term of a series, and
+`g3` is a fit whose value depends on the window it was fitted over -- for `in_a` it moves
+5.4x between the 15 mV and 60 mV windows, so the prediction it makes is a band and not a
+number.  The fix is to stop truncating.  Expand the MEASURED `I_D(V_DS)` curve in
+Chebyshev polynomials over exactly the swing the device sees, `[-A, +A]`: substituting
+`x = A*cos(theta)` turns `T_n(x/A)` into `cos(n*theta)`, so the Chebyshev coefficients ARE
+the Fourier coefficients of the current waveform, and `c3` is the third harmonic exactly.
+There is no window left to choose -- the expansion interval is the physical swing -- and
+as `A -> 0` it must reduce to `g3*A^3/24`, which is checked and reported.
+
+This refinement is POST-REGISTERED and is reported as such: it is a better estimator of
+the same quantity, not a re-run of the test.  The pre-registered verdict above was
+computed from the mid-window cubic and stands unchanged in the record.
+
     PF=../../spicexplorer-platform/.venv/bin/python
     $PF signoff/paper-draft/scripts/gds_residual.py
 """
@@ -45,6 +59,10 @@ GROUNDED = ("vinp", "vinn")
 ACCEPT_X, REFUTE_X = 3.0, 10.0
 #: The band P2 is judged over -- where `validation.md` reports the residual as flat.
 FLAT_HZ = 35.0
+#: Chebyshev degree for the window-free extraction.  7 is comfortably above the third
+#: harmonic being read off and well below the point where the fit starts chasing solver
+#: noise; the `a3 -> g3*A^3/24` check at small `A` is what actually validates it.
+CHEB_DEG = 7
 
 
 def load(name: str) -> dict:
@@ -52,6 +70,65 @@ def load(name: str) -> dict:
     if not p.exists():
         sys.exit(f"missing {p.relative_to(REPO)}")
     return json.loads(p.read_text())
+
+
+def a3_exact(dev: dict, ampl: float, deg: int = CHEB_DEG) -> tuple[float, bool]:
+    """The third-harmonic amplitude of I_D for a drain swing of +/- `ampl`, in amps.
+
+    A Chebyshev fit on `[-ampl, +ampl]` evaluated at `x = ampl*cos(theta)` is a cosine
+    series in `theta`, term by term, so the coefficient of `T_3` is the amplitude of the
+    third harmonic and no derivative is ever taken.  `deg` is above the cubic on purpose:
+    the point of the exercise is to keep the terms a cubic truncation throws away.
+
+    Returns `(a3, exact)`.  A swing so small that the stored curve holds fewer than
+    `4*deg` points across it cannot condition the fit -- and does not need to: that is
+    the regime where the Taylor cubic is the correct expansion, which is the same
+    statement as the small-`A` self-test below.  Such a device falls back to
+    `g3*A^3/24` and is COUNTED, with its share of the total reported, because a silent
+    fallback would make the window-free claim broader than the measurement.
+    """
+    x = np.asarray(dev["curve"]["x"], float)
+    i = np.asarray(dev["curve"]["i"], float)
+    m = np.abs(x) <= ampl * (1 + 1e-9)
+    if int(m.sum()) < 4 * deg:
+        return dev["g3"] * ampl ** 3 / 24.0, False
+    return float(np.polynomial.chebyshev.Chebyshev.fit(
+        x[m], i[m], deg, domain=[-ampl, ampl]).coef[3]), True
+
+
+def validate_extractor(deg: int = CHEB_DEG) -> list[dict]:
+    """Does `a3_exact` return the third harmonic it claims to?
+
+    Tested against curves whose answer is known in closed form rather than against a
+    device, because a device cannot settle it: the quantity a device would be compared to
+    -- its cubic `g3` -- is the window-dependent number this extraction exists to replace,
+    so a disagreement there is the RESULT and cannot also be the CHECK.
+
+      * a pure cubic: the extraction must return exactly `g3*A^3/24`;
+      * a cubic plus a fifth-order term: `x^5 = A^5(10cos + 5cos3 + cos5)/16`, so the
+        third harmonic gains `5*g5*A^5/(16*120)` and the extraction must find it -- this
+        is the term a cubic truncation drops and the whole reason for the exercise;
+      * a curve sampled on the SAME grid the probe writes, so grid resolution is inside
+        the test rather than assumed away.
+    """
+    x = np.linspace(-0.060, 0.060, 481)                  # the probe's own grid
+    a, g1, g2, g3, g5 = 11.0e-3, 8.5e-12, 3e-11, 7.26e-9, 5.0e-4
+    out = []
+    for case, i, want in (
+        ("pure cubic", g1 * x + g2 * x ** 2 / 2 + g3 * x ** 3 / 6, g3 * a ** 3 / 24),
+        ("cubic + quintic",
+         g1 * x + g3 * x ** 3 / 6 + g5 * x ** 5 / 120,
+         g3 * a ** 3 / 24 + 5 * g5 * a ** 5 / (16 * 120)),
+    ):
+        got, ok = a3_exact({"curve": {"x": x.tolist(), "i": i.tolist()}, "g3": g3}, a, deg)
+        assert ok, case
+        out.append({"case": case, "a3_expected_a": want, "a3_extracted_a": got,
+                    "rel_err": float(abs(got - want) / abs(want))})
+    worst = max(o["rel_err"] for o in out)
+    if worst > 1e-6:
+        sys.exit(f"a3_exact fails its own synthetic check ({worst:.2e}) -- "
+                 f"nothing downstream of it means anything")
+    return out
 
 
 def vds_phasor(v: dict, nets: dict) -> complex:
@@ -69,6 +146,7 @@ def main() -> None:
     _ir, _ss, sysf = M.build(CORE_MIM, op, level=Fidelity.FULL)
 
     ampl = hd3f["ampl"]                       # peak DIFFERENTIAL input, volts
+    fell_back: set[str] = set()               # devices whose swing under-resolves the fit
     devs = taylor["devices"]
     resid = {r["fin"]: r for r in ana["frequency_law"]["residual_v3_uv"]}
 
@@ -81,7 +159,9 @@ def main() -> None:
         v = {k: val * ampl for k, val in PZ.node_response(sysf, DRIVE, w).items()}
 
         total = 0j
+        exact = 0j
         per_dev = {}
+        fb_share: dict[str, float] = {}
         # The same sum evaluated with `g3` from each fit window.  For a device whose
         # I_D(V_DS) is not locally cubic the window choice moves `g3`, and the honest
         # prediction is a RANGE -- quoting the mid-window number alone would hide it.
@@ -96,15 +176,32 @@ def main() -> None:
             total += contrib
             for w in by_window:
                 by_window[w] += zt * (dev["windows"][f"{w:g}"]["g3"] * (vds ** 3) / 24.0)
+            # Window-free: the same current, read off the measured curve over this
+            # device's own swing.  The phase is carried the same way the cubic carries
+            # it -- `vds**3` is `|vds|**3 * exp(3j*arg(vds))`.
+            a3, is_exact = a3_exact(dev, abs(vds))
+            i3x = a3 * np.exp(3j * np.angle(vds))
+            exact += zt * i3x
+            if not is_exact:
+                fell_back.add(inst)
+            fb_share[inst] = fb_share.get(inst, 0.0) + abs(zt * i3x)
             per_dev[inst] = {"role": dev["role"], "vds_mv": float(abs(vds) * 1e3),
-                             "i3_a": float(abs(i3)), "zt_ohm": float(abs(zt)),
-                             "v3_uv": float(abs(contrib) * 1e6)}
+                             "i3_a": float(abs(i3)), "i3_exact_a": float(abs(i3x)),
+                             "zt_ohm": float(abs(zt)),
+                             "v3_uv": float(abs(contrib) * 1e6),
+                             "v3_exact_uv": float(abs(zt * i3x) * 1e6),
+                             "window_free": bool(is_exact)}
 
         m = resid.get(fin, {})
         pred_uv = float(abs(total) * 1e6)
         meas_uv = m.get("v3_unexplained_uv")
+        exact_uv = float(abs(exact) * 1e6)
+        tot_share = sum(fb_share.values()) or 1.0
         rows.append({
-            "fin": fin, "v3_gds_pred_uv": pred_uv,
+            "fallback_share_pct": 100.0 * sum(fb_share[i] for i in fell_back
+                                              if i in fb_share) / tot_share,
+            "fin": fin, "v3_gds_pred_uv": pred_uv, "v3_gds_exact_uv": exact_uv,
+            "ratio_exact_over_unexplained": (exact_uv / meas_uv) if meas_uv else None,
             "v3_unexplained_uv": meas_uv,
             "ratio_pred_over_unexplained": (pred_uv / meas_uv) if meas_uv else None,
             "v3_measured_uv": m.get("v3_measured_uv"),
@@ -113,6 +210,11 @@ def main() -> None:
                                 for w, x in by_window.items()},
             "top": sorted(per_dev.items(), key=lambda kv: -kv[1]["v3_uv"])[:4],
         })
+
+    selftest = validate_extractor()
+    print(f"extractor self-test on synthetic curves: worst error "
+          f"{max(t['rel_err'] for t in selftest):.2e} "
+          f"({', '.join(t['case'] for t in selftest)})\n")
 
     lo = [r for r in rows if r["fin"] <= FLAT_HZ and r["ratio_pred_over_unexplained"]]
     ratios = [r["ratio_pred_over_unexplained"] for r in lo]
@@ -130,12 +232,14 @@ def main() -> None:
                "REFUTED" if worst >= REFUTE_X else "INCONCLUSIVE")
 
     print(f"{'fin':>6} {'measured':>10} {'gate model':>11} {'unexplained':>12} "
-          f"{'g_ds pred':>11} {'ratio':>8}")
+          f"{'g_ds cubic':>11} {'ratio':>8} {'g_ds exact':>11} {'ratio':>8}")
     for r in rows:
         u = r["v3_unexplained_uv"]
         print(f"{r['fin']:6.0f} {r['v3_measured_uv']:10.4f} {r['v3_gate_model_uv']:11.4f} "
               f"{u:12.4f} {r['v3_gds_pred_uv']:11.4f} "
-              + (f"{r['ratio_pred_over_unexplained']:8.3f}" if u else f"{'-':>8}"))
+              + (f"{r['ratio_pred_over_unexplained']:8.3f}" if u else f"{'-':>8}")
+              + f" {r['v3_gds_exact_uv']:11.4f} "
+              + (f"{r['ratio_exact_over_unexplained']:8.3f}" if u else f"{'-':>8}"))
     print(f"\nP1 magnitude: worst factor {worst:.2f}x over fin <= {FLAT_HZ:g} Hz "
           f"(accept <= {ACCEPT_X:g}x, refute >= {REFUTE_X:g}x)")
     print(f"P2 flatness : prediction varies {flat_pred:.2f}x, "
@@ -148,6 +252,26 @@ def main() -> None:
           f"vs unexplained {min(meas):.4f} .. {max(meas):.4f} uV")
     print("    dominant contributors at 10 Hz: "
           + ", ".join(f"{i} ({d['role']}) {d['v3_uv']:.4f} uV" for i, d in rows[0]["top"][:3]))
+    ex = [r["v3_gds_exact_uv"] for r in lo]
+    ex_ratios = [r["ratio_exact_over_unexplained"] for r in lo]
+    worst_ex = max(max(ex_ratios), 1.0 / min(ex_ratios))
+    flat_ex = max(ex) / min(ex)
+    print(f"\nREFINEMENT (post-registered, window-free): the same sum with the third "
+          f"harmonic read\n  off the measured I_D(V_DS) over each device's own swing "
+          f"instead of a cubic truncation:")
+    print(f"    magnitude: worst factor {worst_ex:.2f}x (the cubic point estimate gave "
+          f"{worst:.2f}x)")
+    print(f"    flatness : prediction varies {flat_ex:.2f}x vs the residual's "
+          f"{flat_meas:.2f}x")
+    print(f"    prediction {min(ex):.4f} .. {max(ex):.4f} uV vs unexplained "
+          f"{min(meas):.4f} .. {max(meas):.4f} uV")
+    print(f"    {len(fell_back)}/{len(devs)} devices swing too little to condition the "
+          f"fit and keep the\n    cubic term; together they are "
+          f"{max(r['fallback_share_pct'] for r in lo):.4f} % of the predicted total")
+    print("    this is a better estimator of the same quantity, not a re-run of the "
+          "test:\n    the pre-registered verdict above is computed from the mid-window "
+          "cubic and stands.")
+
     overlap = not (hi_pred < min(meas) or lo_pred > max(meas))
     print(f"VERDICT (pre-registered, point estimate): H is {verdict} "
           f"-- not refuted, but the point estimate covers only "
@@ -165,18 +289,41 @@ def main() -> None:
         "pred_band_over_windows_uv": [lo_pred, hi_pred],
         "unexplained_band_uv": [min(meas), max(meas)],
         "bands_overlap": bool(overlap),
+        "refinement": {
+            "method": ("Chebyshev expansion of the measured I_D(V_DS) over each "
+                       "device's own drain swing; c3 is the third harmonic exactly, "
+                       "so no fit window is chosen and no series is truncated"),
+            "post_registered": True,
+            "cheb_degree": CHEB_DEG,
+            "worst_factor": worst_ex,
+            "pred_spread_x": flat_ex,
+            "pred_band_uv": [min(ex), max(ex)],
+            "extractor_selftest": selftest,
+            "fallback_devices": sorted(fell_back),
+            "fallback_share_pct": max(r["fallback_share_pct"] for r in lo),
+            "selftest_worst_rel_err": max(t["rel_err"] for t in selftest),
+            "coverage_pct": 100.0 / worst_ex if worst_ex > 1 else 100.0,
+        },
         "dominant_device_roles": sorted({d[1]["role"] for d in rows[0]["top"][:2]}),
         "conclusion": (
             "The frequency signature is reproduced: the predicted third harmonic is flat "
             "in volts below 35 Hz (varies "
             f"{flat_pred:.2f}x) where the gate-referred model moves by 39x, which is the "
             "signature that made this residual look like a different mechanism in the "
-            "first place. The magnitude is not settled: the mid-window point estimate "
-            f"covers {100 / worst:.0f} % of the residual, but the sum is dominated by "
-            "in_a, whose I_D(V_DS) is not locally cubic over its own drain swing, and "
-            "across the three fit windows the predicted band overlaps the measured one. "
-            "So drain-conductance curvature is established as A contributor with the "
-            "right frequency dependence, and is not established as the WHOLE of it."),
+            "first place. The magnitude is smaller than the residual and the window-free "
+            "evaluation makes that sharper rather than softer: reading the third harmonic "
+            "off the measured I_D(V_DS) over each device's own swing -- no fit window, no "
+            f"truncated series -- gives {min(ex):.4f} .. {max(ex):.4f} uV against a "
+            f"residual of {min(meas):.4f} .. {max(meas):.4f} uV, i.e. about "
+            f"{100 / worst_ex:.0f} % of it, and removes the band overlap that the cubic's "
+            "window ambiguity had produced. So drain-conductance curvature is established "
+            "as A contributor carrying the right frequency dependence and roughly a fifth "
+            "of the magnitude, and is excluded as the whole of it. The pinned-gate probe "
+            "measures I_D(V_DS) at fixed V_GS by construction, so the one mechanism it "
+            "cannot see is the cross-term: gate and drain swinging together, which in a "
+            "source follower they do. That is where the rest of the residual is expected "
+            "to sit, and testing it needs a two-dimensional probe this pack does not "
+            "have."),
         "g3_window_spread_x": {i: d["g3_window_spread_x"] for i, d in devs.items()},
     }, indent=1))
     print(f"wrote {(DATA / 'gds_residual.json').relative_to(REPO)}")
