@@ -29,7 +29,13 @@ from .dut import INSTANCES, Design, subckt
 # earlier note here claimed otherwise -- measured 2026-08-14: it reads fine) and
 # is PSP's saturation voltage V_DSAT; the region call below compares |Vds|
 # against it and the weak-inversion floor.
-PARAMS = ("ids", "gm", "gmb", "gds", "vgs", "vds", "vth", "vdss", "cgg")
+# The capacitance block is what a symbolic small-signal model needs and `cgg` alone
+# cannot give: in weak inversion the channel is not formed, so almost all of a device's
+# gate charge sits on the BULK terminal (`cgb`), not on `cgs`.  Reading only `cgg` and
+# splitting it by a strong-inversion rule of thumb is wrong here by more than an order of
+# magnitude.  `cjd`/`cjs` are the junction parts `cdb`/`csb` exclude.
+PARAMS = ("ids", "gm", "gmb", "gds", "vgs", "vds", "vth", "vdss", "cgg",
+          "cgs", "cgd", "cgb", "cdb", "csb", "cjd", "cjs")
 
 # Below ~4 kT/q a subthreshold device is not really saturated whatever the model
 # reports, because its drain current still depends on Vds through DIBL.
