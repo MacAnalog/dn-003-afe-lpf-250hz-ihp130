@@ -5,15 +5,30 @@
 post-layout**.
 
 Everything here is derived from committed netlists and re-derivable with the commands in
-§4.  No number in this pack is quoted without the script and the artifact that produced it.
+§5.  No number in this pack is quoted without the script and the artifact that produced it.
+
+## Start here
+
+You do not need to read all of this, and you do not need to run anything.
+
+1. **§1 below** is your `request.md`, ask by ask, each one linked to where it is answered.
+2. **[`validation.md`](validation.md)** holds the numbers and the checks; **[`theory.md`](theory.md)**
+   holds the derivations behind them.  Read §1's links into them rather than front to back.
+3. **[`csv/`](csv/README.md)** is every curve as a plain CSV for Veusz — magnitude, phase,
+   noise, group delay, THD/HD2/HD3 and IIP3.  Open [`csv/README.md`](csv/README.md) for the
+   one-line-per-plot map; §4 below summarises it.
+4. `figures/` is the same curves already plotted, as PNG and PDF.
+
+Everything else (§5–§7) is for reproducing the pack, and is not needed to review it.
 
 | file | what it is |
 |---|---|
 | [`theory.md`](theory.md) | **the derivations** — `H(s)`, the noise equation, the distortion equation, IMD3/IIP3, and the assumption ledger.  Hand-written; symbolic; stable. |
 | [`validation.md`](validation.md) | **every number, and what checks it** — DC operating point, poles/zeros, model-vs-simulation, the noise budget, the linearity tables.  **Generated** by `scripts/report.py`; do not hand-edit. |
 | `figures/` | the six figures, PNG + PDF |
-| `scripts/` | the generating scripts (§4) |
-| `data/` | the extracted and analysed JSON (§5) |
+| `scripts/` | the generating scripts (§5) |
+| [`csv/`](csv/README.md) | **every curve as a plain CSV for plotting** (§4) |
+| `data/` | the extracted and analysed JSON (§6) |
 
 ---
 
@@ -102,7 +117,34 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 
 ---
 
-## 4. Regenerating everything
+## 4. The data as CSV
+
+Every requested curve is in [`csv/`](csv/README.md) as a plain CSV — one header row, then
+numbers, so Veusz imports it with no options changed.  Column names carry their unit and
+end in the DUT (`_pre_mim`, `_post_pex`, …).
+
+| plot | file | x | y |
+|---|---|---|---|
+| AC response, magnitude and phase | `csv/ac_response.csv` | `f_hz` | `mag_db_*`, `phase_deg_*` |
+| Input-referred noise vs frequency | `csv/input_referred_noise.csv` | `f_hz` | `inoise_v_per_rthz_*` |
+| Group delay | `csv/group_delay.csv` | `f_hz` | `group_delay_ms_*` |
+| THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
+| THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
+| IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
+
+Three more files support those: the harmonic-vs-frequency sweep repeated at the
+small-signal drive, the 1:1 / 3:1 IIP3 extrapolation lines, and the model-vs-simulation
+Bode pair.  [`csv/README.md`](csv/README.md) covers all nine, plus the two things worth
+knowing before plotting — why the phase and group-delay columns are blank above 3 kHz, and
+which two-tone points the published IIP3 is fitted on.
+
+`export_csv.py` writes them.  It runs no simulation and re-defines no metric: it
+re-serialises the same JSON the figures and tables are built from, and asserts on the way
+out that the CSVs reproduce the certified group delay, integrated noise and IIP3.
+
+---
+
+## 5. Regenerating everything
 
 The symbolic lane needs `spicexplorer_netlist2tf`, so it runs in the **platform** venv; the
 simulation lane runs in this repo's venv.  **Set the ngspice lane first** — the default is
@@ -132,6 +174,8 @@ $PF signoff/paper-draft/scripts/linearity_analysis.py
 #    f-string expressions), so it runs in the REPO venv, not the platform's 3.11 one.
 .venv/bin/python signoff/paper-draft/scripts/report.py   # rewrites validation.md
 $PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
+# 5. the CSVs (needs step 1; no simulation, seconds)
+.venv/bin/python signoff/paper-draft/scripts/export_csv.py   # rewrites csv/
 ```
 
 | script | role |
@@ -145,13 +189,14 @@ $PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
 | `linearity_analysis.py` | the HD3 model, the amplitude/frequency laws, the memoryless test, IIP3 |
 | `report.py` | renders `validation.md` |
 | `figures.py` | renders `figures/` |
+| `export_csv.py` | renders `csv/` — every curve as a plain CSV, with the cross-checks that tie them to the certified numbers |
 
 ---
 
-## 5. What is committed, and what is regenerated
+## 6. What is committed, and what is regenerated
 
-Committed: the scripts, the figures, `validation.md`, `theory.md`, and the small analysis
-JSON (`tf.json`, `noise.json`, `linearity*.json`, `twotone_spacing.json`, `hd3_vs_fin.json`,
+Committed: the scripts, the figures, the CSVs, `validation.md`, `theory.md`, and the small
+analysis JSON (`tf.json`, `noise.json`, `linearity*.json`, `twotone_spacing.json`, `hd3_vs_fin.json`,
 `post_lumped_core.sp`).  **Not committed**: `data/bench_*.json` — 2.7 MB of raw op + ac +
 noise vectors, regenerated in ~2 minutes by step 1 above, and simulator output under the
 repo's never-commit rule.  Every downstream script fails loudly with the missing path if
@@ -164,7 +209,7 @@ are in [validation §7](validation.md#7-the-four-duts-side-by-side).
 
 ---
 
-## 6. Open items
+## 7. Open items
 
 * **The low-frequency third-harmonic residual.**  Below ~35 Hz the measured third harmonic
   exceeds the distortion equation by **0.18–0.28 µV — constant in volts** while the
