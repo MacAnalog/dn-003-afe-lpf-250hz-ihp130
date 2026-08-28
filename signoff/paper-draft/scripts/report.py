@@ -108,7 +108,7 @@ def sec_op(bench: dict, post: dict, la: dict) -> str:
 Every symbol in every equation in [theory.md](theory.md) is bound to **one measured
 operating point**, so this table is the root of the whole chain: the poles, the noise
 transimpedances and the distortion currents are all functions of these `gm`, `I_D` and
-`C` values and of nothing else.  It is the "verified by the DC ops" leg the reviewer
+`C` values and of nothing else.  It is the "verified by the DC ops" check the reviewer
 asked for.
 
 Extracted with `.op` on the as-built subckt, one saved op-var per device per parameter
@@ -146,10 +146,9 @@ uses.  The independent evidence that the exponential law applies is column 7.
 * **Bulk is tied to source on every device** (asserted in `n2tf_model.bind_op`, which
   refuses the netlist otherwise).  That is what makes `gmb` inert and lets the PSP `cgb`
   op-var — which carries ~99 % of `cgg` in weak inversion — fold into `cgs`.
-* **The layout moves the operating point by essentially nothing**: the largest `gm` shift
+* **The layout barely moves the operating point**: the largest `gm` shift
   between pre- and post-layout is {dgm_max:.1e} %.  The pre→post differences reported
-  everywhere below are therefore *capacitive*, not bias shifts — which is the cleanest
-  possible statement for a filter.
+  everywhere below are therefore *capacitive*, not bias shifts.
 """
 
 
@@ -191,7 +190,7 @@ equation*, not the full model; §2.2 quantifies exactly what the rest of the mod
 
 The cross capacitors are drawn floating between the halves, so the half-circuit sees
 **2·C2a = {2 * cap['c2_a']:.3f} pF** and **2·C2b = {2 * cap['c2_b']:.3f} pF** — the factor
-of two the differential realisation buys, and the reason the drawn farads are half what a
+of two from the differential realisation, and the reason the drawn farads are half what a
 single-ended filter would need.
 
 Roots of the closed-form quartic:
@@ -209,8 +208,8 @@ Q = {c['decoupled']['Q_b']:.4f}**.  The coupling term is
     out.append(f"""### 2.2 Reconciling the three pole estimates — closed form, full model, simulation
 
 The closed form above is deliberately minimal, and it is **{tf['cases']['pre_mim']['closed_form']['poles'][0]['f0_hz'] - tf['cases']['pre_mim']['pz']['poles'][0]['f0_hz']:+.2f} Hz**
-away from the full model.  That gap is not an error, it is a *quantity*: it is what the
-device capacitances do.  Naming it is the whole point of having both.
+away from the full model.  That gap is not an error: it is what the device capacitances
+add, and naming it is the point of reporting both.
 
 {tbl(["", "biquad-A pair f₀ / Q", "biquad-B pair f₀ / Q", "`fc` (−3 dB, Hz)", "what it includes"],
      [["closed form, `Fidelity.IDEAL`",
@@ -244,7 +243,7 @@ capacitance symbols is zeroed in turn and the pencil re-solved on the same matri
        ", ".join(f"{x:.0f}" for x in r["zero_f_hz"])]
       for r in tf["cases"]["pre_mim"]["cap_ablation"]])}
 
-**`cgs` is the whole gap.**  Zero it and the poles snap back to
+**`cgs` is the whole gap.**  Zero it and the poles return to
 {tf['cases']['pre_mim']['cap_ablation'][1]['pole_f_hz'][0]:.2f} Hz — the closed form's
 {tf['cases']['pre_mim']['closed_form']['f_c_geometric_hz']:.2f} Hz to within
 {abs(tf['cases']['pre_mim']['cap_ablation'][1]['pole_f_hz'][0] - tf['cases']['pre_mim']['closed_form']['f_c_geometric_hz']):.2f} Hz —
@@ -256,7 +255,7 @@ magnitude above the band — it is listed for completeness, not read as a filter
 in weak inversion the channel is not formed, so there is no Miller path), and `cdb`
 moves `fc` by {abs(tf['cases']['pre_mim']['cap_ablation'][3]['pole_f_hz'][0] - tf['cases']['pre_mim']['pz']['poles'][0]['f0_hz']):.2f} Hz.
 
-The mechanism is specific and worth stating: PSP reports
+The mechanism is specific: PSP reports
 **cgg = {jload('bench_pre_mim.json')['op']['m2']['cgg'] * 1e15:.1f} fF** on the biquad-A
 input follower, of which
 **{jload('bench_pre_mim.json')['op']['m2']['cgb'] * 1e15:.1f} fF is `cgb`** — because in
@@ -264,12 +263,12 @@ weak inversion the gate charge terminates on the bulk, not on a channel.  Bulk i
 source here, so all of it lands gate-to-source and adds
 {100 * (jload('bench_pre_mim.json')['op']['m2']['cgg'] * 1e12) / tf['cases']['pre_mim']['closed_form']['caps_pf']['c1_a']:.1f} %
 to `C1a` = {tf['cases']['pre_mim']['closed_form']['caps_pf']['c1_a']:.3f} pF, the smallest
-capacitor in the filter.  Reading the op-vars with strong-inversion habits — `cgs` as the
+capacitor in the filter.  Reading the op-vars by strong-inversion convention — `cgs` as the
 gate-to-source capacitance, `cgb` left on the bulk — would have put
 {jload('bench_pre_mim.json')['op']['m2']['cgg'] / jload('bench_pre_mim.json')['op']['m2']['cgs']:.0f}×
 too little capacitance on that node and hidden this shift entirely.
 
-Two consequences worth stating plainly:
+Two consequences:
 
 * **The closed form is the design equation, and it is accurate to ~2 % in `fc`** — the
   width of the S2 window — with the error sign and mechanism both known.  Sizing from it
@@ -317,7 +316,7 @@ frequency of the certified ac sweep and compared against it point by point
 {tbl(["", "max Δ\\|H\\| ≤1 kHz (dB)", "max Δφ ≤1 kHz (°)", "max Δτ_g (%)",
       "τ_g(dc) sim / model (ms)", "max Δ\\|H\\| all f (dB)", "max Δφ all f (°)"], rows)}
 
-* **In the scored band the model is exact to a few hundredths of a dB** — 0.027 dB and
+* **In the scored band the model matches the simulator to a few hundredths of a dB** — 0.027 dB and
   0.34° over dc–1 kHz, on a response that falls 49 dB across that band.
 * **Above the scored band it degrades to ~2.6 dB / 26°.**  That is the stopband, below
   −49 dB, where the device-capacitance feed-through zeros of §4 take over; the
@@ -333,7 +332,7 @@ frequency of the certified ac sweep and compared against it point by point
 A 4-pole / 0-zero rational is fitted directly to the measured complex response over
 0.1–500 Hz, in log-magnitude and unwrapped phase together.  It never sees the
 small-signal model, the netlist or the operating point — it is the reviewer's
-"verified by the sim data" leg standing alone.
+"verified by the sim data" check, standing alone.
 
 {tbl(["", "pair A f₀ / Q", "pair B f₀ / Q", "fit residual (dB / °)",
       "monic-quartic coefficient error vs model (%)", "worst single-root distance (%)",
@@ -358,8 +357,8 @@ Read this table in the right order, because the conditioning differs by column:
   and {tf['cases']['pre_mim']['sim_fit']['real_pole_refit']['max_phase_resid_deg']:.0f}°**,
   {tf['cases']['pre_mim']['sim_fit']['real_pole_refit']['max_mag_resid_db'] / pm['max_mag_resid_db']:.0f}×
   and {tf['cases']['pre_mim']['sim_fit']['real_pole_refit']['max_phase_resid_deg'] / pm['max_phase_resid_deg']:.0f}×
-  worse, with both Q's pinned hard against the 0.5 bound (the optimiser is pushing to go
-  complex and the constraint will not let it).  **The measured response cannot be
+  worse, with both Q's pinned against the 0.5 bound (the fit is driven toward complex
+  poles and the constraint prevents it).  **The measured response cannot be
   reproduced by any all-real-pole 4th-order model.**  So "are the poles real or
   imaginary?" is answered by the simulation data alone: **complex, both pairs**, and the
   model then says where.
@@ -367,10 +366,10 @@ Read this table in the right order, because the conditioning differs by column:
 **Why not `ngspice .pz`?**  It is not usable on this cell: it aborts with *"the input
 signal is shorted on the way to the output"* for any input port that carries its own dc
 bias, which a subthreshold gate must.  Confirmed on a one-transistor deck as well, so it
-is the analysis and not the netlist.  The three legs above — an operating-point-bound
+is the analysis and not the netlist.  The three checks above — an operating-point-bound
 eigenvalue solve, a simulator-only fit with a falsification test, and a point-by-point
-overlay — replace it, and between them they are strictly stronger than a single
-`.pz` listing would have been.
+overlay — replace it: between them they report what a `.pz` listing would have, plus
+checks it does not make.
 """
 
 
@@ -406,7 +405,7 @@ them cancel** — {npair // 2} conjugate pair{'s' if npair // 2 != 1 else ''} (c
 {len(p['poles']) * 2 - sum(1 for x in p['poles'] if x['kind'] == 'real')}-pole,
 {len(p['zeros']) * 2 - sum(1 for x in p['zeros'] if x['kind'] == 'real')}-zero response
 below.  A cancelling pole/zero pair is a mode the differential input cannot excite or the
-differential output cannot see — the replica branch and the bias diode account for all of
+differential output cannot observe — the replica branch and the bias diode account for all of
 them — and they are *reported*, not silently dropped.  Cancellation is declared at 10⁻⁴
 relative separation because the two sets come from two separately conditioned
 eigenproblems; the worst residual separation actually observed here is
@@ -433,7 +432,7 @@ eigenproblems; the worst residual separation actually observed here is
   Q = 0.5412 and 1.3066 at a single ω₀; this cell measures
   **{pm['poles'][0]['Q']:.4f} and {pm['poles'][1]['Q']:.4f}** — within
   {100 * abs(pm['poles'][0]['Q'] / 0.54120 - 1):.1f} % and
-  {100 * abs(pm['poles'][1]['Q'] / 1.30656 - 1):.1f} % of Butterworth — which is what buys
+  {100 * abs(pm['poles'][1]['Q'] / 1.30656 - 1):.1f} % of Butterworth — which is what gives
   the {abs(pm['dc_gain_db']):.3f} dB dc flatness and the 0.05 dB passband ripple of §7.
   The shape is *not* designed by placing two textbook stages: §2.1 shows the isolated
   stages would be Q = 2.10 and 0.46, and it is the κ·s² coupling term that maps them onto
@@ -481,11 +480,11 @@ model, and the two are multiplied and summed.
       "max Δ S_out (%)", "max Δ inoise vs onoise/\\|H\\| (%)",
       "`netlist2tf.transimpedance` vs pencil"], rows)}
 
-Three independent closures, all at once:
+Three independent closures:
 
 1. **The sum over generators reproduces the simulator's own total** to
    {max(nz[k]['onoise_closure_max_pct'] for k, _ in CASES):.1e} % at every frequency —
-   so no generator is missing and none is double-counted.  This is what licenses writing
+   so no generator is missing and none is double-counted.  This is what justifies writing
    `Σ_k` at all.
 2. **The integrated IRN equals the certified sign-off number** to all quoted digits — the
    frozen `lab.metrics` definition, not a re-derivation.
@@ -496,7 +495,7 @@ Three independent closures, all at once:
 ### 5.2 Where the noise comes from
 
 Integrated 0.5–200 Hz, input-referred.  Percentages are of total IRN **power**.  First by
-generator kind, which is the headline:
+generator kind:
 
 {tbl(["generator", "what it is"] + [f"{lab} (µV / % power)" for _, lab in CASES],
      [[f"`{g}`", txt] + [_gen_cell(nz[k], g) for k, _ in CASES]
@@ -519,7 +518,8 @@ Then by device role — the answer to "which device should I make bigger":
 
 **The two biquad-A branch devices carry 79 % of the noise between them**, and the
 biquad-A bias sink — a device that appears nowhere in `H(s)`, because an ideal current
-source is an open circuit to small signals — is within a hair of the input follower.
+source is an open circuit to small signals — contributes almost as much as the input
+follower.
 The reason is not the cascade order — both biquads are unity-gain followers, so neither
 attenuates the other's noise — it is **node impedance**: the transimpedance from biquad
 A's internal node `net2` to the differential output is
@@ -605,9 +605,9 @@ the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting artifact.
 (`scripts/noise_analysis.py::identify_port`): for each generator the candidate device
 ports are ranked by how well `S_out/|Z_T,port|²` comes out frequency-flat (or `1/f`, for
 flicker), and the winner is taken.  Every channel-noise generator selects drain–source and
-every gate generator selects gate–source, which is the answer the physics demands — the
-value of doing it this way is that it is a *result*, and it is what licenses re-using the
-same `Z_T` for the distortion currents in §6.
+every gate generator selects gate–source, which is what the physics predicts.  Doing it
+this way makes the port assignment a measured result rather than an assumption, and that
+is what justifies re-using the same `Z_T` for the distortion currents in §6.
 
 `figures/noise_budget.png` plots `S_out(f)`, the sum of generators, and the top
 contributors' individual curves on one axis.
@@ -682,7 +682,7 @@ uses.
     HD3(ω) = | Σ_k Z_T,k(j3ω) · i₃,k(ω) |  /  |V_out,fund(ω)|
 ```
 
-**Stated validity window, because the check below defines one:** the equation is a
+**Validity window, defined by the check below:** the equation is a
 *weak-inversion, small-`a`, quasi-static* model.  It is confirmed to **±2 dB over
 {band[0]:.0f}–{band[1]:.0f} Hz** at 43.75 mVpp; outside that window it under-predicts, and
 §6.2 says by how much and why.  Every claim made from it is made inside that window.
@@ -748,7 +748,7 @@ independently, on the extracted netlist, in §6.1 and §6.3.
   natural candidate — the small-signal `Z_T` linearises it away by construction — but that
   is a hypothesis: it is stated as a bounded observation with numbers attached, **not** as
   a fitted claim, and closing it needs a `g_ds`-expansion term the present model does not
-  have ([README.md](README.md#6-open-items)).  For scale, the entire residual sits
+  have ([README.md](README.md#7-open-items)).  For scale, the entire residual sits
   {abs(20 * math.log10(lo[0][1] / 2.564e-4)):.1f} dB below the third harmonic this same
   cell produces at the S7 operating point — a modelling gap, not a performance one.
 * **Above ~100 Hz `a` passes 0.3** (last column) and the *propagation* stops being linear.
@@ -794,12 +794,12 @@ fundamental (`scripts/linearity_runs.py::tran_twotone`).
   consistent to {la['iip3']['pre_mim']['consistency_of_iip3_over_linear_points_db']:.2f} dB
   across the three amplitudes that are actually in the cubic regime.  The top two
   amplitudes are excluded from the extrapolation and shown anyway — they are compressing
-  (fund 0.084 → 0.103 V for a 1.5× drive increase), and an IIP3 read there would be a
-  fiction.
+  (fund 0.084 → 0.103 V for a 1.5× drive increase), and an IIP3 extrapolated from them
+  would not be valid.
 * **IIP3 is quoted in dBV, not dBm, deliberately.**  This is a voltage-mode filter driven
   by a balun-style differential source into a capacitive gate; there is no 50 Ω anywhere
-  in the cell, so a dBm number would require inventing a reference impedance and is
-  deliberately not quoted.  The dBV figure is referred to the **peak** amplitude of one
+  in the cell, so a dBm number would require inventing a reference impedance.  The dBV
+  figure is referred to the **peak** amplitude of one
   tone at the differential input, which is
   {la['iip3']['pre_mim']['iip3_v_peak_per_tone']:.4f} V — 3.9× the S7 drive amplitude, and
   well past where §6.1 shows the cell compressing, so IIP3 here is an extrapolated
@@ -820,8 +820,8 @@ exactly 20·log₁₀(3) = 9.54 dB.  Measured at A = {ml['per_tone_ampl_v'] * 1e
 
 **The identity fails by {ml['excess_db']:.2f} dB, and it is supposed to.**  §6.2 established
 that HD3 rises at ~{win_meas:.0f} dB/decade through this band, so the third-order response
-is strongly frequency dependent and the cell is by construction *not* memoryless.  The interesting question is
-which kind of memory, and the spacing sweep answers it:
+is strongly frequency dependent and the cell is by construction *not* memoryless.  The
+question is which kind of memory, and the spacing sweep answers it:
 
 {tbl(["f₁ / f₂ (Hz)", "spacing (Hz)", "IMD3 (dBc)", "IIP3 (dBV)"],
      [[f"{r['f1']:.0f} / {r['f2']:.0f}", f"{r['spacing']:.0f}", f"{r['imd3_db']:.3f}",
@@ -893,8 +893,8 @@ IRN {bs['post_pex']['scorecard']['irn_uv'] - bs['pre_mim']['scorecard']['irn_uv'
 stopband {bs['post_pex']['scorecard']['a1000_db'] - bs['pre_mim']['scorecard']['a1000_db']:+.3f} dB,
 core power {bs['post_pex']['scorecard']['p_core_nw'] - bs['pre_mim']['scorecard']['p_core_nw']:+.4f} nW.
 **The layout costs this filter 1.1 Hz of `fc` and 1.2° of `ph_max`; noise and power are
-unchanged at the fourth digit, and the stopband improves by 0.19 dB.**  That is the pre→post statement every
-equation above is also making, each in its own quantity.
+unchanged at the fourth digit, and the stopband improves by 0.19 dB.**  Every equation
+above makes the same pre→post statement in its own quantity.
 """
 
 

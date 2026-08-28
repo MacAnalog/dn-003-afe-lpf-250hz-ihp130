@@ -4,26 +4,27 @@
 4th-order 250 Hz SSF low-pass filter (IHP SG13G2, VDD = 1.5 V), **pre-layout and
 post-layout**.
 
-Everything here is derived from committed netlists and re-derivable with the commands in
-§5.  No number in this pack is quoted without the script and the artifact that produced it.
+Everything here is derived from committed netlists and can be regenerated with the commands
+in §5.  Every number is quoted with the script and the artifact that produced it.
 
 ## Start here
 
-You do not need to read all of this, and you do not need to run anything.
+You do not need to read all of this, or to run anything.
 
-1. **§1 below** is your `request.md`, ask by ask, each one linked to where it is answered.
+1. **§1 below** is your `request.md`, one row per request, linked to where it is answered.
 2. **[`validation.md`](validation.md)** holds the numbers and the checks; **[`theory.md`](theory.md)**
-   holds the derivations behind them.  Read §1's links into them rather than front to back.
+   holds the derivations behind them.  Follow the links in §1 rather than reading either
+   file in order.
 3. **[`csv/`](csv/README.md)** is every curve as a plain CSV for Veusz — magnitude, phase,
-   noise, group delay, THD/HD2/HD3 and IIP3.  Open [`csv/README.md`](csv/README.md) for the
-   one-line-per-plot map; §4 below summarises it.
-4. `figures/` is the same curves already plotted, as PNG and PDF.
+   noise, group delay, THD/HD2/HD3 and IIP3.  Open [`csv/README.md`](csv/README.md) for one
+   line per plot; §4 below summarises it.
+4. `figures/` holds the same curves plotted, as PNG and PDF.
 
-Everything else (§5–§7) is for reproducing the pack, and is not needed to review it.
+§5–§7 are for reproducing the pack and are not needed to review it.
 
 | file | what it is |
 |---|---|
-| [`theory.md`](theory.md) | **the derivations** — `H(s)`, the noise equation, the distortion equation, IMD3/IIP3, and the assumption ledger.  Hand-written; symbolic; stable. |
+| [`theory.md`](theory.md) | **the derivations** — `H(s)`, the noise equation, the distortion equation, IMD3/IIP3, and the list of assumptions.  Hand-written; symbolic; not regenerated. |
 | [`validation.md`](validation.md) | **every number, and what checks it** — DC operating point, poles/zeros, model-vs-simulation, the noise budget, the linearity tables.  **Generated** by `scripts/report.py`; do not hand-edit. |
 | `figures/` | the six figures, PNG + PDF |
 | `scripts/` | the generating scripts (§5) |
@@ -34,27 +35,25 @@ Everything else (§5–§7) is for reproducing the pack, and is not needed to re
 
 ## 1. The request, answered
 
-| # | reviewer's ask | answer | where |
+| # | reviewer's request | answer | where |
 |---|---|---|---|
 | 1 | **transfer function** | exact symbolic 4th-order `H(s)`, and the identity `D(s) = D_A·D_B + κ·s²` proved by symbolic expansion (residual exactly 0) | [theory §2.2](theory.md#22-the-result), numbers in [validation §2.1](validation.md#21-the-closed-form-at-the-measured-operating-point) |
 | 2 | **noise equation** | `S_out = Σ_k \|Z_T,k\|²·S_i,k`, `IRN² = ∫S_out/\|H\|²`, with each generator's port established from the data | [theory §3](theory.md#3-the-noise-equation), [validation §5](validation.md#5-the-noise-equation-checked-generator-by-generator) |
 | 3 | **THD / linearity equation** | `HD3(ω) = \|Σ_k Z_T,k(j3ω)·I_D,k·2I₃(a_k)/I₀(a_k)\| / \|V_out,fund\|` from the weak-inversion exponential, with a stated validity window | [theory §4](theory.md#4-the-distortion-equation), [validation §6.1–6.2](validation.md#61-hd3-versus-amplitude--the-a²-law) |
 | 4 | **pole / zero locations** | 4 poles (2 complex pairs), 4 zeros (2 complex pairs), 7 pole–zero cancellations reported with their residuals; pre- and post-layout | [validation §4](validation.md#4-poles-and-zeros--the-map) |
-| 5 | **Q of each biquad** | given **twice**: isolated-stage Q (2.10 / 0.46) and the filter's pole-pair Q (**0.543 / 1.307**, essentially Butterworth).  The two differ because the current-reuse bridge contributes `κ` = 11.78 % of the quartic's `s²` coefficient — the closed form says exactly how. | [theory §2.3](theory.md#23-per-biquad-f₀-and-q--and-which-q-the-reviewer-should-be-given), [validation §2.1](validation.md#21-the-closed-form-at-the-measured-operating-point) |
+| 5 | **Q of each biquad** | given **twice**: isolated-stage Q (2.10 / 0.46) and the filter's pole-pair Q (**0.543 / 1.307**, close to Butterworth).  The two differ because the current-reuse bridge contributes `κ` = 11.78 % of the quartic's `s²` coefficient; the closed form gives the relation. | [theory §2.3](theory.md#23-per-biquad-f₀-and-q--and-which-q-the-reviewer-should-be-given), [validation §2.1](validation.md#21-the-closed-form-at-the-measured-operating-point) |
 | 6 | **IIP3, IMD3** | IIP3 = **−3.28 dBV** pre-layout, **−3.35 dBV** post-layout, from a 5-point two-tone ladder with a verified 3:1 slope; IMD3 tabulated, plus a spacing sweep | [theory §5](theory.md#5-imd3-and-iip3), [validation §6.3](validation.md#63-two-tone-imd3-and-iip3) |
-| 7 | **proof of the equations, checked against sim** | see the table in §2 below — every equation has a numeric closure against the simulator | [validation §3, §5.1, §6](validation.md#3-model-versus-simulation) |
-| 8 | **pole/zero plane plot; real or imaginary; verified by DC ops and sim data** | `figures/pz_plane.png`, plus **three independent verification legs** — see §3 below | [validation §3.2, §4](validation.md#32-what-the-simulation-says-about-the-poles-on-its-own) |
+| 7 | **proof of the equations, checked against sim** | see the table in §2 below — every equation is checked numerically against the simulator | [validation §3, §5.1, §6](validation.md#3-model-versus-simulation) |
+| 8 | **pole/zero plane plot; real or imaginary; verified by DC ops and sim data** | `figures/pz_plane.png`, plus **three independent checks** — see §3 below | [validation §3.2, §4](validation.md#32-what-the-simulation-says-about-the-poles-on-its-own) |
 
-The topology identification in `request.md` needed no action and none was taken; the
-device-level reading is restated in [theory §1.1](theory.md#11-the-cell) so the equations
-can be read against it.
+The topology identification in `request.md` needed no action; the device-level reading is
+restated in [theory §1.1](theory.md#11-the-cell) so the equations can be read against it.
 
 ---
 
 ## 2. "The proof of the equations" — the closures, in one table
 
-Each equation is checked against the simulator on its own terms.  These are the numbers a
-reviewer should look at first.
+Each equation is checked against the simulator.  These are the numbers to look at first.
 
 | equation | check | pre-layout | post-layout |
 |---|---|---|---|
@@ -69,40 +68,40 @@ reviewer should look at first.
 | `HD3 ∝ A²` | fitted slope vs 40 dB/decade | **42.63** (resid 0.51 dB) | — |
 | `HD3(ω)` | model vs measured, 35–65 Hz | **±2 dB** | — |
 | IMD3 slope | fitted vs 40 dB/decade | **41.71** (resid 0.26 dB) | 42.29 (resid 0.20 dB) |
-| IIP3 | spread over the three in-regime amplitudes | 0.52 dB | 0.69 dB |
+| IIP3 | spread over the three amplitudes inside the validity window | 0.52 dB | 0.69 dB |
 
 ---
 
 ## 3. "Real or imaginary — verified by the DC ops and the sim data"
 
 The reviewer asked for the pole/zero plane **and** for it to be verified two ways.  Three
-independent legs are provided, and they are deliberately independent:
+independent checks are given:
 
-1. **The DC-ops leg.**  One `.op` on the as-built netlist gives every device's `gm`, `ro`
-   and capacitances ([validation §1](validation.md#1-the-dc-operating-point--the-root-of-every-number-below));
-   those bind the MNA pencil; the poles are its generalised eigenvalues.  Every symbol in
-   every equation traces to that one table.
-2. **The sim-data leg, with a falsification test.**  A 4-pole rational is fitted directly
-   to the measured complex response — no model, no netlist, no operating point.  It fits to
+1. **From the DC operating point.**  One `.op` on the as-built netlist gives every device's
+   `gm`, `ro` and capacitances ([validation §1](validation.md#1-the-dc-operating-point--the-root-of-every-number-below));
+   those fill the MNA pencil, and the poles are its generalised eigenvalues.  Every symbol
+   in every equation comes from that one table.
+2. **From the simulation data, as a falsification test.**  A 4-pole rational is fitted to
+   the measured complex response — no model, no netlist, no operating point.  It fits to
    0.215 dB.  Refitting with both Q's forced ≤ 0.5, i.e. **all four poles real**, the best
-   achievable residual is **4.85 dB / 52°**, with both Q's pinned against the bound.  So
-   **the measured response cannot be produced by any all-real-pole 4th-order model** — the
-   poles are complex, and that is established by the simulation data alone
+   residual is **4.85 dB / 52°**, with both Q's at the bound.  So **the measured response
+   cannot be produced by any all-real-pole 4th-order model**: the poles are complex, from
+   the simulation data alone
    ([validation §3.2](validation.md#32-what-the-simulation-says-about-the-poles-on-its-own)).
-3. **The overlay leg.**  The pole-bound model is evaluated at every ac point and matched
-   against the sweep: 0.027 dB, 0.34°, 1 % on group delay.
+3. **From the model overlay.**  The operating-point model is evaluated at every ac point and
+   compared with the sweep: 0.027 dB, 0.34°, 1 % on group delay.
 
-`ngspice`'s own `.pz` cannot do this job here — it aborts with *"the input signal is shorted
+`ngspice`'s own `.pz` cannot be used here: it aborts with *"the input signal is shorted
 on the way to the output"* for any input port carrying its dc bias, which a subthreshold
 gate must; confirmed on a one-transistor deck, so it is the analysis and not the netlist.
-The three legs above replace it and are stronger than a single `.pz` listing.
+The three checks above replace it.
 
 **The answer:** four poles, **two complex-conjugate pairs**, at
 (249.72 Hz, Q 0.543) and (251.08 Hz, Q 1.307) pre-layout — a Butterworth-like quartic
 realised by frequency-coincident, differently damped sections.  Four zeros, **two complex
 pairs**, at 3.85 kHz and 5.05 kHz, both far out of band, both traced by ablation to the
 followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz, Q 0.546) and
-(249.97 Hz, Q 1.304) and nothing else changes qualitatively.
+(249.97 Hz, Q 1.304); the description above is otherwise unchanged.
 
 ### Figures
 
@@ -120,8 +119,8 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 ## 4. The data as CSV
 
 Every requested curve is in [`csv/`](csv/README.md) as a plain CSV — one header row, then
-numbers, so Veusz imports it with no options changed.  Column names carry their unit and
-end in the DUT (`_pre_mim`, `_post_pex`, …).
+numbers, so Veusz imports it with no options changed.  Column names include the unit and
+end with the DUT (`_pre_mim`, `_post_pex`, …).
 
 | plot | file | x | y |
 |---|---|---|---|
@@ -134,13 +133,13 @@ end in the DUT (`_pre_mim`, `_post_pex`, …).
 
 Three more files support those: the harmonic-vs-frequency sweep repeated at the
 small-signal drive, the 1:1 / 3:1 IIP3 extrapolation lines, and the model-vs-simulation
-Bode pair.  [`csv/README.md`](csv/README.md) covers all nine, plus the two things worth
-knowing before plotting — why the phase and group-delay columns are blank above 3 kHz, and
-which two-tone points the published IIP3 is fitted on.
+Bode pair.  [`csv/README.md`](csv/README.md) covers all nine, plus two points to note
+before plotting: why the phase and group-delay columns are blank above 3 kHz, and which
+two-tone points the published IIP3 is fitted on.
 
 `export_csv.py` writes them.  It runs no simulation and re-defines no metric: it
-re-serialises the same JSON the figures and tables are built from, and asserts on the way
-out that the CSVs reproduce the certified group delay, integrated noise and IIP3.
+re-serialises the same JSON the figures and tables are built from, and asserts that the
+CSVs reproduce the certified group delay, integrated noise and IIP3.
 
 ---
 
@@ -181,9 +180,9 @@ $PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
 | script | role |
 |---|---|
 | `extract_bench.py` | one `op` deck and one `ac`+`noise` deck per DUT; per-instance operating point, per-generator noise vectors, and the `post_lumped` netlist |
-| `n2tf_model.py` | the one place that turns an as-built subckt into an MNA system bound to the measured operating point; the DM half-circuit; the symbol renaming |
+| `n2tf_model.py` | the only place that converts an as-built subckt into an MNA system at the measured operating point; the DM half-circuit; the symbol renaming |
 | `pencil.py` | poles, zeros, `H(jω)` and `Z_T` from the matrix pencil `G + sC` |
-| `tf_analysis.py` | the symbolic `H(s)`, the factorisation proof, the pole/zero map, the capacitance ablation, the validation and the sim-only fit |
+| `tf_analysis.py` | the symbolic `H(s)`, the factorisation proof, the pole/zero locations, the capacitance ablation, the validation and the sim-only fit |
 | `noise_analysis.py` | per-generator port identification, the noise equation, the closure and the transimpedance cross-check |
 | `linearity_runs.py`, `twotone_spacing.py`, `hd3_vs_fin.py` | the transient benches |
 | `linearity_analysis.py` | the HD3 model, the amplitude/frequency laws, the memoryless test, IIP3 |
@@ -199,13 +198,12 @@ Committed: the scripts, the figures, the CSVs, `validation.md`, `theory.md`, and
 analysis JSON (`tf.json`, `noise.json`, `linearity*.json`, `twotone_spacing.json`, `hd3_vs_fin.json`,
 `post_lumped_core.sp`).  **Not committed**: `data/bench_*.json` — 2.7 MB of raw op + ac +
 noise vectors, regenerated in ~2 minutes by step 1 above, and simulator output under the
-repo's never-commit rule.  Every downstream script fails loudly with the missing path if
-they are absent — `tf_analysis.py` prints `[<case>] SKIPPED` and moves on, and the
-`report.py` render then raises on the missing case, so a stale `validation.md` cannot be
-produced silently.
+repo's never-commit rule.  If they are absent, every downstream script names the missing
+path: `tf_analysis.py` prints `[<case>] SKIPPED` and continues, and the `report.py` render
+then raises on the missing case, so a stale `validation.md` cannot be produced silently.
 
-The two pre-layout DUTs and the two post-layout DUTs, and why there are four of each kind,
-are in [validation §7](validation.md#7-the-four-duts-side-by-side).
+The four DUTs — two pre-layout, two post-layout — and why each exists are in
+[validation §7](validation.md#7-the-four-duts-side-by-side).
 
 ---
 
@@ -213,13 +211,12 @@ are in [validation §7](validation.md#7-the-four-duts-side-by-side).
 
 * **The low-frequency third-harmonic residual.**  Below ~35 Hz the measured third harmonic
   exceeds the distortion equation by **0.18–0.28 µV — constant in volts** while the
-  equation's own prediction moves by a factor of 39 over the same span.  That additive
-  signature says a mechanism is missing rather than mis-scaled; drain-conductance
-  nonlinearity is the natural candidate, and confirming it needs a `g_ds(V_DS)` expansion
-  term the present model does not have.  The whole residual is **61.7 dB below** the
-  256 µV third harmonic the cell produces at the S7 operating point, so it is a modelling
-  gap and not a performance one, and it is stated as a bounded observation rather than a
-  fitted claim.
+  equation's own prediction moves by a factor of 39 over the same span.  The residual is
+  additive rather than proportional, so a mechanism is missing rather than mis-scaled;
+  drain-conductance nonlinearity is the likely one, and confirming it needs a `g_ds(V_DS)`
+  expansion term the present model does not have.  The whole residual is **61.7 dB below**
+  the 256 µV third harmonic the cell produces at the S7 operating point, so it is a
+  modelling gap, not a performance one, and it is stated as a bound rather than a fit.
 * **Corners and Monte Carlo for the new quantities.**  Everything in this pack is at the
   nominal corner.  The poles, Q, IIP3 and the noise budget have not been swept over PVT or
   mismatch; the existing PVT/MC evidence covers the scorecard metrics only.
