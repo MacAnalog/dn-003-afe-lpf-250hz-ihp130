@@ -43,6 +43,7 @@ and the corner sweeps:
 | **IIP3 over corners** | `iip3_corners.csv` | `corner` (text) | `iip3_dbv`, `imd3_slope_db_per_decade` |
 | **the THD ladder over corners** | `thd_corners.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
 | **the low-frequency residual, and what explains it** | `gds_residual.csv` | `fin_hz` | `v3_unexplained_uv`, `v3_gds_cubic_uv`, `v3_gds_exact_uv` |
+| **whether the Monte Carlo has converged** | `mc_convergence.csv` | `n_draws` | `sigma_fc_hz`, `sigma_q_hi`, `sigma_offset_out_uv`, `sigma_cmrr_db_dc`, … |
 
 The remaining files support those:
 
@@ -78,7 +79,7 @@ Units are in the name: `_hz`, `_db` (dB), `_dbc` (dB relative to the fundamental
 `_dbvp` (dB relative to 1 V peak), `_ms`, `_v`, `_vpp`, `_v_per_rthz` (V/√Hz).
 Phase is in degrees and **negative means lag**, as in the pack's figures.
 
-## Three things worth knowing before you plot
+## Four things worth knowing before you plot
 
 **The corner files have a text first column.**  `pvt_certified_axes.csv`,
 `pvt_cert_box.csv` and `iip3_corners.csv` start with `corner`, `process` — corner names,
@@ -100,6 +101,15 @@ published one.  Two flag columns mark what was used: `in_fit_*` = 1 on the three
 still following the 3:1 law, and `in_ip3_avg_*` = 1 on the two rows whose `iip3_dbvp_*`
 is averaged into the published number.  That average is **−3.281 dBVp** pre-layout and
 **−3.348 dBVp** post-layout, which is what [`../validation.md` §6.3](../validation.md#63-two-tone-imd3-and-iip3) reports.
+
+**A worst case is not a converged number.**  Both Monte Carlo populations are 1024
+draws, and the tables quote `min`/`max` next to `p01`/`p99` on purpose: the minimum and
+maximum of a sample are order statistics, so they walk outward as draws are added and a
+longer run must report a worse worst case.  Only the quantiles are comparable between runs
+of different length.  `mc_convergence.csv` is the evidence for the σ values: plot
+`sigma_*` against `n_draws` and compare the movement with `se_sigma_frac`, the standard
+error 1/√(2(N−1)) that a σ estimated from N draws carries.  Both axes are useful on a log
+x-scale.
 
 ## Regenerating
 

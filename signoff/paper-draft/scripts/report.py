@@ -14,6 +14,7 @@ touches the small-signal model.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 PACK = Path(__file__).resolve().parents[1]
@@ -918,9 +919,16 @@ def _axis_span(rows: list[dict], get, axis: str) -> float:
     return max(v) / min(v)
 
 
+def _at(tr: dict, n: int) -> float:
+    """σ at exactly `n` draws of a running trace -- the ladder always has the powers of
+    two as rungs, so an earlier, shorter run is read off directly rather than interpolated."""
+    return tr["sigma"][tr["n"].index(n)]
+
+
 def sec_pvt(pv: dict) -> str:
     """PVT and mismatch sensitivity of the ANALYTICAL quantities (doc/paper G25)."""
     ca, cb, mm = pv["cert-axes"]["summary"], pv["cert-box"]["summary"], pv["mismatch"]["summary"]
+    cv = mm["convergence"]
     hb = pv["both"]["summary"]
     rows_a = pv["cert-axes"]["rows"]
     qhi = {ax: _axis_span(rows_a, lambda r: r["pairs"][1]["Q"], ax)
@@ -974,21 +982,23 @@ def sec_pvt(pv: dict) -> str:
                  ["Σ generators vs IRN", f"{ca['noise_closure_max_pct']:.1e} %",
                   f"{pa['noise_closure_max_pct']:.1e} %"]])
 
-    mmt = tbl(["quantity", "mean", "σ", "min … max"],
-              [["`fc` (Hz)", f"{mm['fc_hz']['mean']:.3f}", f"{mm['fc_hz']['sigma']:.3f}",
-                f"{mm['fc_hz']['min']:.3f} … {mm['fc_hz']['max']:.3f}"],
-               ["`ph_max` (°)", f"{mm['ph_max_deg']['mean']:.3f}",
-                f"{mm['ph_max_deg']['sigma']:.3f}",
-                f"{mm['ph_max_deg']['min']:.3f} … {mm['ph_max_deg']['max']:.3f}"],
-               ["low-pair `Q`", f"{mm['Q_lo']['mean']:.4f}", f"{mm['Q_lo']['sigma']:.4f}",
-                f"{mm['Q_lo']['min']:.4f} … {mm['Q_lo']['max']:.4f}"],
-               ["high-pair `Q`", f"{mm['Q_hi']['mean']:.4f}", f"{mm['Q_hi']['sigma']:.4f}",
-                f"{mm['Q_hi']['min']:.4f} … {mm['Q_hi']['max']:.4f}"],
-               ["IRN (µV)", f"{mm['irn_uv']['mean']:.3f}", f"{mm['irn_uv']['sigma']:.3f}",
-                f"{mm['irn_uv']['min']:.3f} … {mm['irn_uv']['max']:.3f}"],
-               ["output offset (µV)", f"{mm['offset_out_uv']['mean']:+.1f}",
-                f"{mm['offset_out_uv']['sigma']:.1f}",
-                f"{mm['offset_out_uv']['min']:+.1f} … {mm['offset_out_uv']['max']:+.1f}"]])
+    # p01 … p99 sits beside min … max deliberately: only the quantiles are comparable
+    # across N, since min and max are order statistics that must drift outward as draws
+    # are added.  Every σ carries (M1), its own standard error at this N.
+    def mmrow(key, label, fmt, sgn=""):
+        v = mm[key]
+        return [label, f"{v['mean']:{sgn}{fmt}}", f"{v['sigma']:{fmt}}",
+                f"±{100 * v['se_sigma_frac']:.1f} %",
+                f"{v['p01']:{sgn}{fmt}} … {v['p99']:{sgn}{fmt}}",
+                f"{v['min']:{sgn}{fmt}} … {v['max']:{sgn}{fmt}}"]
+
+    mmt = tbl(["quantity", "mean", "σ", "σ error (M1)", "p01 … p99", "min … max"],
+              [mmrow("fc_hz", "`fc` (Hz)", ".3f"),
+               mmrow("ph_max_deg", "`ph_max` (°)", ".3f"),
+               mmrow("Q_lo", "low-pair `Q`", ".4f"),
+               mmrow("Q_hi", "high-pair `Q`", ".4f"),
+               mmrow("irn_uv", "IRN (µV)", ".3f"),
+               mmrow("offset_out_uv", "output offset (µV)", ".1f", "+")])
 
     return f"""## 8. The analytical results over PVT and mismatch
 
@@ -1050,12 +1060,36 @@ response, so a `Q` distribution built that way would mostly measure the fit's co
 {mmt}
 
 Both complex pairs survive **{mm['n_two_pair']}/{mm['n_draws']}** draws.  The low-Q pair is again the stiff one — `Q`
-scatters by {100 * mm['Q_lo']['sigma'] / mm['Q_lo']['mean']:.2f} % against {100 * mm['fc_hz']['sigma'] / mm['fc_hz']['mean']:.2f} % for `fc` — but the high-Q pair scatters {100 * mm['Q_hi']['sigma'] / mm['Q_hi']['mean']:.2f} %, i.e. as
-much as the scale does.  That is the expected shape of the difference: a PVT corner shifts
+scatters by {100 * mm['Q_lo']['sigma'] / mm['Q_lo']['mean']:.2f} % against {100 * mm['fc_hz']['sigma'] / mm['fc_hz']['mean']:.2f} % for `fc` — but the high-Q pair scatters {100 * mm['Q_hi']['sigma'] / mm['Q_hi']['mean']:.2f} %, which
+belongs with the scale rather than with its own low-Q partner.  That is the expected shape of the difference: a PVT corner shifts
 every device the same way, so ratios can hold while scale moves, whereas a mismatch draw
 shifts each device independently and a ratio has no reason to survive it.  σ(`fc`) = {mm['fc_hz']['sigma']:.2f} Hz here
 against the 3.7 Hz the certified 100-sample scorecard MC reports, which is the agreement
 that says these draws are the same population.
+
+**Is this many draws enough?**  A σ estimated from N samples is itself an estimate: for a
+normal population its relative standard error is 1/√(2(N−1)), which is {100 / math.sqrt(2 * 63):.1f} % at 64 draws
+and **{100 * mm['se_sigma_frac']:.1f} %** at {mm['n_draws']}.  That is the band the σ column above is quoted with, and
+`figures/mc_convergence.png` plots the running σ against N inside it — flat and within the
+band long before the end, so these distributions are resolved rather than still filling
+in.  Over the last four rungs of the ladder σ(`fc`) moved {cv['fc_hz']['drift_pct']:.2f} %, σ(`Q_hi`) {cv['Q_hi']['drift_pct']:.2f} % and
+σ(offset) {cv['offset_out_uv']['drift_pct']:.2f} %.  Seeds run `1…N` in order, so the first 64 rows of this set ARE
+the 64-draw run reported before it was extended: σ(`fc`) over them is {_at(cv['fc_hz'], 64):.3f} Hz, the
+value that run published, and every trace passes through the earlier value rather than
+near it.
+
+That comparison is also why the run was extended.  σ(`fc`) moved **{100 * (mm['fc_hz']['sigma'] / _at(cv['fc_hz'], 64) - 1):+.1f} %** on the way
+from 64 draws to {mm['n_draws']} — {abs(mm['fc_hz']['sigma'] / _at(cv['fc_hz'], 64) - 1) / (1 / math.sqrt(2 * 63)):.1f}× the band (M1) allows at 64 — so the short run had understated
+the scale scatter, and nothing inside the short run could have revealed that.  The
+three shape and offset quantities moved {100 * (mm['Q_lo']['sigma'] / _at(cv['Q_lo'], 64) - 1):+.1f} %, {100 * (mm['Q_hi']['sigma'] / _at(cv['Q_hi'], 64) - 1):+.1f} % and {100 * (mm['offset_out_uv']['sigma'] / _at(cv['offset_out_uv'], 64) - 1):+.1f} % over the same
+extension, all inside it.  Read together: 64 draws was enough for the ratios and not for
+the scale, and the σ column's band is what tells the two cases apart.
+
+The `min … max` column is completeness, not a worst case that converged.  min and max are
+ORDER statistics: they move outward as draws are added, by construction, so a longer run
+must report a wider range and a range that widened is evidence of nothing.  `p01 … p99` is
+the pair that stays comparable between runs of different length, and at {mm['n_draws']} draws each of
+those tails has about {mm['n_draws'] // 100} samples under it.
 
 `figures/pvt_axes.png` plots the nine points and the 45-point box; `figures/mc_mismatch.png`
 plots the three distributions.
@@ -1091,11 +1125,14 @@ def sec_rej(rj: dict, mm2: dict) -> str:
     nomt = tbl(["transfer", *[f"{s} Hz" for s in spots]],
                [["supply → output CM (dB)"] + [f"{nom['supply_to_cm_db'][s]:.2f}" for s in spots],
                 ["CM in → CM out (dB)"] + [f"{nom['cm_to_cm_db'][s]:.2f}" for s in spots]])
+    # p01 as well as the sample minimum, for the reason Section 8.3 gives: the minimum
+    # of N draws is an order statistic and gets worse as N grows, so only the quantile
+    # is comparable between runs of different length.
     mmt = tbl(["quantity", *[f"{s} Hz" for s in spots]],
-              [["CMRR mean (dB)"] + [f"{mm['cmrr_db'][s]['mean']:.2f}" for s in spots],
-               ["CMRR worst (dB)"] + [f"{mm['cmrr_db'][s]['min']:.2f}" for s in spots],
-               ["PSRR mean (dB)"] + [f"{mm['psrr_db'][s]['mean']:.2f}" for s in spots],
-               ["PSRR worst (dB)"] + [f"{mm['psrr_db'][s]['min']:.2f}" for s in spots]])
+              [[f"{n} {w} (dB)"] + [f"{mm[k][s][a]:.2f}" for s in spots]
+               for k, n in (("cmrr_db", "CMRR"), ("psrr_db", "PSRR"))
+               for w, a in (("mean", "mean"), ("σ", "sigma"), ("p01", "p01"),
+                            ("worst", "min"))])
     o, oa = mm["offset_in_uv"], mm["offset_in_abs_uv"]
 
     return f"""## 9. Supply rejection, common-mode rejection, and offset
@@ -1129,13 +1166,22 @@ but it bounds what may sit downstream of this filter on the same supply.
 
 Rejection falls with frequency in both paths, as the loop gain that produces it falls.
 
+Every σ here carries the same (M1) band as Section 8.3 — **±{100 * mm['cmrr_db']['0.1']['se_sigma_frac']:.1f} %** at {mm['n_draws']} draws — and
+panel (b) of `figures/mc_convergence.png` plots the running σ of these three
+distributions.  They settle more slowly than `fc` and `Q` do, and for a reason worth
+stating: rejection in dB is the logarithm of a near-cancellation, so its distribution has
+a longer tail than a smooth function of many small device shifts, and (M1)'s normal
+assumption is a rough guide rather than a tight one.  The trace, not the formula, is the
+evidence in that case, and the `worst` row moves with N while `p01` does not.
+
 `figures/rejection.png` plots both: panel (a) the nominal common-mode transfers with
 their envelope over the nine certified axis points, panel (b) the mismatch band.
 
 ### 9.3 Input-referred offset
 
 Zero by symmetry at nominal, so it is a mismatch quantity and only a distribution.  Over
-the same {mm['n_draws']} draws: mean **{o['mean']:+.1f} µV**, σ **{o['sigma']:.1f} µV**, worst |offset| **{oa['max']:.1f} µV**.  The dc
+the same {mm['n_draws']} draws: mean **{o['mean']:+.1f} µV**, σ **{o['sigma']:.1f} ± {o['se_sigma']:.1f} µV**, 99th percentile of
+|offset| **{oa['p99']:.1f} µV** and worst |offset| **{oa['max']:.1f} µV**.  The dc
 gain is within 0.01 dB of unity, so the input-referred and output values coincide.  For
 scale, σ is {100 * o['sigma'] / 175e-3 / 1e6:.2f} % of the 175 mVpp S7 drive.
 

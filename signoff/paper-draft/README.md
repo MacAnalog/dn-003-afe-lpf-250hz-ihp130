@@ -30,7 +30,7 @@ You do not need to read all of this, or to run anything.
 |---|---|
 | [`theory.md`](theory.md) | **the derivations** — `H(s)`, the noise equation, the distortion equation, IMD3/IIP3, and the list of assumptions.  Hand-written; symbolic; not regenerated. |
 | [`validation.md`](validation.md) | **every number, and what checks it** — DC operating point, poles/zeros, model-vs-simulation, the noise budget, the linearity tables.  **Generated** by `scripts/report.py`; do not hand-edit. |
-| `figures/` | the twelve figures, PNG + PDF |
+| `figures/` | the thirteen figures, PNG + PDF |
 | `scripts/` | the generating scripts (§5) |
 | [`csv/`](csv/README.md) | **every curve as a plain CSV for plotting** (§4) |
 | `data/` | the extracted and analysed JSON (§6) |
@@ -123,6 +123,7 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 | `figures/gds_residual.png` | what §6.2 leaves unexplained, and the two `g_ds` predictions against it | `scripts/figures.py::fig_residual` |
 | `figures/iip3_corners.png` | IIP3 and the measured IMD3 slope at every certified corner | `scripts/figures.py::fig_iip3_corners` |
 | `figures/thd_corners.png` | the THD amplitude ladder at every certified corner, and the margin at the spec point | `scripts/figures.py::fig_thd_corners` |
+| `figures/mc_convergence.png` | running σ against draw count for both Monte Carlo populations, inside the band a σ estimated from N draws is allowed to wander in | `scripts/figures.py::fig_mc_convergence` |
 
 ---
 
@@ -148,11 +149,12 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | IIP3 over corners | `csv/iip3_corners.csv` | `corner` | `iip3_dbv`, `imd3_slope_db_per_decade` |
 | the THD ladder over corners | `csv/thd_corners.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
 | the low-frequency residual and both `g_ds` predictions | `csv/gds_residual.csv` | `fin_hz` | `v3_unexplained_uv`, `v3_gds_cubic_uv`, `v3_gds_exact_uv` |
+| running σ against draw count, both MC populations | `csv/mc_convergence.csv` | `n_draws` | `sigma_fc_hz`, `sigma_q_hi`, `sigma_cmrr_db_dc`, … |
 
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all eighteen, plus three points to note before
+[`csv/README.md`](csv/README.md) covers all nineteen, plus three points to note before
 plotting: why the phase and group-delay columns are blank above 3 kHz, which two-tone
 points the published IIP3 is fitted on, and why the corner files carry a text column.
 
@@ -196,14 +198,19 @@ $PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
 .venv/bin/python signoff/paper-draft/scripts/export_csv.py   # rewrites csv/
 # 6. PVT / mismatch / rejection / distortion mechanism -- the §8-§10 material.
 #    LPF_BIAS_ALPHA=1.1 is the constant-gm bias the cells were certified with; without it
-#    the temperature rows measure an UNCOMPENSATED cell.  ~3 min total on many cores.
+#    the temperature rows measure an UNCOMPENSATED cell.
+#    OMP_NUM_THREADS=1 is not optional for the Monte Carlo: ngspice takes ~11 threads per
+#    process by default, so LPF_JOBS workers ask for 11x LPF_JOBS threads and the host
+#    thrashes -- 5 draws/min instead of ~110.  One thread per worker and ~32 workers is
+#    the fast setting here.  ~15 min for the two 1024-draw runs.
 E="signoff/paper-draft/scripts"
+export OMP_NUM_THREADS=1 LPF_JOBS=32
 for s in cert-axes cert-box both; do
   LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt $s --dut pre_mim
 done
-.venv/bin/python $E/extract_bench.py --mc 64 --dut pre_mim
+.venv/bin/python $E/extract_bench.py --mc 1024 --dut pre_mim   # ~10 min
 LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt cert-axes --dut post_lumped
-.venv/bin/python $E/psrr_cmrr.py --seeds 32
+.venv/bin/python $E/psrr_cmrr.py --seeds 1024
 .venv/bin/python $E/gds_probe.py
 LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/iip3_corners.py
 LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/thd_corners.py    # 54 transients, ~20 min
@@ -232,6 +239,7 @@ step 6 writes.
 | `gds_probe.py`, `gds_residual.py` | the drain-conductance distortion test: per-device `I_D(V_DS)` curves, then the third harmonic they generate, propagated (§10.1) |
 | `iip3_corners.py` | IIP3 over the certified axes, two amplitudes per corner (§10.2) |
 | `thd_corners.py` | the THD amplitude ladder over the certified axes (§10.3) |
+| `mc_stats.py` | how much a σ estimated from N draws is allowed to move, and the running traces that show whether it did |
 
 ---
 

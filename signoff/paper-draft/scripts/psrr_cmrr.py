@@ -38,6 +38,8 @@ from lab.deck import ac_cmrr, ac_noise, ac_psrr  # noqa: E402
 from lab.mc import _seeded  # noqa: E402
 from lab.parallel import batch  # noqa: E402
 
+import mc_stats as MC  # noqa: E402
+
 CELL = "H12-pdk-cap"
 #: Spot frequencies the tables quote: dc, the THD spec tone, the cutoff, the stopband.
 SPOTS = (0.1, 50.0, 250.0, 1000.0)
@@ -146,9 +148,14 @@ def main() -> None:
 
     def stat(get):
         v = np.asarray([get(r) for r in draws], float)
-        return {"n": int(v.size), "mean": float(v.mean()), "sigma": float(v.std(ddof=1)),
-                "min": float(v.min()), "max": float(v.max()),
-                "p50": float(np.median(v)), "p10": float(np.percentile(v, 10))}
+        # p01/p99 alongside min/max because only the quantiles are comparable across N:
+        # see `mc_stats` -- min and max are order statistics and must drift outward as
+        # draws are added.  `se_sigma_frac` is (M1), the error bar on sigma itself.
+        return MC.annotate({
+            "n": int(v.size), "mean": float(v.mean()), "sigma": float(v.std(ddof=1)),
+            "min": float(v.min()), "max": float(v.max()),
+            "p50": float(np.median(v)), "p10": float(np.percentile(v, 10)),
+            "p01": float(np.percentile(v, 1)), "p99": float(np.percentile(v, 99))})
 
     mm = {"n_draws": len(draws), "n_failed": nfail,
           "offset_in_uv": stat(lambda r: 1e6 * r["offset_in_v"]),
@@ -160,17 +167,33 @@ def main() -> None:
                     **{f"{k}_{s}hz": r[k][s] for k in ("cmrr_db", "psrr_db")
                        for s in map(lambda x: f"{x:g}", SPOTS)}}
                    for r in draws]
-    mm["curves"] = {"f": draws[0]["curves"]["f"],
-                    "cmrr_db": [r["curves"]["cmrr_db"] for r in draws],
-                    "psrr_db": [r["curves"]["psrr_db"] for r in draws]}
+    # The BAND, not one sweep per draw.  The figure and the CSV both consume only the
+    # mean and the min-max envelope at each frequency, and keeping every draw's 301
+    # points would put tens of MB of derived JSON in the repo to plot three curves.
+    mm["curves"] = {"f": draws[0]["curves"]["f"]}
+    for k in ("cmrr_db", "psrr_db"):
+        v = np.asarray([r["curves"][k] for r in draws], float)
+        mm["curves"][k] = {"mean": v.mean(0).tolist(), "min": v.min(0).tolist(),
+                           "max": v.max(0).tolist()}
     for k in ("cmrr_db", "psrr_db"):
         mm[k] = {s: stat(lambda r, s=s, k=k: r[k][s]) for s in map(lambda x: f"{x:g}", SPOTS)}
+    # Convergence of the three headline distributions, in seed order (see `mc_stats`).
+    mm["convergence"] = {
+        "offset_in_uv": MC.trace([1e6 * r["offset_in_v"] for r in draws]),
+        **{f"{k}_0.1hz": MC.trace([r[k]["0.1"] for r in draws])
+           for k in ("cmrr_db", "psrr_db")}}
     for k, s in (("cmrr_db", "0.1"), ("psrr_db", "0.1")):
-        print(f"  {k:9s} @dc  mean {mm[k][s]['mean']:7.2f} dB  "
-              f"sigma {mm[k][s]['sigma']:6.2f}  worst {mm[k][s]['min']:7.2f}")
+        v = mm[k][s]
+        print(f"  {k:9s} @dc  mean {v['mean']:7.2f} dB  "
+              f"sigma {v['sigma']:6.2f} +/-{100 * v['se_sigma_frac']:.1f} %  "
+              f"p01 {v['p01']:7.2f}  worst {v['min']:7.2f}")
     o = mm["offset_in_abs_uv"]
-    print(f"  |offset|      mean {o['mean']:7.2f} uV  sigma {o['sigma']:6.2f}  "
+    print(f"  |offset|      mean {o['mean']:7.2f} uV  sigma {o['sigma']:6.2f} "
+          f"+/-{100 * o['se_sigma_frac']:.1f} %  p99 {o['p99']:7.2f}  "
           f"worst {o['max']:7.2f} uV")
+    for k, tr in mm["convergence"].items():
+        print(f"  converge {k:16s} sigma drifted {MC.drift_pct(tr):5.2f} % over the last "
+              f"4 rungs; (M1) allows {100 * MC.se_frac(len(draws)):.2f} %")
 
     (OUT / "psrr_cmrr.json").write_text(json.dumps(
         {"cell": CELL, "spots_hz": list(SPOTS), "corners": corners, "mismatch": mm},

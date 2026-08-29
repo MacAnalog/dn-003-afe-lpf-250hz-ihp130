@@ -320,9 +320,10 @@ def rejection(rj: dict) -> list[Path]:
     fm = np.asarray(mc["f"], float)
     cols = [("freq_hz", fm.tolist())]
     for k in ("cmrr_db", "psrr_db"):
-        v = np.asarray(mc[k], float)
-        cols += [(f"{k}_mean", v.mean(0).tolist()), (f"{k}_min", v.min(0).tolist()),
-                 (f"{k}_max", v.max(0).tolist())]
+        cols += [(f"{k}_{w}", mc[k][w]) for w in ("mean", "min", "max")]
+        # The band's own spot values must agree with the table the report quotes.
+        got = float(np.interp(np.log10(0.1), np.log10(fm), mc[k]["mean"]))
+        assert abs(got - rj["mismatch"][k]["0.1"]["mean"]) < 5e-3, f"{k} band vs table"
     b = write_csv("rejection_mismatch_curves.csv", cols)
 
     draws = rj["mismatch"]["draws"]
@@ -417,6 +418,44 @@ def gds_residual(gr: dict) -> Path:
     return path
 
 
+def mc_convergence(pv: dict, rj: dict) -> Path:
+    """Running sigma against N for both Monte Carlo populations.
+
+    The file a reader needs to answer "is a thousand draws enough?" without re-running
+    anything: one row per rung of the ladder, the running sigma of each distribution at
+    that rung, and the band (M1) allows it -- see `mc_stats`.
+    """
+    ex = pv["mismatch"]["summary"]["convergence"]
+    rejc = rj["mismatch"]["convergence"]
+    ns = ex["fc_hz"]["n"]
+    cols: list[tuple[str, list]] = [("n_draws", ns),
+                                    ("se_sigma_frac", ex["fc_hz"]["se_frac"])]
+    for k, name in (("fc_hz", "sigma_fc_hz"), ("Q_lo", "sigma_q_lo"),
+                    ("Q_hi", "sigma_q_hi"), ("offset_out_uv", "sigma_offset_out_uv")):
+        assert ex[k]["n"] == ns, f"{k} ladder differs"
+        cols.append((name, ex[k]["sigma"]))
+    # The two populations are the same size but written as separate columns, since a
+    # reader comparing them across a shared N is exactly the point of the file.
+    nr = rejc["offset_in_uv"]["n"]
+    cols.append(("n_draws_rejection", nr))
+    for k, name in (("offset_in_uv", "sigma_offset_in_uv"),
+                    ("cmrr_db_0.1hz", "sigma_cmrr_db_dc"),
+                    ("psrr_db_0.1hz", "sigma_psrr_db_dc")):
+        assert rejc[k]["n"] == nr, f"{k} ladder differs"
+        cols.append((name, rejc[k]["sigma"]))
+    # The last rung is the full run, so it must equal the sigma every table quotes.
+    for k, ref in (("fc_hz", pv["mismatch"]["summary"]["fc_hz"]["sigma"]),
+                   ("Q_hi", pv["mismatch"]["summary"]["Q_hi"]["sigma"]),
+                   ("offset_out_uv", pv["mismatch"]["summary"]["offset_out_uv"]["sigma"])):
+        assert abs(ex[k]["sigma"][-1] - ref) < 1e-9, f"final sigma({k}) differs"
+    assert abs(rejc["offset_in_uv"]["sigma"][-1]
+               - rj["mismatch"]["offset_in_uv"]["sigma"]) < 1e-9, "final sigma(offset) differs"
+    path = write_csv("mc_convergence.csv", cols)
+    print(f"  mc convergence: {len(ns)} rungs to N = {ns[-1]}, final (M1) band "
+          f"+/-{100 * ex['fc_hz']['se_frac'][-1]:.2f} %")
+    return path
+
+
 def main() -> None:
     OUT.mkdir(exist_ok=True)
     bench = {d: load(f"bench_{d}.json") for d in AC_DUTS}
@@ -431,7 +470,9 @@ def main() -> None:
     written += iip3(lin, ana)
     written += pvt(load("pvt.json"))
     written.append(monte_carlo(load("pvt.json")))
-    written += rejection(load("psrr_cmrr.json"))
+    rj = load("psrr_cmrr.json")
+    written += rejection(rj)
+    written.append(mc_convergence(load("pvt.json"), rj))
     written.append(iip3_corners(load("iip3_corners.json")))
     written.append(thd_corners(load("thd_corners.json")))
     written.append(gds_residual(load("gds_residual.json")))

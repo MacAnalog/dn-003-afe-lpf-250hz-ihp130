@@ -20,6 +20,7 @@ DATA = HERE.parent / "data"
 sys.path.insert(0, str(HERE))
 
 import _style as S  # noqa: E402
+from mc_stats import se_frac as MC_SE  # noqa: E402
 
 S.use()
 import matplotlib.pyplot as plt  # noqa: E402
@@ -459,8 +460,8 @@ def fig_mc(pv):
             ([r["pairs"][1]["Q"] for r in rows], r"$Q_{hi}$", ""),
             ([r["offset_out_uv"] for r in rows], "output offset", "µV"))):
         v = np.asarray(vals, float)
-        a.hist(v, bins=14, color=S.CYCLE[0]["color"], alpha=0.8, edgecolor="white",
-               linewidth=0.5)
+        a.hist(v, bins=max(14, int(np.sqrt(v.size))), color=S.CYCLE[0]["color"],
+               alpha=0.8, edgecolor="white", linewidth=0.5)
         a.axvline(v.mean(), color=S.BAD, lw=1.1, ls="--")
         a.set_xlabel(f"{lab}  ({unit})" if unit else lab)
         a.set_ylabel("draws")
@@ -510,9 +511,9 @@ def fig_rejection(rj):
     mc = rj["mismatch"]["curves"]
     fm = np.asarray(mc["f"], float)
     for i, (k, lab) in enumerate((("cmrr_db", "CMRR"), ("psrr_db", "PSRR"))):
-        v = np.asarray(mc[k], float)
-        ax[1].semilogx(fm, v.mean(0), **cy(i, marker="", lw=1.2), label=f"{lab} mean")
-        ax[1].fill_between(fm, v.min(0), v.max(0), color=S.CYCLE[i]["color"],
+        b = mc[k]
+        ax[1].semilogx(fm, b["mean"], **cy(i, marker="", lw=1.2), label=f"{lab} mean")
+        ax[1].fill_between(fm, b["min"], b["max"], color=S.CYCLE[i]["color"],
                            alpha=0.15, lw=0)
     ax[1].set_xlabel("frequency (Hz)")
     ax[1].set_ylabel("dB")
@@ -665,6 +666,68 @@ def fig_thd_corners(tc):
     plt.close(fig)
 
 
+# ------------------------------------------- F13: has the Monte Carlo converged? --
+def fig_mc_convergence(pv, rj):
+    """Running sigma against N, inside the band that (M1) allows it to wander in.
+
+    Both populations use seeds `1..N` in order, so the left-hand part of every trace IS
+    the smaller run that was reported before: a trace that passes through the old value
+    and then flattens shows the larger set is a superset, not a different population.
+    """
+    fig, ax = plt.subplots(1, 3, figsize=(S.WIDE * 1.25, 2.8))
+    band = dict(color=S.GREY, alpha=0.18, lw=0)
+    nmax = pv["mismatch"]["summary"]["n_draws"]
+    notes = {
+        "(a) extraction MC":
+            f"shaded: $\\pm 1/\\sqrt{{2(N-1)}}$, the standard\nerror of a sigma "
+            f"estimated from N\ndraws (M1) -- $\\pm${100 * MC_SE(nmax):.1f} % at N = {nmax}.  All four\n"
+            f"are inside it well before the end.",
+        "(b) rejection MC":
+            "rejection in dB is the log of a near-\ncancellation, so these tails are "
+            "longer\nthan (a)'s and (M1)'s normal assumption\nis a guide, not a bound.  "
+            "Here the trace,\nnot the formula, is the evidence.",
+    }
+
+    for a, (conv, title, keys) in zip(ax, (
+            (pv["mismatch"]["summary"]["convergence"], "(a) extraction MC",
+             (("fc_hz", r"$\sigma(f_c)$"), ("Q_lo", r"$\sigma(Q_{lo})$"),
+              ("Q_hi", r"$\sigma(Q_{hi})$"), ("offset_out_uv", r"$\sigma$(offset)"))),
+            (rj["mismatch"]["convergence"], "(b) rejection MC",
+             (("cmrr_db_0.1hz", r"$\sigma$(CMRR@dc)"),
+              ("psrr_db_0.1hz", r"$\sigma$(PSRR@dc)"),
+              ("offset_in_uv", r"$\sigma$(offset)"))))):
+        n = np.asarray(conv[keys[0][0]]["n"], float)
+        se = np.asarray(conv[keys[0][0]]["se_frac"], float)
+        a.fill_between(n, 1 - se, 1 + se, **band)
+        for i, (k, lab) in enumerate(keys):
+            v = np.asarray(conv[k]["sigma"], float)
+            a.semilogx(conv[k]["n"], v / v[-1], **cy(i, marker="", lw=1.1), label=lab)
+        a.axhline(1.0, color=S.GREY, lw=0.7, ls=":")
+        a.set_xlabel("draws used, in seed order")
+        a.set_ylabel(r"$\sigma(N)\ /\ \sigma(N_{max})$")
+        a.set_title(title)
+        a.set_ylim(0.4, 1.6)
+        a.legend(loc="lower right", fontsize=6.0, ncol=1)
+        S.note(a, notes[title], loc="upper right")
+
+    # (c) why the worst case is not a convergent number.
+    tr = pv["mismatch"]["summary"]["convergence"]["offset_out_uv"]
+    n = tr["n"]
+    for i, (k, lab, ls) in enumerate((("max", "max", "-"), ("p99", "p99", "--"),
+                                      ("p01", "p01", "--"), ("min", "min", "-"))):
+        ax[2].semilogx(n, tr[k], **cy(i % 2, marker="", lw=1.1, ls=ls), label=lab)
+    ax[2].set_xlabel("draws used, in seed order")
+    ax[2].set_ylabel("output offset (µV)")
+    ax[2].set_title("(c) order statistics do not converge")
+    ax[2].legend(loc="center right", fontsize=6.0)
+    ax[2].margins(y=0.28)
+    S.note(ax[2], "min and max walk outward\nwith N by construction:\na longer run MUST "
+                  "report a\nworse worst case.  p01/p99\nstay comparable across N.",
+           loc="upper left")
+    S.save(fig, "mc_convergence")
+    plt.close(fig)
+
+
 def main() -> None:
     tf, nz, la = load("tf.json"), load("noise.json"), load("linearity_analysis.json")
     fig_half_circuit()
@@ -676,7 +739,9 @@ def main() -> None:
     pv = load("pvt.json")
     fig_pvt(pv)
     fig_mc(pv)
-    fig_rejection(load("psrr_cmrr.json"))
+    rj = load("psrr_cmrr.json")
+    fig_rejection(rj)
+    fig_mc_convergence(pv, rj)
     fig_residual(load("gds_residual.json"))
     fig_iip3_corners(load("iip3_corners.json"))
     fig_thd_corners(load("thd_corners.json"))

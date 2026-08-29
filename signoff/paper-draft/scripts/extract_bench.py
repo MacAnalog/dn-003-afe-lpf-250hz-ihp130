@@ -444,7 +444,10 @@ def mc(n: int = 64, label: str = "pre_mim", workers: int | None = None) -> None:
         if isinstance(r, BaseException):
             bad.append(s)
             continue
-        index.append({"seed": s, "corner": c.as_dict(),
+        # No per-draw corner: every draw sits at the SAME PVT point (only the mismatch
+        # seed differs), so the corner is written once at the top of the index instead
+        # of a thousand identical copies inside it.
+        index.append({"seed": s,
                       "file": f"bench_mc_{label}_s{seed_name(s)}.json",
                       "scorecard": r["scorecard"]})
     (OUT / f"mc_index_{label}.json").write_text(json.dumps(

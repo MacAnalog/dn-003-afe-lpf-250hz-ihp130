@@ -34,6 +34,7 @@ REPO = HERE.parents[2]
 DATA = PACK / "data"
 sys.path.insert(0, str(HERE))
 
+import mc_stats as MC  # noqa: E402
 import n2tf_model as M  # noqa: E402
 import pencil as PZ  # noqa: E402
 from noise_analysis import integrate_noise, parse_contrib  # noqa: E402
@@ -112,14 +113,19 @@ def _pairs(pz: dict) -> tuple[list[dict], int]:
     return sorted(allp[:2], key=lambda p: p["Q"]), len(allp)
 
 
-def analyse_corner(entry: dict) -> dict:
+def analyse_corner(entry: dict, corner: dict | None = None) -> dict:
+    """One index entry -> its poles, offset and noise budget.
+
+    `corner` is the fallback for index files that carry it once at the top rather than
+    per entry -- the mismatch index, whose thousand draws all sit at the same PVT point.
+    """
     bench = DATA / entry["file"]
     rec = json.loads(bench.read_text())
     pz = pz_map(CORE_MIM, bench)
     pp, n_all = _pairs(pz)
     row = {
         "slug": entry.get("slug") or f"s{entry['seed']:05d}",
-        "corner": entry["corner"],
+        "corner": entry.get("corner") or corner,
         "seed": entry.get("seed"),
         # Differential output offset at the operating point.  Zero by symmetry at
         # nominal; under mismatch it is the quantity G12 asks for, and the dc gain is
@@ -212,7 +218,7 @@ def run_mc(dut: str = "pre_mim") -> dict:
                  f"  .venv/bin/python signoff/paper-draft/scripts/extract_bench.py "
                  f"--mc 64 --dut {dut}")
     idx = json.loads(idx_p.read_text())
-    rows = [analyse_corner(e) for e in idx["draws"]]
+    rows = [analyse_corner(e, idx["corner"]) for e in idx["draws"]]
     two = [r for r in rows if len(r["pairs"]) == 2]
 
     def pick(i, key):
@@ -234,8 +240,28 @@ def run_mc(dut: str = "pre_mim") -> dict:
             abs(r["noise"]["irn_uv_from_generators"] - r["scorecard"]["irn_uv"])
             / max(r["scorecard"]["irn_uv"], 1e-12) for r in rows),
     }
+    # (M1) on every sigma, and the running trace behind the three headline
+    # distributions -- `mc_stats` explains why sigma needs an error bar and why the
+    # min/max columns must not be read as convergent quantities.
+    for v in summary.values():
+        if isinstance(v, dict) and "sigma" in v:
+            MC.annotate(v)
+    summary["se_sigma_frac"] = MC.se_frac(len(rows))
+    summary["convergence"] = {
+        "fc_hz": MC.trace([r["scorecard"].get("fc_hz") for r in rows]),
+        "Q_lo": MC.trace(pick(0, "Q")), "Q_hi": MC.trace(pick(1, "Q")),
+        "offset_out_uv": MC.trace([r["offset_out_uv"] for r in rows]),
+    }
+
+    # The per-draw payload is trimmed to what the figures and the CSV read.  At a
+    # thousand draws the full row -- the identical mismatch corner, the per-generator
+    # noise split -- is megabytes of committed JSON that nothing consumes; the complete
+    # record stays in `data/bench_mc_*.json`, which is regenerable and gitignored.
+    keep = ("seed", "slug", "scorecard", "pairs", "offset_out_uv", "dc_gain_db",
+            "n_complex_pairs_all", "pair_ratio", "q_ratio")
+    lean = [{k: r[k] for k in keep if k in r} for r in rows]
     return {"set": "mismatch", "dut": dut, "corner": idx["corner"],
-            "rows": rows, "summary": summary}
+            "rows": lean, "summary": summary}
 
 
 def run(which: str, dut: str = "pre_mim", alpha: str = "_a1p1") -> dict:
