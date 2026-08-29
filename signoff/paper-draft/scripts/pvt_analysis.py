@@ -80,13 +80,28 @@ def budget(rec: dict) -> dict:
 
 
 def _offset_uv(rec: dict) -> float | None:
-    """Differential output offset at the operating point, or None on an older record.
+    """Differential OUTPUT offset at the operating point, or None on an older record.
 
-    Zero by symmetry at nominal; under mismatch it is the quantity G12 asks for.  The dc
-    gain is within 0.01 dB of unity, so the output value is the input-referred one too.
+    The raw measurement.  What the tables quote is this referred to the input -- see
+    `_refer_in` -- because an output offset is only meaningful next to the gain that
+    produced it, and it is the input-referred number that compares against the drive
+    level, against the devices' own V_GS mismatch, and against another design.
     """
     n = rec.get("nodes")
     return None if not n else 1e6 * (n["voutp"] - n["voutn"])
+
+
+def _refer_in(offset_out_uv: float | None, dc_gain_db: float) -> float | None:
+    """Output offset referred to the input, using THIS draw's own dc gain.
+
+    The cell is a unity-gain filter, so the referral is small -- |A_dc| = -0.008 dB, a
+    0.09 % correction -- but it is not zero, and it is not noise: applying it makes the
+    two independent offset benches (this one and `psrr_cmrr.py`, which has always
+    referred) agree draw-by-draw to about 2 nV instead of 0.09 %.  Per draw, not by the
+    mean gain: the referral belongs to the draw whose offset it corrects.
+    """
+    return (None if offset_out_uv is None
+            else offset_out_uv / 10.0 ** (dc_gain_db / 20.0))
 
 
 def _pairs(pz: dict) -> tuple[list[dict], int]:
@@ -127,10 +142,12 @@ def analyse_corner(entry: dict, corner: dict | None = None) -> dict:
         "slug": entry.get("slug") or f"s{entry['seed']:05d}",
         "corner": entry.get("corner") or corner,
         "seed": entry.get("seed"),
-        # Differential output offset at the operating point.  Zero by symmetry at
-        # nominal; under mismatch it is the quantity G12 asks for, and the dc gain is
-        # within 0.01 dB of unity so the output value is also the input-referred one.
+        # Differential offset at the operating point -- zero by symmetry at nominal,
+        # and under mismatch the quantity G12 asks for.  Both are carried: the raw
+        # output offset is what the bench measures, `offset_in_uv` is what the tables
+        # quote.
         "offset_out_uv": _offset_uv(rec),
+        "offset_in_uv": _refer_in(_offset_uv(rec), pz["dc_gain_db"]),
         "scorecard": entry["scorecard"],
         "dc_gain_db": pz["dc_gain_db"],
         "n_poles": pz["n_poles"], "n_zeros": pz["n_zeros"],
@@ -231,8 +248,11 @@ def run_mc(dut: str = "pre_mim") -> dict:
         "fc_hz": _stat([r["scorecard"].get("fc_hz") for r in rows]),
         "ph_max_deg": _stat([r["scorecard"].get("ph_max_deg") for r in rows]),
         "irn_uv": _stat([r["scorecard"].get("irn_uv") for r in rows]),
+        "offset_in_uv": _stat([r["offset_in_uv"] for r in rows]),
+        "offset_in_abs_uv": _stat([abs(r["offset_in_uv"]) for r in rows]),
+        # The raw output offset is kept beside it so the size of the referral is
+        # readable from the file rather than taken on trust.
         "offset_out_uv": _stat([r["offset_out_uv"] for r in rows]),
-        "offset_abs_uv": _stat([abs(r["offset_out_uv"]) for r in rows]),
         "f0_loQ_hz": _stat(pick(0, "f0_hz")), "Q_lo": _stat(pick(0, "Q")),
         "f0_hiQ_hz": _stat(pick(1, "f0_hz")), "Q_hi": _stat(pick(1, "Q")),
         "pair_ratio": _stat([r["pair_ratio"] for r in two]),
@@ -250,14 +270,15 @@ def run_mc(dut: str = "pre_mim") -> dict:
     summary["convergence"] = {
         "fc_hz": MC.trace([r["scorecard"].get("fc_hz") for r in rows]),
         "Q_lo": MC.trace(pick(0, "Q")), "Q_hi": MC.trace(pick(1, "Q")),
-        "offset_out_uv": MC.trace([r["offset_out_uv"] for r in rows]),
+        "offset_in_uv": MC.trace([r["offset_in_uv"] for r in rows]),
     }
 
     # The per-draw payload is trimmed to what the figures and the CSV read.  At a
     # thousand draws the full row -- the identical mismatch corner, the per-generator
     # noise split -- is megabytes of committed JSON that nothing consumes; the complete
     # record stays in `data/bench_mc_*.json`, which is regenerable and gitignored.
-    keep = ("seed", "slug", "scorecard", "pairs", "offset_out_uv", "dc_gain_db",
+    keep = ("seed", "slug", "scorecard", "pairs", "offset_in_uv", "offset_out_uv",
+            "dc_gain_db",
             "n_complex_pairs_all", "pair_ratio", "q_ratio")
     lean = [{k: r[k] for k in keep if k in r} for r in rows]
     return {"set": "mismatch", "dut": dut, "corner": idx["corner"],
@@ -298,7 +319,8 @@ def main() -> None:
         print("=== mismatch ===")
         out["mismatch"] = run_mc(a.dut)
         s = out["mismatch"]["summary"]
-        for k in ("fc_hz", "ph_max_deg", "irn_uv", "Q_lo", "Q_hi", "offset_abs_uv"):
+        for k in ("fc_hz", "ph_max_deg", "irn_uv", "Q_lo", "Q_hi",
+                  "offset_in_abs_uv"):
             v = s[k]
             print(f"  {k:14s} mean {v['mean']:10.4f}  sigma {v['sigma']:9.4f}  "
                   f"[{v['min']:10.4f} .. {v['max']:10.4f}]")

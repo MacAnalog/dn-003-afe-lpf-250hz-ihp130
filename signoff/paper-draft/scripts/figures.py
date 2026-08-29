@@ -458,7 +458,7 @@ def fig_mc(pv):
     for a, (vals, lab, unit) in zip(ax, (
             ([r["scorecard"]["fc_hz"] for r in rows], r"$f_c$", "Hz"),
             ([r["pairs"][1]["Q"] for r in rows], r"$Q_{hi}$", ""),
-            ([r["offset_out_uv"] for r in rows], "output offset", "µV"))):
+            ([r["offset_in_uv"] for r in rows], "input-referred offset", "µV"))):
         v = np.asarray(vals, float)
         a.hist(v, bins=max(14, int(np.sqrt(v.size))), color=S.CYCLE[0]["color"],
                alpha=0.8, edgecolor="white", linewidth=0.5)
@@ -481,35 +481,46 @@ def fig_mc(pv):
 
 # ------------------------------------- F8: supply rejection, CM rejection and offset --
 def fig_rejection(rj):
+    """The two rejection ratios, and the transfers they are built from.
+
+    CMRR and PSRR are defined against the DIFFERENTIAL output -- CMRR = A_dm /
+    A_(cm->dm), PSRR = A_dm / A_(vdd->dm) -- so panel (a) draws the numerator and the two
+    denominators on one axis and the rejection is the vertical gap between them.  Panel
+    (b) is the ratios themselves.  The common-mode-to-common-mode paths are a DIFFERENT
+    quantity, finite at nominal where the differential ones are symmetry-cancelled, and
+    they get their own panel (c) rather than sharing an axis with the rejection.
+    """
     spots = rj["spots_hz"]
     keys = [f"{x:g}" for x in spots]
     cs = rj["corners"]
     nom = cs["tt_27c_1v500"]
-    fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
-
-    f = np.asarray(nom["curves"]["f"], float)
-    env = np.array([[c["curves"][k] for c in cs.values()]
-                    for k in ("supply_to_cm_db", "cm_to_cm_db")])
-    for i, (k, lab) in enumerate((("supply_to_cm_db", r"supply $\rightarrow$ CM"),
-                                  ("cm_to_cm_db", r"CM $\rightarrow$ CM"))):
-        ax[0].semilogx(f, nom["curves"][k], **cy(i, marker="", lw=1.2), label=lab)
-        ax[0].fill_between(f, env[i].min(0), env[i].max(0),
-                           color=S.CYCLE[i]["color"], alpha=0.15, lw=0)
-        # The four spot frequencies the tables quote, marked on the measured sweep.
-        ax[0].plot([float(x) for x in keys], [nom[k][s] for s in keys],
-                   ls="none", marker="o", ms=4, color=S.CYCLE[i]["color"])
-    ax[0].set_xlabel("frequency (Hz)")
-    ax[0].set_ylabel("dB")
-    ax[0].set_xlim(f.min(), 1e4)
-    ax[0].set_title("(a) nominal common-mode paths")
-    ax[0].legend(loc="lower right", fontsize=6.5)
-    ax[0].set_ylim(-80, 6)
-    S.note(ax[0], "shaded: the envelope over the nine\ncertified axis points.  These paths "
-                  "are\nSYMMETRY-EXACT; the differential\nones are mismatch-limited, in (b).",
-           loc="center left")
-
     mc = rj["mismatch"]["curves"]
     fm = np.asarray(mc["f"], float)
+    fig, ax = plt.subplots(1, 3, figsize=(S.WIDE * 1.2, 2.9))
+
+    # (a) the definition, drawn.
+    for i, (k, lab) in enumerate((("a_dm_db", r"$A_{dm}$  (signal)"),
+                                  ("cm_to_dm_db", r"CM in $\rightarrow$ DM out"),
+                                  ("supply_to_dm_db", r"supply $\rightarrow$ DM out"))):
+        b = mc[k]
+        ax[0].semilogx(fm, b["mean"], **cy(i, marker="", lw=1.2), label=lab)
+        ax[0].fill_between(fm, b["min"], b["max"], color=S.CYCLE[i]["color"],
+                           alpha=0.15, lw=0)
+    ax[0].set_xlabel("frequency (Hz)")
+    ax[0].set_ylabel("dB")
+    ax[0].set_xlim(fm.min(), 1e4)
+    ax[0].set_title("(a) the transfers the ratios are made of")
+    # Headroom above the 0 dB signal path so the note sits in empty axes rather than on
+    # top of the leakage curves it is describing.
+    ax[0].set_ylim(-165, 55)
+    ax[0].legend(loc="upper right", fontsize=6.0)
+    S.note(ax[0], "rejection is the VERTICAL GAP:\n"
+                  "CMRR = $A_{dm}$ $-$ (CM$\\rightarrow$DM),\n"
+                  "PSRR = $A_{dm}$ $-$ (supply$\\rightarrow$DM).\n"
+                  "Both leakage paths are measured\nto the DIFFERENTIAL output.",
+           loc="lower left")
+
+    # (b) the ratios.
     for i, (k, lab) in enumerate((("cmrr_db", "CMRR"), ("psrr_db", "PSRR"))):
         b = mc[k]
         ax[1].semilogx(fm, b["mean"], **cy(i, marker="", lw=1.2), label=f"{lab} mean")
@@ -525,10 +536,32 @@ def fig_rejection(rj):
     S.note(ax[1], f"at dc: CMRR {mm['cmrr_db']['0.1']['mean']:.1f} dB mean,\n"
                   f"{mm['cmrr_db']['0.1']['min']:.1f} worst;  PSRR "
                   f"{mm['psrr_db']['0.1']['mean']:.1f} /\n"
-                  f"{mm['psrr_db']['0.1']['min']:.1f}.  Input offset "
+                  f"{mm['psrr_db']['0.1']['min']:.1f}.  Input-referred offset\n"
                   f"$\\sigma$ = {mm['offset_in_uv']['sigma']:.0f} µV\n"
                   f"(line: mean of the dB values;\nshaded: min-max over draws)",
            loc="upper right")
+
+    # (c) a different quantity: the common-mode paths, finite at nominal.
+    f = np.asarray(nom["curves"]["f"], float)
+    env = np.array([[c["curves"][k] for c in cs.values()]
+                    for k in ("supply_to_cm_db", "cm_to_cm_db")])
+    for i, (k, lab) in enumerate((("supply_to_cm_db", r"supply $\rightarrow$ CM"),
+                                  ("cm_to_cm_db", r"CM $\rightarrow$ CM"))):
+        ax[2].semilogx(f, nom["curves"][k], **cy(i, marker="", lw=1.2), label=lab)
+        ax[2].fill_between(f, env[i].min(0), env[i].max(0),
+                           color=S.CYCLE[i]["color"], alpha=0.15, lw=0)
+        # The four spot frequencies the tables quote, marked on the measured sweep.
+        ax[2].plot([float(x) for x in keys], [nom[k][s] for s in keys],
+                   ls="none", marker="o", ms=4, color=S.CYCLE[i]["color"])
+    ax[2].set_xlabel("frequency (Hz)")
+    ax[2].set_ylabel("dB")
+    ax[2].set_xlim(f.min(), 1e4)
+    ax[2].set_title("(c) nominal common-mode paths")
+    ax[2].legend(loc="lower right", fontsize=6.5)
+    ax[2].set_ylim(-80, 6)
+    S.note(ax[2], "NOT rejection: these end at the\noutput COMMON mode.  Shaded: the\n"
+                  "envelope over the nine certified\naxis points.  Symmetry-exact, so\n"
+                  "they are finite at nominal.", loc="center left")
     S.save(fig, "rejection")
     plt.close(fig)
 
@@ -691,7 +724,7 @@ def fig_mc_convergence(pv, rj):
     for a, (conv, title, keys) in zip(ax, (
             (pv["mismatch"]["summary"]["convergence"], "(a) extraction MC",
              (("fc_hz", r"$\sigma(f_c)$"), ("Q_lo", r"$\sigma(Q_{lo})$"),
-              ("Q_hi", r"$\sigma(Q_{hi})$"), ("offset_out_uv", r"$\sigma$(offset)"))),
+              ("Q_hi", r"$\sigma(Q_{hi})$"), ("offset_in_uv", r"$\sigma$(offset)"))),
             (rj["mismatch"]["convergence"], "(b) rejection MC",
              (("cmrr_db_0.1hz", r"$\sigma$(CMRR@dc)"),
               ("psrr_db_0.1hz", r"$\sigma$(PSRR@dc)"),
@@ -711,13 +744,13 @@ def fig_mc_convergence(pv, rj):
         S.note(a, notes[title], loc="upper right")
 
     # (c) why the worst case is not a convergent number.
-    tr = pv["mismatch"]["summary"]["convergence"]["offset_out_uv"]
+    tr = pv["mismatch"]["summary"]["convergence"]["offset_in_uv"]
     n = tr["n"]
     for i, (k, lab, ls) in enumerate((("max", "max", "-"), ("p99", "p99", "--"),
                                       ("p01", "p01", "--"), ("min", "min", "-"))):
         ax[2].semilogx(n, tr[k], **cy(i % 2, marker="", lw=1.1, ls=ls), label=lab)
     ax[2].set_xlabel("draws used, in seed order")
-    ax[2].set_ylabel("output offset (µV)")
+    ax[2].set_ylabel("input-referred offset (µV)")
     ax[2].set_title("(c) order statistics do not converge")
     ax[2].legend(loc="center right", fontsize=6.0)
     ax[2].margins(y=0.28)

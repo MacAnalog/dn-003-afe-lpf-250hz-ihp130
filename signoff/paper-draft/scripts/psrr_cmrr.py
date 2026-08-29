@@ -100,6 +100,12 @@ def measure(d, *, corner: str, temp: float, vdd: float | None, tag: str,
     return {
         "a_dm_db": _at(f, dm),
         "cmrr_db": _at(f, cmrr), "psrr_db": _at(f, psrr),
+        # The two transfers the rejection ratios are BUILT from, kept beside them: a
+        # ratio hides which of its halves moved, and only the leakage paths --
+        # common-mode input and supply, each to the DIFFERENTIAL output -- say how much
+        # unwanted signal actually arrives.  CMRR = A_dm / (CM -> DM),
+        # PSRR = A_dm / (supply -> DM); in dB, the ratio is the vertical gap.
+        "cm_to_dm_db": _at(f, cm2dm), "supply_to_dm_db": _at(f, ps2dm),
         "cm_to_cm_db": _at(f, cm2cm), "supply_to_cm_db": _at(f, ps2cm),
         # The spot values above are what the tables quote; the full sweep is what a
         # rejection plot needs.  Four interpolated points drawn as a line would imply a
@@ -107,6 +113,7 @@ def measure(d, *, corner: str, temp: float, vdd: float | None, tag: str,
         "curves": {"f": f.tolist(),
                    **{k: _db(v).tolist() for k, v in
                       (("a_dm_db", dm), ("cmrr_db", cmrr), ("psrr_db", psrr),
+                       ("cm_to_dm_db", cm2dm), ("supply_to_dm_db", ps2dm),
                        ("cm_to_cm_db", cm2cm), ("supply_to_cm_db", ps2cm))}},
         "offset_out_v": off,
         "offset_in_v": off / gdc if gdc else None,
@@ -171,11 +178,11 @@ def main() -> None:
     # mean and the min-max envelope at each frequency, and keeping every draw's 301
     # points would put tens of MB of derived JSON in the repo to plot three curves.
     mm["curves"] = {"f": draws[0]["curves"]["f"]}
-    for k in ("cmrr_db", "psrr_db"):
+    for k in ("a_dm_db", "cm_to_dm_db", "supply_to_dm_db", "cmrr_db", "psrr_db"):
         v = np.asarray([r["curves"][k] for r in draws], float)
         mm["curves"][k] = {"mean": v.mean(0).tolist(), "min": v.min(0).tolist(),
                            "max": v.max(0).tolist()}
-    for k in ("cmrr_db", "psrr_db"):
+    for k in ("cmrr_db", "psrr_db", "cm_to_dm_db", "supply_to_dm_db"):
         mm[k] = {s: stat(lambda r, s=s, k=k: r[k][s]) for s in map(lambda x: f"{x:g}", SPOTS)}
     # Convergence of the three headline distributions, in seed order (see `mc_stats`).
     mm["convergence"] = {

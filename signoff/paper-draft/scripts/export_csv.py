@@ -284,11 +284,20 @@ def monte_carlo(pv: dict) -> Path:
     path = write_csv("mc_draws.csv",
                      [("seed", [r["seed"] for r in rows])]
                      + _sc_cols(rows) + _pair_cols(rows)
-                     + [("offset_out_uv", [r["offset_out_uv"] for r in rows])])
+                     # Both offsets and the gain between them: the tables quote the
+                     # input-referred value, and a reader who wants the raw output
+                     # measurement should not have to take the referral on trust.
+                     + [("offset_in_uv", [r["offset_in_uv"] for r in rows]),
+                        ("offset_out_uv", [r["offset_out_uv"] for r in rows]),
+                        ("dc_gain_db", [r["dc_gain_db"] for r in rows])])
     fc = np.asarray([r["scorecard"]["fc_hz"] for r in rows], float)
     assert abs(float(fc.std(ddof=1)) - s["fc_hz"]["sigma"]) < 1e-9, "sigma(fc) differs"
-    print(f"  mc: {len(rows)} draws, sigma(fc) {s['fc_hz']['sigma']:.4f} Hz reproduced "
-          f"from the exported column")
+    off = np.asarray([r["offset_in_uv"] for r in rows], float)
+    assert abs(float(off.std(ddof=1)) - s["offset_in_uv"]["sigma"]) < 1e-9, \
+        "sigma(input-referred offset) differs"
+    print(f"  mc: {len(rows)} draws, sigma(fc) {s['fc_hz']['sigma']:.4f} Hz and "
+          f"sigma(offset_in) {s['offset_in_uv']['sigma']:.2f} uV reproduced from the "
+          f"exported columns")
     return path
 
 
@@ -319,8 +328,13 @@ def rejection(rj: dict) -> list[Path]:
     mc = rj["mismatch"]["curves"]
     fm = np.asarray(mc["f"], float)
     cols = [("freq_hz", fm.tolist())]
-    for k in ("cmrr_db", "psrr_db"):
+    # The ratios AND the transfers they are made of, since CMRR = A_dm/(CM->DM) and
+    # PSRR = A_dm/(supply->DM): a reader who wants to check the definition needs the
+    # numerator and the denominator, not only the quotient.
+    for k in ("a_dm_db", "cm_to_dm_db", "supply_to_dm_db", "cmrr_db", "psrr_db"):
         cols += [(f"{k}_{w}", mc[k][w]) for w in ("mean", "min", "max")]
+        if k not in ("cmrr_db", "psrr_db"):
+            continue
         # The band's own spot values must agree with the table the report quotes.
         got = float(np.interp(np.log10(0.1), np.log10(fm), mc[k]["mean"]))
         assert abs(got - rj["mismatch"][k]["0.1"]["mean"]) < 5e-3, f"{k} band vs table"
@@ -431,7 +445,7 @@ def mc_convergence(pv: dict, rj: dict) -> Path:
     cols: list[tuple[str, list]] = [("n_draws", ns),
                                     ("se_sigma_frac", ex["fc_hz"]["se_frac"])]
     for k, name in (("fc_hz", "sigma_fc_hz"), ("Q_lo", "sigma_q_lo"),
-                    ("Q_hi", "sigma_q_hi"), ("offset_out_uv", "sigma_offset_out_uv")):
+                    ("Q_hi", "sigma_q_hi"), ("offset_in_uv", "sigma_offset_in_uv_extraction")):
         assert ex[k]["n"] == ns, f"{k} ladder differs"
         cols.append((name, ex[k]["sigma"]))
     # The two populations are the same size but written as separate columns, since a
@@ -446,7 +460,7 @@ def mc_convergence(pv: dict, rj: dict) -> Path:
     # The last rung is the full run, so it must equal the sigma every table quotes.
     for k, ref in (("fc_hz", pv["mismatch"]["summary"]["fc_hz"]["sigma"]),
                    ("Q_hi", pv["mismatch"]["summary"]["Q_hi"]["sigma"]),
-                   ("offset_out_uv", pv["mismatch"]["summary"]["offset_out_uv"]["sigma"])):
+                   ("offset_in_uv", pv["mismatch"]["summary"]["offset_in_uv"]["sigma"])):
         assert abs(ex[k]["sigma"][-1] - ref) < 1e-9, f"final sigma({k}) differs"
     assert abs(rejc["offset_in_uv"]["sigma"][-1]
                - rj["mismatch"]["offset_in_uv"]["sigma"]) < 1e-9, "final sigma(offset) differs"

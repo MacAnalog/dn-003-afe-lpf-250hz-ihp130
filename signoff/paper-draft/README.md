@@ -118,8 +118,8 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 | `figures/distortion.png` | HD3 vs amplitude and vs frequency, measured against the equation | `scripts/figures.py::fig_thd` |
 | `figures/iip3.png` | the two-tone ladder and the IIP3 extrapolation | `scripts/figures.py::fig_iip3` |
 | `figures/pvt_axes.png` | `fc` and both `Q` over the nine certified points, pre- and post-layout; and the 45-point box with the lost pairs marked | `scripts/figures.py::fig_pvt` |
-| `figures/mc_mismatch.png` | the mismatch distributions of `fc`, `Q` and offset | `scripts/figures.py::fig_mc` |
-| `figures/rejection.png` | the nominal common-mode transfers and the mismatch-limited CMRR/PSRR band | `scripts/figures.py::fig_rejection` |
+| `figures/mc_mismatch.png` | the mismatch distributions of `fc`, `Q` and input-referred offset | `scripts/figures.py::fig_mc` |
+| `figures/rejection.png` | the transfers CMRR and PSRR are built from, the mismatch-limited band itself, and the nominal common-mode paths | `scripts/figures.py::fig_rejection` |
 | `figures/gds_residual.png` | what §6.2 leaves unexplained, and the two `g_ds` predictions against it | `scripts/figures.py::fig_residual` |
 | `figures/iip3_corners.png` | IIP3 and the measured IMD3 slope at every certified corner | `scripts/figures.py::fig_iip3_corners` |
 | `figures/thd_corners.png` | the THD amplitude ladder at every certified corner, and the margin at the spec point | `scripts/figures.py::fig_thd_corners` |
@@ -143,7 +143,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
 | `fc` and `Q` over the certified axes, pre- and post-layout | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_*`, `q_lo_*`, `q_hi_*` |
 | the same over the 45-point box | `csv/pvt_cert_box.csv` | `corner` | `fc_hz`, `q_hi`, `n_complex_pairs` |
-| the mismatch draws | `csv/mc_draws.csv` | `seed` | `fc_hz`, `q_hi`, `offset_out_uv` |
+| the mismatch draws | `csv/mc_draws.csv` | `seed` | `fc_hz`, `q_hi`, `offset_in_uv` |
 | PSRR / CMRR / common-mode transfers vs frequency | `csv/rejection_nominal.csv` | `freq_hz` | `psrr_db`, `cmrr_db`, `supply_to_cm_db`, … |
 | the mismatch-limited rejection band | `csv/rejection_mismatch_curves.csv` | `freq_hz` | `psrr_db_mean`, `psrr_db_min`, `psrr_db_max`, … |
 | IIP3 over corners | `csv/iip3_corners.csv` | `corner` | `iip3_dbv`, `imd3_slope_db_per_decade` |
@@ -154,9 +154,11 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all nineteen, plus three points to note before
-plotting: why the phase and group-delay columns are blank above 3 kHz, which two-tone
-points the published IIP3 is fitted on, and why the corner files carry a text column.
+[`csv/README.md`](csv/README.md) covers all nineteen, plus five points to note before
+plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
+two halves are exported beside them, why the phase and group-delay columns are blank above
+3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not
+a converged number.
 
 `export_csv.py` writes them.  It runs no simulation and re-defines no metric: it
 re-serialises the same JSON the figures and tables are built from, and asserts that the
@@ -287,8 +289,10 @@ The four DUTs — two pre-layout, two post-layout — and why each exists are in
   7 of the 45 cross-product points lose a complex pole pair, including `tt / 0 °C /
   1.40 V`, whose three coordinates are each individually inside the certified window.
   Reading the sign-off numbers as a BOX is not supported by the evidence that exists.
-* **PSRR / CMRR / offset — measured** (§9): nominal common-mode transfers and
-  mismatch-limited differential ones.  Two results worth carrying: the output common mode
-  tracks the supply almost one-for-one at 1 kHz (−0.14 dB), and the input-referred offset
-  has σ ≈ 1.9 mV, 1.1 % of the S7 drive.  Neither is a specified quantity, so neither
+* **PSRR / CMRR / offset — measured** (§9): both ratios are taken to the DIFFERENTIAL
+  output — `CMRR = A_dm / A_(cm→dm)`, `PSRR = A_dm / A_(vdd→dm)` — and the transfers they
+  are built from are tabulated and plotted beside them; the common-mode-to-common-mode
+  paths are reported separately, as a different quantity.  Two results worth carrying:
+  the output common mode tracks the supply almost one-for-one at 1 kHz (−0.14 dB), and
+  the input-referred offset has σ ≈ 2.1 mV, 1.2 % of the S7 drive.  Neither is a specified quantity, so neither
   carries a pass/fail.

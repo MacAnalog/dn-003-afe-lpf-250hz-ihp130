@@ -861,7 +861,7 @@ response, so a `Q` distribution built that way would mostly measure the fit's co
 | low-pair `Q` | 0.5430 | 0.0013 | ±2.2 % | 0.5400 … 0.5462 | 0.5383 … 0.5472 |
 | high-pair `Q` | 1.3078 | 0.0161 | ±2.2 % | 1.2710 … 1.3463 | 1.2654 … 1.3669 |
 | IRN (µV) | 29.201 | 0.197 | ±2.2 % | 28.765 … 29.694 | 28.648 … 29.927 |
-| output offset (µV) | +26.2 | 2106.0 | ±2.2 % | -5096.7 … +4809.6 | -6884.4 … +6758.3 |
+| input-referred offset (µV) | +26.2 | 2107.9 | ±2.2 % | -5101.5 … +4814.0 | -6890.8 … +6764.6 |
 
 Both complex pairs survive **1024/1024** draws.  The low-Q pair is again the stiff one — `Q`
 scatters by 0.25 % against 1.56 % for `fc` — but the high-Q pair scatters 1.23 %, which
@@ -888,6 +888,13 @@ the scale scatter, and nothing inside the short run could have revealed that.  T
 three shape and offset quantities moved +3.2 %, -2.5 % and +6.6 % over the same
 extension, all inside it.  Read together: 64 draws was enough for the ratios and not for
 the scale, and the σ column's band is what tells the two cases apart.
+
+The offset row is **referred to the input** — the raw differential output offset divided
+by that same draw's own dc gain.  |A_dc| is -0.008 dB here, so the referral is a
++0.094 % correction and the two columns look alike; it is applied anyway, because
+an output offset is only meaningful next to the gain that produced it, and because it is
+what makes this bench and Section 9.3's agree exactly rather than approximately.  The raw
+output value is kept in `data/pvt.json` beside it — σ 2106.0 µV against the referred 2107.9 µV.
 
 The `min … max` column is completeness, not a worst case that converged.  min and max are
 ORDER statistics: they move outward as draws are added, by construction, so a longer run
@@ -955,7 +962,18 @@ but it bounds what may sit downstream of this filter on the same supply.
 
 ### 9.2 Mismatch-limited, differential paths
 
-1024 draws, `mos_tt_mismatch`, 27 °C.
+1024 draws, `mos_tt_mismatch`, 27 °C.  Both ratios are defined the way the differential
+signal actually sees them — **the transfer from the disturbance to the DIFFERENTIAL
+output, referred to the differential gain**:
+
+$$\mathrm{CMRR}(f)=\frac{A_{dm}(f)}{A_{cm\rightarrow dm}(f)},
+\qquad
+\mathrm{PSRR}(f)=\frac{A_{dm}(f)}{A_{vdd\rightarrow dm}(f)}$$
+
+`A_cm→dm` is measured by driving both inputs together (`ac_cmrr`) and reading `v(voutp) −
+v(voutn)`; `A_vdd→dm` by putting the ac source on the rail ahead of the core probe
+(`ac_psrr`) and reading the same difference.  Neither is a common-mode-to-common-mode
+transfer — those are Section 9.1's, and they are a different quantity.
 
 | quantity | 0.1 Hz | 50 Hz | 250 Hz | 1000 Hz |
 |---|---|---|---|---|
@@ -970,6 +988,22 @@ but it bounds what may sit downstream of this filter on the same supply.
 
 Rejection falls with frequency in both paths, as the loop gain that produces it falls.
 
+The numerator and the denominator separately, since a ratio hides which half moved — the
+`worst` row here is the largest leakage over the draws, i.e. the case that produced the
+`worst` rejection above:
+
+| transfer | 0.1 Hz | 50 Hz | 250 Hz | 1000 Hz |
+|---|---|---|---|---|
+| CM in → DM out mean (dB) | -98.42 | -51.71 | -46.98 | -72.13 |
+| CM in → DM out worst (dB) | -85.72 | -36.58 | -32.61 | -57.32 |
+| supply → DM out mean (dB) | -105.81 | -53.27 | -53.23 | -66.66 |
+| supply → DM out worst (dB) | -90.31 | -37.08 | -37.27 | -50.61 |
+| A_dm at this spot (dB) | -0.01 | -0.01 | -3.02 | -49.03 |
+
+Read across: at dc the differential path has -0.01 dB of gain while a common-mode input
+arrives at the differential output 98 dB down and supply ripple 106 dB down; the
+difference is the CMRR and PSRR quoted above.
+
 Every σ here carries the same (M1) band as Section 8.3 — **±2.2 %** at 1024 draws — and
 panel (b) of `figures/mc_convergence.png` plots the running σ of these three
 distributions.  They settle more slowly than `fc` and `Q` do, and for a reason worth
@@ -978,21 +1012,34 @@ a longer tail than a smooth function of many small device shifts, and (M1)'s nor
 assumption is a rough guide rather than a tight one.  The trace, not the formula, is the
 evidence in that case, and the `worst` row moves with N while `p01` does not.
 
-`figures/rejection.png` plots both: panel (a) the nominal common-mode transfers with
-their envelope over the nine certified axis points, panel (b) the mismatch band.
+`figures/rejection.png` plots all of it: panel (a) the differential gain against the two
+leakage transfers that define the ratios, so the rejection is the vertical gap between
+them; panel (b) the CMRR and PSRR bands themselves; panel (c) the nominal
+common-mode-to-common-mode paths of Section 9.1, with their envelope over the nine
+certified axis points.
 
 ### 9.3 Input-referred offset
 
 Zero by symmetry at nominal, so it is a mismatch quantity and only a distribution.  Over
 the same 1024 draws: mean **+26.2 µV**, σ **2107.9 ± 46.6 µV**, 99th percentile of
-|offset| **5546.8 µV** and worst |offset| **6890.8 µV**.  The dc
-gain is within 0.01 dB of unity, so the input-referred and output values coincide.  For
+|offset| **5546.8 µV** and worst |offset| **6890.8 µV**.  Every draw's differential
+output offset is divided by that draw's own dc gain before it enters this distribution;
+the gain is close to unity (+0.094 % on σ) but the referral is applied rather than
+waved away, because the input-referred value is the one that compares against the drive
+level, against the devices' own V_GS mismatch, and against another design.  For
 scale, σ is 1.20 % of the 175 mVpp S7 drive.
 
 Section 8.3 measures the same quantity a second way — 1024 draws, from the operating point
 of a full extraction rather than from this bench's `op` — and gets mean +26.2 µV,
-σ **2106.0 µV**.  The two σ agree to 0.1 %, and both means sit inside one
-standard error of zero, which is what a symmetric cell should give.
+σ **2107.9 µV**.  Referred the same way, the two benches agree to
+0.25 nV on σ, and draw by draw to about 2 nV — they are separate decks,
+separate solves and separate `op` points, and they land on the same number.  Both means
+sit inside one standard error of zero, which is what a symmetric cell should give.
+
+That agreement is what the referral bought.  Compared un-referred, the two σ differ by
+0.09 % — which reads like sampling noise and is not: it is exactly the dc-gain
+correction Section 8.3 used to omit.  A residual that small is easy to attribute to the
+benches; dividing by the gain shows it was never theirs.
 
 ## 10. The sub-35 Hz residual, and linearity over corners
 
