@@ -91,7 +91,8 @@ def _bias(d: Design) -> str:
     ])
 
 
-def _core(d: Design, ic: bool = True, vdd: float | None = None) -> str:
+def _core(d: Design, ic: bool = True, vdd: float | None = None,
+          vdd_ac: float = 0.0) -> str:
     """Supply probes, the DUT instance, and the dc-solution hints.
 
     `vdd` overrides `lab.config.VDD` for THIS deck only.  It is a parameter and
@@ -101,8 +102,12 @@ def _core(d: Design, ic: bool = True, vdd: float | None = None) -> str:
     `vdd=None` reproduces the nominal deck byte-for-byte.
     """
     v = C.VDD if vdd is None else vdd
+    # `vdd_ac = 0` emits the plain dc source, so every deck built before the supply
+    # stimulus existed is unchanged byte-for-byte; a non-zero value turns the same
+    # source into the PSRR drive without moving the operating point.
+    ac = "" if not vdd_ac else f" ac {vdd_ac:.6g}"
     lines = [
-        f"vdd_meas vdd_top 0 {v}",
+        f"vdd_meas vdd_top 0 {v}{ac}",
         "vflt vdd_top vdd 0",
         f"xdut vinp vinn voutp voutn vbn vbp vdd lpf_core",
     ]
@@ -148,12 +153,34 @@ def _save(extra: tuple[str, ...] = ()) -> str:
     return "save " + nets + " " + cur + ("" if not extra else " " + " ".join(extra))
 
 
-def _stim_ac(vicm: float) -> str:
+def _stim_ac(vicm: float, ac: float = 1.0) -> str:
+    """The balun differential drive.  `ac = 0` keeps the bias and the node names but
+    stops the input from being excited, which is what a supply-rejection run needs:
+    with both `vsig` and the rail driven at once the differential output is dominated
+    by the INPUT path and the measured rejection is the input gain, not the supply's.
+    `ac = 1` renders `ac 1`, so every existing deck is unchanged byte-for-byte."""
+    return "\n".join([
+        f"vcm vcm 0 {vicm}",
+        f"{C.IN_SRC} sig vcm dc 0 ac {ac:g}",
+        "evp vinp vcm sig vcm 0.5",
+        "evn vinn vcm sig vcm -0.5",
+    ])
+
+
+def _stim_cm(vicm: float) -> str:
+    """Both inputs driven TOGETHER -- the common-mode half of the balun contract.
+
+    `_stim_ac` splits `vsig` into +-0.5, so `vsig` is the differential input; here both
+    gains are +1, so `vsig` is the common-mode input and a 1 V ac source is a 1 V
+    common-mode excitation.  The node names, the bias network and the probes are
+    otherwise identical, which is what lets CMRR be read against the differential gain
+    measured on the same cell by `ac_noise`.
+    """
     return "\n".join([
         f"vcm vcm 0 {vicm}",
         f"{C.IN_SRC} sig vcm dc 0 ac 1",
-        "evp vinp vcm sig vcm 0.5",
-        "evn vinn vcm sig vcm -0.5",
+        "evp vinp vcm sig vcm 1.0",
+        "evn vinn vcm sig vcm 1.0",
     ])
 
 
@@ -193,6 +220,66 @@ ac dec {dec} {fstart:.6g} {fstop:.6g}
 write sim.raw
 noise v({C.OUT_P},{C.OUT_N}) {C.IN_SRC} dec {dec} {fstart:.6g} {nstop:.6g}
 setplot noise1
+write sim.raw
+.endc
+.end
+"""
+
+
+def ac_cmrr(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
+            fstart: float = 0.1, fstop: float = 1e5, dec: int = C.AC_DEC,
+            vdd: float | None = None) -> str:
+    """Common-mode drive, differential and common-mode response.
+
+    CMRR is then |A_dm| / |A_cm->dm| with `A_dm` taken from `ac_noise` on the same cell.
+    Both are needed: at nominal the cell is geometrically symmetric, so `A_cm->dm` is
+    limited by the solver rather than by the circuit, and the honest number is the
+    MISMATCH-limited one (`lab.mc`).  `A_cm->cm` is finite at nominal and is what says
+    whether the output common-mode rejects its own input excursion.
+    """
+    return f""".title lpf {d.topology} -- common-mode ac (CMRR)
+{_libs(corner, d)}
+{subckt(d)}
+{_core(d, vdd=vdd)}
+{_bias(d)}
+{_stim_cm(d.vicm)}
+.temp {temp}
+.control
+set filetype=binary
+set appendwrite
+op
+write sim.raw
+ac dec {dec} {fstart:.6g} {fstop:.6g}
+write sim.raw
+.endc
+.end
+"""
+
+
+def ac_psrr(d: Design, *, corner: str = C.CORNER_NOM, temp: float = C.TEMP_NOM,
+            fstart: float = 0.1, fstop: float = 1e5, dec: int = C.AC_DEC,
+            vdd: float | None = None) -> str:
+    """Supply ripple in, output out.  The differential input is grounded (dc only).
+
+    The ac source rides on `vdd_meas`, i.e. AHEAD of the core probe `vflt`, so the
+    ripple reaches the bias network and the core by the same path a real rail would.
+    Reported both ways: supply -> differential output (symmetry-cancelled at nominal,
+    so mismatch-limited in practice) and supply -> output common mode (finite, and the
+    one that actually moves the operating point).
+    """
+    return f""".title lpf {d.topology} -- supply ac (PSRR)
+{_libs(corner, d)}
+{subckt(d)}
+{_core(d, vdd=vdd, vdd_ac=1.0)}
+{_bias(d)}
+{_stim_ac(d.vicm, ac=0.0)}
+.temp {temp}
+.control
+set filetype=binary
+set appendwrite
+op
+write sim.raw
+ac dec {dec} {fstart:.6g} {fstop:.6g}
 write sim.raw
 .endc
 .end

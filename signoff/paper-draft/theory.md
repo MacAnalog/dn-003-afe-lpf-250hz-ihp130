@@ -465,6 +465,51 @@ claim made from `(D1)` in this pack is made inside that window; the full error t
 
 ---
 
+### 4.4 A second generation mechanism: drain-conductance curvature
+
+`(D1)` generates harmonics at the GATE: the exponential turns a `v_gs` swing into harmonic
+current.  It is not the only nonlinearity a device has.  The same device also sources a
+current that depends on its DRAIN voltage, and that dependence is not linear either.
+Expanding `I_D` about the operating point in `v_ds` alone,
+
+```
+I_D(v_ds) = I₀ + g₁·v_ds + g₂·v_ds²/2 + g₃·v_ds³/6 + …          (D4)
+
+    g₁ = g_ds ,     g₂ = ∂g_ds/∂V_DS ,     g₃ = ∂²g_ds/∂V_DS² .
+```
+
+The small-signal model keeps `g₁` — it IS `g_ds`, and it is already in the MNA — and drops
+everything after it.  Dropping `g₃` is what makes `Z_T` linear, so this mechanism is
+invisible to the propagation of §4.2 by construction, not by neglect.
+
+For `v_ds = A·cos(ωt)`, using `cos³θ = (3cosθ + cos3θ)/4`, the cubic term emits a third
+harmonic of amplitude
+
+```
+i₃,gds = g₃·A³/24 ,     at 3ω, phase 3·arg(v_ds).              (D5)
+```
+
+Two things make this cheap to evaluate rather than a new theory. First, `i₃,gds` is a
+current injected between the same two terminals — drain and source — that §3.3 established
+as a noise generator's port, so it propagates to the output through the SAME `Z_T(j3ω)`
+already built and cross-checked there; `(D3)`'s propagation step is reused unchanged.
+Second, `A` need not be estimated: the MNA system that produced `H(s)` also produces every
+interior node's response, so each device's `v_ds` phasor at the fundamental is read off the
+same solve (`pencil.node_response`).
+
+The scaling is what distinguishes this mechanism from `(D1)` in a measurement. `(D1)`'s
+third harmonic is driven by the follower's `v_gs`, which is the feedback ERROR and
+therefore falls with the loop gain as ω drops; `(D5)` is driven by `v_ds`, which follows
+the output SWING and is flat across the passband. So the two mechanisms have opposite
+low-frequency behaviour, and a residual that is flat in volts where `(D1)` collapses is
+the signature `(D5)` predicts. That is a falsifiable statement and it is tested, with its
+threshold fixed in advance, in [validation §10.1](validation.md#101-a-named-mechanism-for-the-residual).
+
+`g₃` is not available from an operating point: PSP reports `g_ds`, not its second
+derivative. It is measured per device by sweeping `V_DS` about the device's own bias and
+fitting `(D4)` — with the caveat that a Taylor coefficient is only meaningful if it does
+not depend on the fit window, which for one device in this cell it does.
+
 ## 5. IMD3 and IIP3
 
 ### 5.1 The definitions used

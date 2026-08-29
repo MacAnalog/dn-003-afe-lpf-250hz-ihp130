@@ -14,6 +14,7 @@ touches the small-signal model.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 PACK = Path(__file__).resolve().parents[1]
@@ -898,11 +899,527 @@ above makes the same pre→post statement in its own quantity.
 """
 
 
+def _sp(s: dict, key: str, fmt: str = "{:.3f}") -> str:
+    v = s.get(key)
+    return "—" if not v else (fmt.format(v["min"]) + " … " + fmt.format(v["max"]))
+
+
+def _axis_span(rows: list[dict], get, axis: str) -> float:
+    """Span of a quantity over ONE axis of the certified window, nominal included.
+
+    The nine certified points are three separate one-dimensional sweeps sharing a centre,
+    so a single overall span hides which axis moved the number.  `axis` selects the
+    sweep: "process" (27 °C, 1.5 V), "vdd" (nominal process, 27 °C) or "temp"
+    (nominal process, 1.5 V).
+    """
+    key = {"process": lambda c: c["temp"] == 27.0 and c["vdd"] == 1.5,
+           "vdd": lambda c: c["process"] == "mos_tt" and c["temp"] == 27.0,
+           "temp": lambda c: c["process"] == "mos_tt" and c["vdd"] == 1.5}[axis]
+    v = [get(r) for r in rows if key(r["corner"])]
+    return max(v) / min(v)
+
+
+def _at(tr: dict, n: int) -> float:
+    """σ at exactly `n` draws of a running trace -- the ladder always has the powers of
+    two as rungs, so an earlier, shorter run is read off directly rather than interpolated."""
+    return tr["sigma"][tr["n"].index(n)]
+
+
+def sec_pvt(pv: dict) -> str:
+    """PVT and mismatch sensitivity of the ANALYTICAL quantities (doc/paper G25)."""
+    ca, cb, mm = pv["cert-axes"]["summary"], pv["cert-box"]["summary"], pv["mismatch"]["summary"]
+    cv = mm["convergence"]
+    # The dc gain the offset row is referred by, averaged over the draws only so the
+    # prose can state its size; the referral itself is per draw, in `pvt_analysis`.
+    mmrows = pv["mismatch"]["rows"]
+    gdc_db = sum(r["dc_gain_db"] for r in mmrows) / len(mmrows)
+    hb = pv["both"]["summary"]
+    rows_a = pv["cert-axes"]["rows"]
+    qhi = {ax: _axis_span(rows_a, lambda r: r["pairs"][1]["Q"], ax)
+           for ax in ("process", "vdd", "temp")}
+    fcs = {ax: _axis_span(rows_a, lambda r: r["scorecard"]["fc_hz"], ax)
+           for ax in ("process", "vdd", "temp")}
+    post = pv["cert-axes:post_lumped"]
+    pa = post["summary"]
+
+    scale_shape = tbl(
+        ["quantity", "what it is", "certified axes (9)", "certified box (45)",
+         "harness box (29)"],
+        [["`fc`", "**scale** — set by `gm/C`", f"{ca['fc_hz']['span_x']:.3f}×",
+          f"{cb['fc_hz']['span_x']:.3f}×", f"{hb['fc_hz']['span_x']:.3f}×"],
+         ["`Q` low pair", "**shape** — a `gm` ratio", f"{ca['Q_lo']['span_x']:.3f}×",
+          f"{cb['Q_lo']['span_x']:.3f}×", f"{hb['Q_lo']['span_x']:.3f}×"],
+         ["`Q` high pair", "**shape** — a `gm` ratio", f"{ca['Q_hi']['span_x']:.3f}×",
+          f"{cb['Q_hi']['span_x']:.3f}×", f"{hb['Q_hi']['span_x']:.3f}×"],
+         ["`f₀` ratio", "**shape** — pair coincidence",
+          f"{ca['pair_ratio']['span_x']:.3f}×", f"{cb['pair_ratio']['span_x']:.3f}×",
+          f"{hb['pair_ratio']['span_x']:.3f}×"],
+         ["two complex pairs", "the S1 property itself",
+          f"**{ca['n_two_pair']}/{ca['n_corners']}**",
+          f"{cb['n_two_pair']}/{cb['n_corners']}", f"{hb['n_two_pair']}/{hb['n_corners']}"],
+         ["Σ generators vs IRN", "the noise equation, per corner",
+          f"{ca['noise_closure_max_pct']:.1e} %", f"{cb['noise_closure_max_pct']:.1e} %",
+          f"{hb['noise_closure_max_pct']:.1e} %"]])
+
+    axes = tbl(["corner", "`fc` (Hz)", "`ph_max` (°)", "low-Q pair `f₀` / `Q`",
+                "high-Q pair `f₀` / `Q`", "IRN (µV)"],
+               [[f"`{r['slug']}`", f"{r['scorecard']['fc_hz']:.3f}",
+                 f"{r['scorecard']['ph_max_deg']:.2f}",
+                 f"{r['pairs'][0]['f0_hz']:.2f} / {r['pairs'][0]['Q']:.4f}",
+                 f"{r['pairs'][1]['f0_hz']:.2f} / {r['pairs'][1]['Q']:.4f}",
+                 f"{r['scorecard']['irn_uv']:.3f}"]
+                for r in pv["cert-axes"]["rows"]])
+
+    cmp_t = tbl(["quantity", "pre-layout (`pre_mim`)", "post-layout (`post_lumped`)"],
+                [["`fc` span", f"{ca['fc_hz']['span_x']:.4f}×", f"{pa['fc_hz']['span_x']:.4f}×"],
+                 ["`Q` low pair span", f"{ca['Q_lo']['span_x']:.4f}×",
+                  f"{pa['Q_lo']['span_x']:.4f}×"],
+                 ["`Q` high pair span", f"{ca['Q_hi']['span_x']:.4f}×",
+                  f"{pa['Q_hi']['span_x']:.4f}×"],
+                 ["`f₀` ratio span", f"{ca['pair_ratio']['span_x']:.4f}×",
+                  f"{pa['pair_ratio']['span_x']:.4f}×"],
+                 ["two complex pairs", f"{ca['n_two_pair']}/{ca['n_corners']}",
+                  f"{pa['n_two_pair']}/{pa['n_corners']}"],
+                 ["IRN over the axes (µV)",
+                  f"{ca['irn_uv']['min']:.3f} … {ca['irn_uv']['max']:.3f}",
+                  f"{pa['irn_uv']['min']:.3f} … {pa['irn_uv']['max']:.3f}"],
+                 ["Σ generators vs IRN", f"{ca['noise_closure_max_pct']:.1e} %",
+                  f"{pa['noise_closure_max_pct']:.1e} %"]])
+
+    # p01 … p99 sits beside min … max deliberately: only the quantiles are comparable
+    # across N, since min and max are order statistics that must drift outward as draws
+    # are added.  Every σ carries (M1), its own standard error at this N.
+    def mmrow(key, label, fmt, sgn=""):
+        v = mm[key]
+        return [label, f"{v['mean']:{sgn}{fmt}}", f"{v['sigma']:{fmt}}",
+                f"±{100 * v['se_sigma_frac']:.1f} %",
+                f"{v['p01']:{sgn}{fmt}} … {v['p99']:{sgn}{fmt}}",
+                f"{v['min']:{sgn}{fmt}} … {v['max']:{sgn}{fmt}}"]
+
+    mmt = tbl(["quantity", "mean", "σ", "σ error (M1)", "p01 … p99", "min … max"],
+              [mmrow("fc_hz", "`fc` (Hz)", ".3f"),
+               mmrow("ph_max_deg", "`ph_max` (°)", ".3f"),
+               mmrow("Q_lo", "low-pair `Q`", ".4f"),
+               mmrow("Q_hi", "high-pair `Q`", ".4f"),
+               mmrow("irn_uv", "IRN (µV)", ".3f"),
+               mmrow("offset_in_uv", "input-referred offset (µV)", ".1f", "+")])
+
+    return f"""## 8. The analytical results over PVT and mismatch
+
+Everything in Sections 1–7 is derived at ONE operating point.  This section re-derives the
+poles, the per-biquad `Q` and the noise budget at every corner of the window the cell is
+certified over, and over {mm['n_draws']} mismatch draws.  No new modelling is involved: each of those
+quantities is a function of the operating point, and `extract_bench.py --pvt/--mc` produces
+one operating point per point.  Generated by `scripts/pvt_analysis.py`.
+
+**Read `fc` and `Q` as different questions.**  `fc` is a SCALE set by `gm/C`, and in weak
+inversion `gm = I/(n·U_T)`, so a reference current that does not track temperature makes
+`fc` move by construction — that is old news and `lab/corners.py` documents it.  `Q` and the
+pair-coincidence ratio are `gm` RATIOS.  Whether the filter's SHAPE survives when its scale
+drifts is the question the nominal analysis could not answer, and it is the one below.
+
+**The bias law matters and is recorded.**  The temperature rows use `LPF_BIAS_ALPHA=1.1`,
+the constant-`gm` shaping the delivered cells were certified with.  At 27 °C it is the same
+current as the default `alpha = 0`, so the nominal numbers above are unaffected; at every
+other temperature it is a different measurement, and a sweep that silently took the default
+would report an uncompensated cell as if it were this one.
+
+### 8.1 Scale versus shape
+
+{scale_shape}
+
+The certified window is **one axis at a time** — process at 27 °C/1.5 V, supply 1.40–1.65 V
+at 27 °C, temperature 0–70 °C at 1.5 V — which is how `signoff/post-pvt/README.md` states
+it.  On those nine points the scale moves {ca['fc_hz']['span_x']:.3f}×, and **both complex pairs survive every
+one of them** — the S1 property itself never comes close to failing.
+
+The two pairs then behave differently, and the table says so.  The LOW-Q pair is the pure
+ratio the framing predicts: its `Q` holds to {100 * (ca['Q_lo']['span_x'] - 1):.2f} %, {ca['fc_hz']['span_x'] / ca['Q_lo']['span_x']:.0f}× stiffer than the scale beside it.
+The HIGH-Q pair is not: its `Q` moves {100 * (ca['Q_hi']['span_x'] - 1):.1f} %, which is as much as `fc` moves and slightly
+more.  Splitting that by axis shows where it comes from — {100 * (qhi['process'] - 1):.1f} % over process,
+{100 * (qhi['vdd'] - 1):.1f} % over supply, {100 * (qhi['temp'] - 1):.1f} % over temperature — so it is a temperature effect, and it
+persists under the constant-`gm` bias that is supposed to remove temperature from `gm`.
+The honest summary is therefore narrower than "shape is invariant": the filter stays two
+biquads and the low-Q damping is fixed, while the high-Q damping carries a residual
+temperature dependence of the same order as the cutoff's ({100 * (fcs['temp'] - 1):.1f} % over the same axis).
+
+**The axes do not superpose, and that is a result.**  The middle column is the CROSS
+PRODUCT of the same endpoints — 45 points, none of them ever certified.  {cb['n_corners'] - cb['n_two_pair']} of them have
+lost a complex pair, i.e. the filter is no longer two biquads, and `tt / 0 °C / 1.40 V` is
+among the failures even though nominal process, 0 °C and 1.40 V are each individually
+inside the certified window.  A one-axis-at-a-time claim is therefore not a box, and the
+distinction is invisible in the scorecard alone.
+
+### 8.2 The certified axes, point by point
+
+{axes}
+
+### 8.3 Mismatch
+
+{mm['n_draws']} draws at `{pv['mismatch']['corner']['process']}`, 27 °C, each one a full extraction and the same pencil
+solve — not a rational fit to the response, because `fit_poles_from_sim` (Section 3.2)
+records that the `f₀`/`Q` split of two nearly co-located pairs is weakly determined by the
+response, so a `Q` distribution built that way would mostly measure the fit's conditioning.
+
+{mmt}
+
+Both complex pairs survive **{mm['n_two_pair']}/{mm['n_draws']}** draws.  The low-Q pair is again the stiff one — `Q`
+scatters by {100 * mm['Q_lo']['sigma'] / mm['Q_lo']['mean']:.2f} % against {100 * mm['fc_hz']['sigma'] / mm['fc_hz']['mean']:.2f} % for `fc` — but the high-Q pair scatters {100 * mm['Q_hi']['sigma'] / mm['Q_hi']['mean']:.2f} %, which
+belongs with the scale rather than with its own low-Q partner.  That is the expected shape of the difference: a PVT corner shifts
+every device the same way, so ratios can hold while scale moves, whereas a mismatch draw
+shifts each device independently and a ratio has no reason to survive it.  σ(`fc`) = {mm['fc_hz']['sigma']:.2f} Hz here
+against the 3.7 Hz the certified 100-sample scorecard MC reports, which is the agreement
+that says these draws are the same population.
+
+**Is this many draws enough?**  A σ estimated from N samples is itself an estimate: for a
+normal population its relative standard error is 1/√(2(N−1)), which is {100 / math.sqrt(2 * 63):.1f} % at 64 draws
+and **{100 * mm['se_sigma_frac']:.1f} %** at {mm['n_draws']}.  That is the band the σ column above is quoted with, and
+`figures/mc_convergence.png` plots the running σ against N inside it — flat and within the
+band long before the end, so these distributions are resolved rather than still filling
+in.  Over the last four rungs of the ladder σ(`fc`) moved {cv['fc_hz']['drift_pct']:.2f} %, σ(`Q_hi`) {cv['Q_hi']['drift_pct']:.2f} % and
+σ(offset) {cv['offset_in_uv']['drift_pct']:.2f} %.  Seeds run `1…N` in order, so the first 64 rows of this set ARE
+the 64-draw run reported before it was extended: σ(`fc`) over them is {_at(cv['fc_hz'], 64):.3f} Hz, the
+value that run published, and every trace passes through the earlier value rather than
+near it.
+
+That comparison is also why the run was extended.  σ(`fc`) moved **{100 * (mm['fc_hz']['sigma'] / _at(cv['fc_hz'], 64) - 1):+.1f} %** on the way
+from 64 draws to {mm['n_draws']} — {abs(mm['fc_hz']['sigma'] / _at(cv['fc_hz'], 64) - 1) / (1 / math.sqrt(2 * 63)):.1f}× the band (M1) allows at 64 — so the short run had understated
+the scale scatter, and nothing inside the short run could have revealed that.  The
+three shape and offset quantities moved {100 * (mm['Q_lo']['sigma'] / _at(cv['Q_lo'], 64) - 1):+.1f} %, {100 * (mm['Q_hi']['sigma'] / _at(cv['Q_hi'], 64) - 1):+.1f} % and {100 * (mm['offset_in_uv']['sigma'] / _at(cv['offset_in_uv'], 64) - 1):+.1f} % over the same
+extension, all inside it.  Read together: 64 draws was enough for the ratios and not for
+the scale, and the σ column's band is what tells the two cases apart.
+
+The offset row is **referred to the input** — the raw differential output offset divided
+by that same draw's own dc gain.  |A_dc| is {gdc_db:.3f} dB here, so the referral is a
+{100 * (mm['offset_in_uv']['sigma'] / mm['offset_out_uv']['sigma'] - 1):+.3f} % correction and the two columns look alike; it is applied anyway, because
+an output offset is only meaningful next to the gain that produced it, and because it is
+what makes this bench and Section 9.3's agree exactly rather than approximately.  The raw
+output value is kept in `data/pvt.json` beside it — σ {mm['offset_out_uv']['sigma']:.1f} µV against the referred {mm['offset_in_uv']['sigma']:.1f} µV.
+
+The `min … max` column is completeness, not a worst case that converged.  min and max are
+ORDER statistics: they move outward as draws are added, by construction, so a longer run
+must report a wider range and a range that widened is evidence of nothing.  `p01 … p99` is
+the pair that stays comparable between runs of different length, and at {mm['n_draws']} draws each of
+those tails has about {mm['n_draws'] // 100} samples under it.
+
+`figures/pvt_axes.png` plots the nine points and the 45-point box; `figures/mc_mismatch.png`
+plots the three distributions.
+
+One caveat on the pole COUNT.  At nominal the cell is symmetric and seven pole/zero pairs
+cancel exactly; under mismatch those become near-cancellations, so the raw solve returns
+the doublets separately plus a parasitic pair near 10 kHz from the device capacitances.
+The filter's poles are the two nearest the origin and are selected that way
+(`pvt_analysis._pairs`); the doublets are reported in `n_complex_pairs_all`.
+
+### 8.4 Does any of this transfer to the post-layout cell?
+
+Everything above is measured on the pre-layout DUT.  Section 7 argues the sensitivity
+carries over to the extracted cells because layout adds capacitance and the capacitance
+ratios are what set `Q`.  That argument is now measured rather than asserted: the same nine
+certified axes, re-extracted on `post_lumped`.
+
+{cmp_t}
+
+The two columns agree to the third decimal on every span, and the post-layout cell keeps
+two complex pairs at all {pa['n_two_pair']}/{pa['n_corners']} points.  `fc` sits about {100 * (1 - post['rows'][0]['scorecard']['fc_hz'] / pv['cert-axes']['rows'][0]['scorecard']['fc_hz']):.2f} % lower everywhere — the
+layout capacitance the extraction adds — but the SENSITIVITY, which is what this section is
+about, is the same measurement.  The post-layout `fc` is drawn as hollow circles in
+`figures/pvt_axes.png`.
+"""
+
+
+def sec_rej(rj: dict, mm2: dict) -> str:
+    """PSRR, CMRR and offset (doc/paper G12)."""
+    mm, nom = rj["mismatch"], rj["corners"]["tt_27c_1v500"]
+    spots = [f"{s:g}" for s in rj["spots_hz"]]
+
+    nomt = tbl(["transfer", *[f"{s} Hz" for s in spots]],
+               [["supply → output CM (dB)"] + [f"{nom['supply_to_cm_db'][s]:.2f}" for s in spots],
+                ["CM in → CM out (dB)"] + [f"{nom['cm_to_cm_db'][s]:.2f}" for s in spots]])
+    # p01 as well as the sample minimum, for the reason Section 8.3 gives: the minimum
+    # of N draws is an order statistic and gets worse as N grows, so only the quantile
+    # is comparable between runs of different length.
+    # CMRR and PSRR are RATIOS, so the two transfers they are built from are tabulated
+    # beside them: the common-mode input and the supply, each measured to the
+    # DIFFERENTIAL output.  A ratio alone cannot say which half moved.
+    mmt = tbl(["quantity", *[f"{s} Hz" for s in spots]],
+              [[f"{n} {w} (dB)"] + [f"{mm[k][s][a]:.2f}" for s in spots]
+               for k, n in (("cmrr_db", "CMRR"), ("psrr_db", "PSRR"))
+               for w, a in (("mean", "mean"), ("σ", "sigma"), ("p01", "p01"),
+                            ("worst", "min"))])
+    leak = tbl(["transfer", *[f"{s} Hz" for s in spots]],
+               [[f"{n} {w} (dB)"] + [f"{mm[k][s][a]:.2f}" for s in spots]
+                for k, n in (("cm_to_dm_db", "CM in → DM out"),
+                             ("supply_to_dm_db", "supply → DM out"))
+                for w, a in (("mean", "mean"), ("worst", "max"))]
+               + [["A_dm at this spot (dB)"]
+                  + [f"{nom['a_dm_db'][s]:.2f}" for s in spots]])
+    o, oa = mm["offset_in_uv"], mm["offset_in_abs_uv"]
+
+    return f"""## 9. Supply rejection, common-mode rejection, and offset
+
+`doc/paper/README.md` G12 records these three as unmeasured.  Generated by
+`scripts/psrr_cmrr.py`, from two new benches in `lab/deck.py` (`ac_psrr`, `ac_cmrr`).
+
+**Why the nominal differential number is not the answer.**  This cell is geometrically
+symmetric, so supply → differential output and common-mode → differential output both
+cancel by construction.  At nominal the simulator returns its own solver residual, which
+reads as a spectacular rejection figure and says nothing about silicon.  What is finite at
+nominal is the COMMON-MODE response; what is real for the differential path is the
+MISMATCH-limited value.  Both are given, and neither alone would be honest.
+
+### 9.1 Nominal, common-mode paths
+
+{nomt}
+
+Two things to read here.  The cell **passes** its input common mode to the output at dc
+({nom['cm_to_cm_db'][spots[0]]:.2f} dB) and low-passes it — expected of a follower chain, and not a defect, because
+every spec in `doc/target-spec.md` is differential.  Supply → output common mode is
+{nom['supply_to_cm_db'][spots[0]]:.2f} dB at dc but only {nom['supply_to_cm_db'][spots[-1]]:.2f} dB at 1 kHz: **in the stopband the output common mode
+tracks the rail essentially one-for-one.**  That does not touch the differential signal,
+but it bounds what may sit downstream of this filter on the same supply.
+
+### 9.2 Mismatch-limited, differential paths
+
+{mm['n_draws']} draws, `mos_tt_mismatch`, 27 °C.  Both ratios are defined the way the differential
+signal actually sees them — **the transfer from the disturbance to the DIFFERENTIAL
+output, referred to the differential gain**:
+
+$$\\mathrm{{CMRR}}(f)=\\frac{{A_{{dm}}(f)}}{{A_{{cm\\rightarrow dm}}(f)}},
+\\qquad
+\\mathrm{{PSRR}}(f)=\\frac{{A_{{dm}}(f)}}{{A_{{vdd\\rightarrow dm}}(f)}}$$
+
+`A_cm→dm` is measured by driving both inputs together (`ac_cmrr`) and reading `v(voutp) −
+v(voutn)`; `A_vdd→dm` by putting the ac source on the rail ahead of the core probe
+(`ac_psrr`) and reading the same difference.  Neither is a common-mode-to-common-mode
+transfer — those are Section 9.1's, and they are a different quantity.
+
+{mmt}
+
+Rejection falls with frequency in both paths, as the loop gain that produces it falls.
+
+The numerator and the denominator separately, since a ratio hides which half moved — the
+`worst` row here is the largest leakage over the draws, i.e. the case that produced the
+`worst` rejection above:
+
+{leak}
+
+Read across: at dc the differential path has {nom['a_dm_db'][spots[0]]:.2f} dB of gain while a common-mode input
+arrives at the differential output {abs(mm['cm_to_dm_db'][spots[0]]['mean']):.0f} dB down and supply ripple {abs(mm['supply_to_dm_db'][spots[0]]['mean']):.0f} dB down; the
+difference is the CMRR and PSRR quoted above.
+
+Every σ here carries the same (M1) band as Section 8.3 — **±{100 * mm['cmrr_db']['0.1']['se_sigma_frac']:.1f} %** at {mm['n_draws']} draws — and
+panel (b) of `figures/mc_convergence.png` plots the running σ of these three
+distributions.  They settle more slowly than `fc` and `Q` do, and for a reason worth
+stating: rejection in dB is the logarithm of a near-cancellation, so its distribution has
+a longer tail than a smooth function of many small device shifts, and (M1)'s normal
+assumption is a rough guide rather than a tight one.  The trace, not the formula, is the
+evidence in that case, and the `worst` row moves with N while `p01` does not.
+
+`figures/rejection.png` plots all of it: panel (a) the differential gain against the two
+leakage transfers that define the ratios, so the rejection is the vertical gap between
+them; panel (b) the CMRR and PSRR bands themselves; panel (c) the nominal
+common-mode-to-common-mode paths of Section 9.1, with their envelope over the nine
+certified axis points.
+
+### 9.3 Input-referred offset
+
+Zero by symmetry at nominal, so it is a mismatch quantity and only a distribution.  Over
+the same {mm['n_draws']} draws: mean **{o['mean']:+.1f} µV**, σ **{o['sigma']:.1f} ± {o['se_sigma']:.1f} µV**, 99th percentile of
+|offset| **{oa['p99']:.1f} µV** and worst |offset| **{oa['max']:.1f} µV**.  Every draw's differential
+output offset is divided by that draw's own dc gain before it enters this distribution;
+the gain is close to unity ({100 * (mm2['offset_in_uv']['sigma'] / mm2['offset_out_uv']['sigma'] - 1):+.3f} % on σ) but the referral is applied rather than
+waved away, because the input-referred value is the one that compares against the drive
+level, against the devices' own V_GS mismatch, and against another design.  For
+scale, σ is {100 * o['sigma'] / 175e-3 / 1e6:.2f} % of the 175 mVpp S7 drive.
+
+Section 8.3 measures the same quantity a second way — {mm2['n_draws']} draws, from the operating point
+of a full extraction rather than from this bench's `op` — and gets mean {mm2['offset_in_uv']['mean']:+.1f} µV,
+σ **{mm2['offset_in_uv']['sigma']:.1f} µV**.  Referred the same way, the two benches agree to
+{1e3 * abs(mm2['offset_in_uv']['sigma'] - o['sigma']):.2f} nV on σ, and draw by draw to about 2 nV — they are separate decks,
+separate solves and separate `op` points, and they land on the same number.  Both means
+sit inside one standard error of zero, which is what a symmetric cell should give.
+
+That agreement is what the referral bought.  Compared un-referred, the two σ differ by
+{100 * abs(mm2['offset_out_uv']['sigma'] / o['sigma'] - 1):.2f} % — which reads like sampling noise and is not: it is exactly the dc-gain
+correction Section 8.3 used to omit.  A residual that small is easy to attribute to the
+benches; dividing by the gain shows it was never theirs.
+"""
+
+
+def sec_gds(gr: dict, ic: dict, gt: dict, lin: dict, tc: dict) -> str:
+    """The sub-35 Hz residual test, and IIP3 over corners."""
+    rows = tbl(["f_in (Hz)", "measured V₃ (µV)", "gate model (µV)", "unexplained (µV)",
+                "`g_ds` prediction (µV)", "ratio"],
+               [[f"{r['fin']:.0f}", f"{r['v3_measured_uv']:.4f}",
+                 f"{r['v3_gate_model_uv']:.4f}", f"{r['v3_unexplained_uv']:.4f}",
+                 f"{r['v3_gds_pred_uv']:.4f}",
+                 f"{r['ratio_pred_over_unexplained']:.3f}"
+                 if r["ratio_pred_over_unexplained"] else "—"]
+                for r in gr["rows"]])
+    lo, hi = gr["pred_band_over_windows_uv"]
+    ulo, uhi = gr["unexplained_band_uv"]
+    rf = gr["refinement"]
+
+    ct = tbl(["corner", "`fc` (Hz)", "IMD3 slope (dB/decade)", "IIP3 (dBVp)",
+              "OIP3 (dBVp)"],
+             [[f"`{k}`", f"{v['fc_hz']:.3f}", f"{v['imd3_slope_db_per_decade']:.2f}",
+               f"{v['iip3_dbv']:+.3f}", f"{v['oip3_dbv']:+.3f}"]
+              for k, v in ic["corners"].items() if v.get("trusted")])
+    ilo, ihi = ic["iip3_dbv_span"]
+    tlo, thi = tc["thd_db_at_spec_span"]
+    tworst = max(tc["corners"], key=lambda k: tc["corners"][k]["thd_db_at_spec"])
+    M_THD = -40.0
+    _t70 = tc["corners"]["tt_70c_1v500"]["points"]
+    _t27 = tc["corners"]["tt_27c_1v500"]["points"]
+    _t70lo, _t27lo = _t70[0]["thd_db"], _t27[0]["thd_db"]
+    _t70hi = next(p["thd_db"] for p in _t70 if p["is_spec_amplitude"])
+    _t27hi = next(p["thd_db"] for p in _t27 if p["is_spec_amplitude"])
+    # The weakest HD2/HD3 separation anywhere in the ladder, so the claim below is a
+    # worst case rather than a typical one.
+    _h2, _h3 = min(((p["hd2_db"], p["hd3_db"]) for v in tc["corners"].values()
+                    for p in v["points"]), key=lambda t: abs(t[0] - t[1]))
+    tct = tbl(["corner", "`fc` (Hz)"]
+              + [f"{v * 1e3:g} mVpp" for v in tc["vpp_diff"]] + ["HD3 slope (dB/dB)"],
+              [[f"`{k}`", f"{v['fc_hz']:.3f}"]
+               + [f"{p['thd_db']:.2f}" for p in v["points"]]
+               + [f"{v['hd3_slope_db_per_db']:.2f}"]
+               for k, v in tc["corners"].items()])
+    # Section 6.3's row at the SAME per-tone amplitude the corner sweep quotes
+    # (iip3_corners takes pts[0], the lowest amplitude) -- not the corner sweep's
+    # own nominal, which would make the comparison self-referential.
+    _a0 = ic["ampls_v"][0]
+    _ref63 = min(lin["twotone"]["pre_mim"],
+                 key=lambda r: abs(r["ampl_per_tone_v"] - _a0))["iip3_dbv"]
+
+    return f"""## 10. The sub-35 Hz residual, and linearity over corners
+
+### 10.1 A named mechanism for the residual
+
+Section 6.2 reports a third harmonic below 35 Hz that the gate-referred model does not
+explain: 0.18–0.28 µV, and nearly CONSTANT IN VOLTS while the modelled mechanism moves by
+39× over the same span.  That additive signature says a different mechanism, not a
+mis-scaled one.  This is the test of the candidate named there.
+
+**The hypothesis, its predictions and its refutation threshold were written down before
+the measurement** (`scripts/gds_probe.py`, repo rule 3):
+
+* **H** — the residual is generated by drain-conductance nonlinearity, the curvature of
+  `I_D` in `V_DS`.  The gate-referred model does not contain it and the small-signal `Z_T`
+  linearises it away.
+* **P1**, magnitude within a factor of {gr['accept_factor']:g} of the residual.  **P2**, flat in volts below 35 Hz.
+* **Refuted** by a prediction more than {gr['refute_factor']:g}× off, or a frequency slope of the wrong sign.
+
+A device whose drain swings by `v_ds` sources `I(v) = I₀ + g₁v + g₂v²/2 + g₃v³/6`; the
+small-signal model keeps `g₁` and drops the rest.  For `v = A·cos(ωt)` the cubic term makes
+a third harmonic of amplitude `g₃A³/24`, injected at the SAME port the noise analysis
+already characterised, so it propagates through the same `Z_T` and needs no new machinery.
+`g₃` is measured per device by a probe pinned to that device's own in-circuit bias
+(`gds_probe.py`, which reproduces the DUT's PSP `gds` to {gt['worst_g1_vs_gds_op_pct']:.2f} %); `A` and its phase come
+from the MNA node solve, not from an estimated swing.
+
+{rows}
+
+**P2 is satisfied.**  The prediction varies {gr['p2_pred_spread_x']:.2f}× below 35 Hz where the residual it
+explains varies {gr['p2_residual_spread_x']:.2f}× — flat in volts, which is the signature that made this residual
+look like a separate mechanism in the first place, and which the gate-referred model misses
+by 39×.
+
+**P1 is not settled.**  On the pre-registered point estimate the worst factor is
+{gr['p1_worst_factor']:.2f}×, so H is **{gr['verdict']}** — outside the accept band, well inside the refute
+threshold.  The threshold is not moved after the fact.  What the point estimate hides is
+that the sum is dominated by `in_a`, whose `I_D(V_DS)` is not locally cubic over its own
+drain swing: its `g₃` moves {gr['g3_window_spread_x']['m2']:.1f}× across the three fit windows, against ≤ 1.3× for every
+other device.  Carrying that through, the predicted band is **{lo:.4f} … {hi:.4f} µV** against a
+measured residual of **{ulo:.4f} … {uhi:.4f} µV** — the bands overlap.
+
+**The window dependence is now removed, and it does not rescue the magnitude.**  `g₃A³/24`
+is the first term of a series and `g₃` is a fit, so the number it produces depends on the
+interval it was fitted over.  Replacing it: expand the MEASURED `I_D(V_DS)` in Chebyshev
+polynomials over exactly the swing the device sees, `[-A, +A]`.  Substituting
+`x = A·cos θ` turns `T_n(x/A)` into `cos nθ`, so the Chebyshev coefficients ARE the Fourier
+coefficients of the current waveform and `c₃` is the third harmonic exactly — no window is
+chosen and no series is truncated.  The extractor is checked against synthetic curves whose
+answer is known in closed form, including one carrying a fifth-order term that a cubic
+truncation would drop; worst error {rf['selftest_worst_rel_err']:.1e}.  ({len(rf['fallback_devices'])} of the 15 devices swing too little
+across the stored curve to condition the fit; they keep the cubic term, which is the
+correct expansion in exactly that limit, and together they are {rf['fallback_share_pct']:.4f} % of the total.)
+
+| | prediction below {gr['flat_band_hz']:.0f} Hz | worst factor vs the residual | flatness |
+|---|---|---|---|
+| cubic, mid window (pre-registered) | {gr['rows'][0]['v3_gds_pred_uv']:.4f} … {max(r['v3_gds_pred_uv'] for r in gr['rows'] if r['fin'] <= gr['flat_band_hz']):.4f} µV | {gr['p1_worst_factor']:.2f}× | {gr['p2_pred_spread_x']:.2f}× |
+| cubic, across the three windows | {lo:.4f} … {hi:.4f} µV | — | — |
+| **window-free, over each device's own swing** | **{rf['pred_band_uv'][0]:.4f} … {rf['pred_band_uv'][1]:.4f} µV** | **{rf['worst_factor']:.2f}×** | {rf['pred_spread_x']:.2f}× |
+
+The window-free number is SMALLER, not larger.  It covers {rf['coverage_pct']:.0f} % of the residual, keeps the
+flat frequency signature, and removes the band overlap that the cubic's window ambiguity had
+produced.  So the ambiguity is resolved in the direction that sharpens the conclusion rather
+than the one that would have rescued it.
+
+**So:** drain-conductance curvature is established as *a* contributor — the right frequency
+dependence and about a fifth of the magnitude — and is excluded as the whole of it.  The
+probe pins the gate and sweeps only the drain, so the one mechanism it cannot see by
+construction is the cross-term, gate and drain swinging together, which in a source follower
+they do.  That is where the remaining {100 - rf['coverage_pct']:.0f} % is expected to sit; testing it needs a
+two-dimensional device probe this pack does not have, and it is left open rather than fitted.
+
+`figures/gds_residual.png` plots both panels of this argument.
+
+### 10.2 IIP3 over the certified axes
+
+Tones stay at {ic['tones_hz'][0]:g}/{ic['tones_hz'][1]:g} Hz — the frozen definition every other IIP3 here uses — so each
+row also carries its corner's `fc`: the tones sit at a different fraction of the passband
+when the cutoff moves.  Two amplitudes per corner, so each corner reports its own IMD3
+slope instead of assuming the 3:1 law that a corner might break.
+
+{ct}
+
+IIP3 spans **{ilo:+.3f} … {ihi:+.3f} dBVp** over the {len(ic['corners'])} certified points, a {ihi - ilo:.2f} dB spread, with
+every corner's measured slope within 2 dB/decade of 40 — so every row is an intercept and
+not an extrapolation from an unverified law.  The worst is the hot corner.  The nominal row
+differs from Section 6.3's {_ref63:+.3f} dBVp at the same amplitude in the third decimal because the `alpha = 1.1`
+bias makes the reference a behavioural source even at 27 °C, where it carries the same
+current.
+
+`figures/iip3_corners.png` plots the intercepts and the measured slopes.
+
+### 10.3 THD over the certified axes
+
+Section 6.1 measures the THD amplitude ladder at nominal.  The same ladder, re-run at every
+certified axis point: {len(tc['vpp_diff'])} amplitudes × {len(tc['corners'])} corners at `fin` = {tc['fin_hz']:.0f} Hz, open loop — an explicit
+drive with no servo, because servoing the output to a constant level would remove the
+amplitude dependence the ladder exists to measure.
+
+**This table is characterisation, not a spec line.**  S7 is defined at one point —
+{tc['spec_vpp'] * 1e3:.0f} mVpp, {tc['fin_hz']:.0f} Hz, nominal — and it is scored there by `lab.metrics` in `make check`.
+What a corner row says is how much margin the delivered cell carries away from nominal.
+
+{tct}
+
+At the spec amplitude the nine corners span **{tlo:.3f} … {thi:.3f} dB**, so the WORST of them
+({thi:.2f} dB, at `{tworst}`) still clears the {M_THD:.0f} dB limit by {abs(thi) - abs(M_THD):.2f} dB.  HD2 is {abs(_h2 - _h3):.0f} dB below HD3 in every
+row, so each of these numbers is third-order distortion and not an even-order artefact.
+
+The corners do not simply translate the nominal ladder.  `tt_70c_1v500` sits {_t70lo - _t27lo:+.2f} dB
+relative to nominal at the lowest drive but only {_t70hi - _t27hi:+.2f} dB at the spec amplitude, and its
+HD3 slope over the two lowest points, {tc['corners']['tt_70c_1v500']['hd3_slope_db_per_db']:.2f} dB/dB, is the furthest of the nine from
+the cubic law's 2.  A low-drive point lifted above a cubic extrapolation is the signature of
+an additive third-harmonic term that does NOT scale with `A³` — which is what Section 10.1
+measures at nominal.  Whether that mechanism also carries this temperature dependence is not
+tested here; the ladder measures it, it does not explain it.
+
+`figures/thd_corners.png` plots the ladder at every corner and the margin at the spec point.
+"""
+
+
 def main() -> None:
     tf, nz = jload("tf.json"), jload("noise.json")
     bs, la = jload("bench_summary.json"), jload("linearity_analysis.json")
     lin, sp_ = jload("linearity.json"), jload("twotone_spacing.json")
     bench, post = jload("bench_pre_mim.json"), jload("bench_post_lumped.json")
+    pv, rj = jload("pvt.json"), jload("psrr_cmrr.json")
+    gr, ic = jload("gds_residual.json"), jload("iip3_corners.json")
+    gt, tc = jload("gds_taylor.json"), jload("thd_corners.json")
     body = "\n".join([
         """# validation.md — every number, and what checks it
 
@@ -916,7 +1433,8 @@ The derivations these numbers check live in [theory.md](theory.md); the map from
 reviewer's request to the answers is in [README.md](README.md).
 """,
         sec_op(bench, post, la), sec_tf(tf, bs), sec_valid(tf), sec_pz(tf),
-        sec_noise(nz), sec_lin(la, lin, sp_), sec_score(bs)])
+        sec_noise(nz), sec_lin(la, lin, sp_), sec_score(bs),
+        sec_pvt(pv), sec_rej(rj, pv['mismatch']['summary']), sec_gds(gr, ic, gt, lin, tc)])
     (PACK / "validation.md").write_text(body)
     print(f"wrote {PACK / 'validation.md'} ({len(body)} chars)")
 

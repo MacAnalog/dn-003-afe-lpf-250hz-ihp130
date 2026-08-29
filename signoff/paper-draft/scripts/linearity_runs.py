@@ -84,7 +84,7 @@ def design_of(cell: str, *, pex: bool = False) -> Design:
 def tran_twotone(d: Design, a1: float, a2: float, *, f1: float = F1, f2: float = F2,
                  fg: float = FG, cycles: int = TT_CYCLES, settle: int = TT_SETTLE,
                  ppc: int = TT_PPC, corner: str = C.CORNER_NOM,
-                 temp: float = C.TEMP_NOM) -> str:
+                 temp: float = C.TEMP_NOM, vdd: float | None = None) -> str:
     """Coherent strobed two-tone transient.  `ppc` is points per GRID cycle."""
     tper = 1.0 / fg
     tstop = (settle + cycles) * tper
@@ -101,7 +101,7 @@ def tran_twotone(d: Design, a1: float, a2: float, *, f1: float = F1, f2: float =
     return f""".title lpf {d.topology} -- two-tone f1={f1:g} f2={f2:g} a={a1:g}
 {_libs(corner, d)}
 {subckt(d)}
-{_core(d)}
+{_core(d, vdd=vdd)}
 {_bias(d)}
 {stim}
 .temp {temp}

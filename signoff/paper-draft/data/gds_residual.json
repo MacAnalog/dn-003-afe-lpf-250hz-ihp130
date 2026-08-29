@@ -1,0 +1,638 @@
+{
+ "hypothesis": "third harmonic from drain-conductance curvature g3 = d2(gds)/dVds2",
+ "accept_factor": 3.0,
+ "refute_factor": 10.0,
+ "flat_band_hz": 35.0,
+ "ampl_diff_v": 0.021875,
+ "rows": [
+  {
+   "fallback_share_pct": 0.00013779686553944408,
+   "fin": 10.0,
+   "v3_gds_pred_uv": 0.050607621795731375,
+   "v3_gds_exact_uv": 0.03503800696176909,
+   "ratio_exact_over_unexplained": 0.19992606332787574,
+   "v3_unexplained_uv": 0.17525482360099937,
+   "ratio_pred_over_unexplained": 0.28876592812617335,
+   "v3_measured_uv": 0.2117951018980818,
+   "v3_gate_model_uv": 0.03654027829708241,
+   "v3_by_window_uv": {
+    "0.015": 0.03654513142871979,
+    "0.03": 0.050607621795731375,
+    "0.06": 0.19212779105151642
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 11.063500497300476,
+      "i3_a": 4.0967056563045315e-16,
+      "i3_exact_a": 2.803205258298893e-16,
+      "zt_ohm": 60073047.522469044,
+      "v3_uv": 0.024610159357674983,
+      "v3_exact_uv": 0.016839708269702446,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 11.063501270191445,
+      "i3_a": 4.0966273014552786e-16,
+      "i3_exact_a": 2.803155666331769e-16,
+      "zt_ohm": 60073046.39198036,
+      "v3_uv": 0.024609688193097626,
+      "v3_exact_uv": 0.016839410038749093,
+      "window_free": true
+     }
+    ],
+    [
+     "m15",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.927204905230862,
+      "i3_a": 3.7144819942608045e-17,
+      "i3_exact_a": 3.5889131366101835e-17,
+      "zt_ohm": 7976122.237038226,
+      "v3_uv": 0.000296271624335017,
+      "v3_exact_uv": 0.0002862560987571509,
+      "window_free": true
+     }
+    ],
+    [
+     "m14",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.927204814236834,
+      "i3_a": 3.7144819476603373e-17,
+      "i3_exact_a": 3.588913182704377e-17,
+      "zt_ohm": 7976121.750890642,
+      "v3_uv": 0.00029627160256024256,
+      "v3_exact_uv": 0.0002862560849862654,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.0010037717600350896,
+   "fin": 20.0,
+   "v3_gds_pred_uv": 0.055553634433613136,
+   "v3_gds_exact_uv": 0.03853471311348059,
+   "ratio_exact_over_unexplained": 0.18240393348923367,
+   "v3_unexplained_uv": 0.21126031865839717,
+   "ratio_pred_over_unexplained": 0.26296293968694623,
+   "v3_measured_uv": 0.49451055433225477,
+   "v3_gate_model_uv": 0.2832502356738576,
+   "v3_by_window_uv": {
+    "0.015": 0.04003213283638566,
+    "0.03": 0.055553634433613136,
+    "0.06": 0.21179416365859655
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 11.435302968053673,
+      "i3_a": 4.523765752241226e-16,
+      "i3_exact_a": 3.1093172930187076e-16,
+      "zt_ohm": 60075101.23952167,
+      "v3_uv": 0.027176568554977253,
+      "v3_exact_uv": 0.018679255116389435,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 11.43530590411734,
+      "i3_a": 4.523681765666334e-16,
+      "i3_exact_a": 3.109264222801845e-16,
+      "zt_ohm": 60075097.17504969,
+      "v3_uv": 0.027176062166140533,
+      "v3_exact_uv": 0.01867893503277262,
+      "window_free": true
+     }
+    ],
+    [
+     "m15",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.927081125804614,
+      "i3_a": 3.714355766763686e-17,
+      "i3_exact_a": 3.588790712345287e-17,
+      "zt_ohm": 8556045.608332219,
+      "v3_uv": 0.0003178019734600188,
+      "v3_exact_uv": 0.00030705857013585343,
+      "window_free": true
+     }
+    ],
+    [
+     "m14",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.927080802727879,
+      "i3_a": 3.714355483493672e-17,
+      "i3_exact_a": 3.588790476964827e-17,
+      "zt_ohm": 8556043.222419383,
+      "v3_uv": 0.00031780186060202306,
+      "v3_exact_uv": 0.00030705846437118135,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.004251636224340314,
+   "fin": 35.0,
+   "v3_gds_pred_uv": 0.07021199195054886,
+   "v3_gds_exact_uv": 0.04908514379625143,
+   "ratio_exact_over_unexplained": 0.1765358848070049,
+   "v3_unexplained_uv": 0.2780462671932848,
+   "ratio_pred_over_unexplained": 0.25251909568611747,
+   "v3_measured_uv": 1.7066296215804413,
+   "v3_gate_model_uv": 1.4285833543871564,
+   "v3_by_window_uv": {
+    "0.015": 0.05040005397245407,
+    "0.03": 0.07021199195054886,
+    "0.06": 0.26970942234537837
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 12.41032262046113,
+      "i3_a": 5.782375586159903e-16,
+      "i3_exact_a": 4.0242226647221504e-16,
+      "zt_ohm": 60040508.16173725,
+      "v3_uv": 0.03471767685750638,
+      "v3_exact_uv": 0.024161637374589828,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 12.41033094520208,
+      "i3_a": 5.78227541492241e-16,
+      "i3_exact_a": 4.0241582413919607e-16,
+      "zt_ohm": 60040499.7068626,
+      "v3_uv": 0.034717070535464786,
+      "v3_exact_uv": 0.024161247171266276,
+      "window_free": true
+     }
+    ],
+    [
+     "m15",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.92670027883068,
+      "i3_a": 3.713967405452631e-17,
+      "i3_exact_a": 3.588414154456241e-17,
+      "zt_ohm": 9668878.599498684,
+      "v3_uv": 0.000359098999658166,
+      "v3_exact_uv": 0.0003469594082416012,
+      "window_free": true
+     }
+    ],
+    [
+     "m14",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.926699323231214,
+      "i3_a": 3.713966477220525e-17,
+      "i3_exact_a": 3.588413205175737e-17,
+      "zt_ohm": 9668872.593043381,
+      "v3_uv": 0.00035909868683079403,
+      "v3_exact_uv": 0.00034695910092038645,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.009145453055983948,
+   "fin": 50.0,
+   "v3_gds_pred_uv": 0.095247112017796,
+   "v3_gds_exact_uv": 0.06770874504815266,
+   "ratio_exact_over_unexplained": -0.0832113757692289,
+   "v3_unexplained_uv": -0.813695776836212,
+   "ratio_pred_over_unexplained": -0.11705494206708682,
+   "v3_measured_uv": 3.3567363858245107,
+   "v3_gate_model_uv": 4.170432162660722,
+   "v3_by_window_uv": {
+    "0.015": 0.06819358931468941,
+    "0.03": 0.095247112017796,
+    "0.06": 0.3677068978215171
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 13.80830613625104,
+      "i3_a": 7.964862875415486e-16,
+      "i3_exact_a": 5.653255313299718e-16,
+      "zt_ohm": 59552981.23184525,
+      "v3_uv": 0.04743313293338394,
+      "v3_exact_uv": 0.03366682075717676,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 13.808321618996116,
+      "i3_a": 7.964735659406009e-16,
+      "i3_exact_a": 5.653173739563555e-16,
+      "zt_ohm": 59552971.81647075,
+      "v3_uv": 0.04743236782502455,
+      "v3_exact_uv": 0.0336663296385841,
+      "window_free": true
+     }
+    ],
+    [
+     "m15",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.925990940394,
+      "i3_a": 3.7132441435127575e-17,
+      "i3_exact_a": 3.587712717792998e-17,
+      "zt_ohm": 10438911.248808129,
+      "v3_uv": 0.00038762226059286224,
+      "v3_exact_uv": 0.0003745181464726131,
+      "window_free": true
+     }
+    ],
+    [
+     "m14",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.925989022099898,
+      "i3_a": 3.713242233870906e-17,
+      "i3_exact_a": 3.587710226245716e-17,
+      "zt_ohm": 10438901.69338266,
+      "v3_uv": 0.00038762170643095014,
+      "v3_exact_uv": 0.00037451754356122684,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.014377336727374701,
+   "fin": 65.0,
+   "v3_gds_pred_uv": 0.1283917709880684,
+   "v3_gds_exact_uv": 0.09373846861671882,
+   "ratio_exact_over_unexplained": 0.1416539961416492,
+   "v3_unexplained_uv": 0.6617424934696762,
+   "ratio_pred_over_unexplained": 0.19402074410376646,
+   "v3_measured_uv": 11.080819360015056,
+   "v3_gate_model_uv": 10.41907686654538,
+   "v3_by_window_uv": {
+    "0.015": 0.09186188082617537,
+    "0.03": 0.1283917709880684,
+    "0.06": 0.49629100498328477
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 15.546346445234025,
+      "i3_a": 1.1366901774943432e-15,
+      "i3_exact_a": 8.292491423935629e-16,
+      "zt_ohm": 56354331.17198223,
+      "v3_uv": 0.06405741470245549,
+      "v3_exact_uv": 0.046731780794529096,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 15.546370154978094,
+      "i3_a": 1.1366733991963055e-15,
+      "i3_exact_a": 8.2923816878427115e-16,
+      "zt_ohm": 56354325.413726166,
+      "v3_uv": 0.06405646262743486,
+      "v3_exact_uv": 0.046731157609151204,
+      "window_free": true
+     }
+    ],
+    [
+     "m15",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.924756509133127,
+      "i3_a": 3.711985705678331e-17,
+      "i3_exact_a": 3.5864923607158127e-17,
+      "zt_ohm": 10105562.808208078,
+      "v3_uv": 0.00037511704691902954,
+      "v3_exact_uv": 0.0003624352381237211,
+      "window_free": true
+     }
+    ],
+    [
+     "m14",
+     {
+      "role": "gmf_b",
+      "vds_mv": 10.924753312758915,
+      "i3_a": 3.7119824936750045e-17,
+      "i3_exact_a": 3.5864886063617276e-17,
+      "zt_ohm": 10105550.763276523,
+      "v3_uv": 0.00037511627522226527,
+      "v3_exact_uv": 0.00036243442673501307,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.02335281359781505,
+   "fin": 100.0,
+   "v3_gds_pred_uv": 0.14054175167079871,
+   "v3_gds_exact_uv": 0.11343068922526131,
+   "ratio_exact_over_unexplained": 0.004021392341231625,
+   "v3_unexplained_uv": 28.206819827612517,
+   "ratio_pred_over_unexplained": 0.004982545091212945,
+   "v3_measured_uv": 65.85102785651017,
+   "v3_gate_model_uv": 37.64420802889765,
+   "v3_by_window_uv": {
+    "0.015": 0.1007772404944002,
+    "0.03": 0.14054175167079871,
+    "0.06": 0.5409347437351321
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 20.615298405480054,
+      "i3_a": 2.6504887127248455e-15,
+      "i3_exact_a": 2.1353254219679208e-15,
+      "zt_ohm": 26296399.06521997,
+      "v3_uv": 0.06969830890767371,
+      "v3_exact_uv": 0.056151369430177664,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 20.615343681475736,
+      "i3_a": 2.650454926161419e-15,
+      "i3_exact_a": 2.1353019974961538e-15,
+      "zt_ohm": 26296405.228349958,
+      "v3_uv": 0.06969743677781702,
+      "v3_exact_uv": 0.05615076661106396,
+      "window_free": true
+     }
+    ],
+    [
+     "mstn",
+     {
+      "role": "bridge",
+      "vds_mv": 15.18068389697574,
+      "i3_a": 7.934013893758472e-17,
+      "i3_exact_a": 7.800031888901218e-17,
+      "zt_ohm": 8074186.138934821,
+      "v3_uv": 0.0006406070500710095,
+      "v3_exact_uv": 0.0006297890936061582,
+      "window_free": true
+     }
+    ],
+    [
+     "mst",
+     {
+      "role": "bridge",
+      "vds_mv": 15.180675144523988,
+      "i3_a": 7.934003492842352e-17,
+      "i3_exact_a": 7.800022315619158e-17,
+      "zt_ohm": 8074170.705464411,
+      "v3_uv": 0.0006406049857896004,
+      "v3_exact_uv": 0.0006297871168274088,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.02660081140569125,
+   "fin": 150.0,
+   "v3_gds_pred_uv": 0.09256297345286432,
+   "v3_gds_exact_uv": 0.09588651192434262,
+   "ratio_exact_over_unexplained": 0.0010526884485102274,
+   "v3_unexplained_uv": 91.0872652398171,
+   "ratio_pred_over_unexplained": 0.001016201037644087,
+   "v3_measured_uv": 155.11827796125976,
+   "v3_gate_model_uv": 64.03101272144266,
+   "v3_by_window_uv": {
+    "0.015": 0.06659774120118708,
+    "0.03": 0.09256297345286432,
+    "0.06": 0.35396884989788885
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 29.742256558535136,
+      "i3_a": 7.959372478076373e-15,
+      "i3_exact_a": 8.2517900020695e-15,
+      "zt_ohm": 5715266.48093504,
+      "v3_uv": 0.04548993473322677,
+      "v3_exact_uv": 0.0471611788065427,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 29.74233702751027,
+      "i3_a": 7.95928317881048e-15,
+      "i3_exact_a": 8.251718010752518e-15,
+      "zt_ohm": 5715271.4996696245,
+      "v3_uv": 0.045489464309655385,
+      "v3_exact_uv": 0.047160808770164396,
+      "window_free": true
+     }
+    ],
+    [
+     "mstn",
+     {
+      "role": "bridge",
+      "vds_mv": 19.27001150288411,
+      "i3_a": 1.6227995060607932e-16,
+      "i3_exact_a": 1.6020235896133053e-16,
+      "zt_ohm": 6380607.289516239,
+      "v3_uv": 0.001035444635779485,
+      "v3_exact_uv": 0.0010221883393863626,
+      "window_free": true
+     }
+    ],
+    [
+     "mst",
+     {
+      "role": "bridge",
+      "vds_mv": 19.26999124349856,
+      "i3_a": 1.6227950672204106e-16,
+      "i3_exact_a": 1.6020191696531488e-16,
+      "zt_ohm": 6380601.1647128565,
+      "v3_uv": 0.001035440809599683,
+      "v3_exact_uv": 0.0010221845379781206,
+      "window_free": true
+     }
+    ]
+   ]
+  },
+  {
+   "fallback_share_pct": 0.023747669055060025,
+   "fin": 200.0,
+   "v3_gds_pred_uv": 0.06637056038826845,
+   "v3_gds_exact_uv": 0.09781967491292151,
+   "ratio_exact_over_unexplained": 0.0005505862283579253,
+   "v3_unexplained_uv": 177.6645870795934,
+   "ratio_pred_over_unexplained": 0.0003735722547709216,
+   "v3_measured_uv": 248.1947069274975,
+   "v3_gate_model_uv": 70.53011984790415,
+   "v3_by_window_uv": {
+    "0.015": 0.04779287454185907,
+    "0.03": 0.06637056038826845,
+    "0.06": 0.2534811758590469
+   },
+   "top": [
+    [
+     "m2",
+     {
+      "role": "in_a",
+      "vds_mv": 39.09204474270228,
+      "i3_a": 1.8072666889869964e-14,
+      "i3_exact_a": 2.680438307491146e-14,
+      "zt_ohm": 1801924.5598464638,
+      "v3_uv": 0.0325655823307807,
+      "v3_exact_uv": 0.04829947617421583,
+      "window_free": true
+     }
+    ],
+    [
+     "m5",
+     {
+      "role": "in_a",
+      "vds_mv": 39.09216046053105,
+      "i3_a": 1.807247792903752e-14,
+      "i3_exact_a": 2.6804204378234116e-14,
+      "zt_ohm": 1801927.1560830933,
+      "v3_uv": 0.03256528875804505,
+      "v3_exact_uv": 0.0482992237663414,
+      "window_free": true
+     }
+    ],
+    [
+     "mstn",
+     {
+      "role": "bridge",
+      "vds_mv": 22.670121711230745,
+      "i3_a": 2.642290117530759e-16,
+      "i3_exact_a": 2.6197330917415995e-16,
+      "zt_ohm": 4965723.228723352,
+      "v3_uv": 0.0013120881413648648,
+      "v3_exact_uv": 0.0013008869466716504,
+      "window_free": true
+     }
+    ],
+    [
+     "mst",
+     {
+      "role": "bridge",
+      "vds_mv": 22.670084871802352,
+      "i3_a": 2.642278342614675e-16,
+      "i3_exact_a": 2.619721314171975e-16,
+      "zt_ohm": 4965720.349869703,
+      "v3_uv": 0.0013120815335941683,
+      "v3_exact_uv": 0.0013008803440771178,
+      "window_free": true
+     }
+    ]
+   ]
+  }
+ ],
+ "p1_worst_factor": 3.960096551442609,
+ "p2_pred_spread_x": 1.387379794963435,
+ "p2_residual_spread_x": 1.5865256172709374,
+ "verdict": "INCONCLUSIVE",
+ "pred_band_over_windows_uv": [
+  0.03654513142871979,
+  0.26970942234537837
+ ],
+ "unexplained_band_uv": [
+  0.17525482360099937,
+  0.2780462671932848
+ ],
+ "bands_overlap": true,
+ "refinement": {
+  "method": "Chebyshev expansion of the measured I_D(V_DS) over each device's own drain swing; c3 is the third harmonic exactly, so no fit window is chosen and no series is truncated",
+  "post_registered": true,
+  "cheb_degree": 7,
+  "worst_factor": 5.664570696735309,
+  "pred_spread_x": 1.4009114117081358,
+  "pred_band_uv": [
+   0.03503800696176909,
+   0.04908514379625143
+  ],
+  "extractor_selftest": [
+   {
+    "case": "pure cubic",
+    "a3_expected_a": 4.026275e-16,
+    "a3_extracted_a": 4.026275000000636e-16,
+    "rel_err": 1.5796712962588019e-13
+   },
+   {
+    "case": "cubic + quintic",
+    "a3_expected_a": 6.123293229166666e-16,
+    "a3_extracted_a": 6.123293229166641e-16,
+    "rel_err": 4.1869592815779654e-15
+   }
+  ],
+  "fallback_devices": [
+   "m10",
+   "m9",
+   "r1",
+   "r2",
+   "r3"
+  ],
+  "fallback_share_pct": 0.004251636224340314,
+  "selftest_worst_rel_err": 1.5796712962588019e-13,
+  "coverage_pct": 17.653588480700492
+ },
+ "dominant_device_roles": [
+  "in_a"
+ ],
+ "conclusion": "The frequency signature is reproduced: the predicted third harmonic is flat in volts below 35 Hz (varies 1.39x) where the gate-referred model moves by 39x, which is the signature that made this residual look like a different mechanism in the first place. The magnitude is smaller than the residual and the window-free evaluation makes that sharper rather than softer: reading the third harmonic off the measured I_D(V_DS) over each device's own swing -- no fit window, no truncated series -- gives 0.0350 .. 0.0491 uV against a residual of 0.1753 .. 0.2780 uV, i.e. about 18 % of it, and removes the band overlap that the cubic's window ambiguity had produced. So drain-conductance curvature is established as A contributor carrying the right frequency dependence and roughly a fifth of the magnitude, and is excluded as the whole of it. The pinned-gate probe measures I_D(V_DS) at fixed V_GS by construction, so the one mechanism it cannot see is the cross-term: gate and drain swinging together, which in a source follower they do. That is where the rest of the residual is expected to sit, and testing it needs a two-dimensional probe this pack does not have.",
+ "g3_window_spread_x": {
+  "m2": 5.415571126499769,
+  "m5": 5.41555357552096,
+  "m4": 1.0033253911541082,
+  "m8": 1.0033266575246924,
+  "m9": 1.0092407259804224,
+  "m10": 1.0092691621537047,
+  "mst": 1.1367138634000535,
+  "mstn": 1.1367140554812702,
+  "m0": 1.0234978666197936,
+  "m1": 1.0234970104968772,
+  "m14": 1.2635811981760943,
+  "m15": 1.2635803978401485,
+  "r1": 1.012468151318509,
+  "r2": 1.011930745656029,
+  "r3": 1.1090051017373082
+ }
+}

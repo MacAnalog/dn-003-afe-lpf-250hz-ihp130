@@ -20,6 +20,7 @@ DATA = HERE.parent / "data"
 sys.path.insert(0, str(HERE))
 
 import _style as S  # noqa: E402
+from mc_stats import se_frac as MC_SE  # noqa: E402
 
 S.use()
 import matplotlib.pyplot as plt  # noqa: E402
@@ -368,6 +369,398 @@ def fig_iip3(la):
     plt.close(fig)
 
 
+def cy(i: int, **kw) -> dict:
+    """One entry of the shared colour cycle with per-call overrides merged in.
+
+    `S.CYCLE[i]` already carries `marker` and `ms`, so splatting it next to an explicit
+    marker is a duplicate-keyword TypeError; this merges instead of colliding.
+    """
+    return {**S.CYCLE[i % len(S.CYCLE)], **kw}
+
+
+# ------------------------------------------------- F6: the analytical results over PVT --
+def fig_pvt(pv):
+    """Scale moves, shape does not -- and the certified window does not superpose."""
+    ax_rows = pv["cert-axes"]["rows"]
+    post = {r["slug"]: r for r in pv["cert-axes:post_lumped"]["rows"]}
+    n = len(ax_rows)
+    x = np.arange(n)
+    fig, ax = plt.subplots(1, 2, figsize=(S.WIDE * 1.15, 3.0))
+
+    # (a) fc and Q on one axis, normalised to their nominal value, so "moves with T by
+    # construction" and "should not move" can be compared on the same scale.
+    def norm(vals):
+        return np.asarray(vals, float) / vals[0]
+    fc = norm([r["scorecard"]["fc_hz"] for r in ax_rows])
+    qlo = norm([r["pairs"][0]["Q"] for r in ax_rows])
+    qhi = norm([r["pairs"][1]["Q"] for r in ax_rows])
+    # The x axis is a LIST of corners, not a continuous variable: markers only, because
+    # a line between two corners would draw a trend that does not exist.
+    ax[0].plot(x, fc, **cy(0, ls="none", ms=6), label=r"$f_c$  (scale: $g_m/C$)")
+    ax[0].plot(x, qlo, **cy(1, ls="none", ms=6), label=r"$Q_{lo}$  (shape: ratio)")
+    ax[0].plot(x, qhi, **cy(2, ls="none", ms=6), label=r"$Q_{hi}$  (shape: ratio)")
+    ax[0].plot(x, norm([post[r["slug"]]["scorecard"]["fc_hz"] for r in ax_rows]),
+               color=S.GREY, ls="none", marker="o", ms=9, mfc="none", mew=0.9,
+               label=r"$f_c$, post-layout")
+    for xi in x:
+        ax[0].axvline(xi, color="0.92", lw=0.5, zorder=0)
+    lo_y = min(fc.min(), qlo.min(), qhi.min())
+    hi_y = max(fc.max(), qlo.max(), qhi.max())
+    ax[0].set_ylim(lo_y - 0.35 * (hi_y - lo_y), hi_y + 0.08 * (hi_y - lo_y))
+    ax[0].axhline(1.0, color="0.7", lw=0.6)
+    ax[0].set_xticks(x)
+    ax[0].set_xticklabels([r["slug"].replace("_", "\n") for r in ax_rows], fontsize=5.4)
+    ax[0].set_ylabel("normalised to the nominal corner")
+    ax[0].set_title("(a) the nine certified axis points")
+    ax[0].legend(loc="upper left", fontsize=6)
+    s, sp = pv["cert-axes"]["summary"], pv["cert-axes:post_lumped"]["summary"]
+    S.note(ax[0], f"$f_c$ spans {s['fc_hz']['span_x']:.3f}$\\times$\n"
+                  f"$Q_{{lo}}$ {s['Q_lo']['span_x']:.3f}$\\times$, "
+                  f"$Q_{{hi}}$ {s['Q_hi']['span_x']:.3f}$\\times$\n"
+                  f"two complex pairs {s['n_two_pair']}/{s['n_corners']}\n"
+                  f"post-layout: {sp['fc_hz']['span_x']:.3f}$\\times$ / "
+                  f"{sp['Q_lo']['span_x']:.3f}$\\times$ / "
+                  f"{sp['Q_hi']['span_x']:.3f}$\\times$", loc="lower left")
+
+    # (b) the 45-point cross product.  One marker per point, filled where both complex
+    # pairs survive and hollow-red where one is lost -- the non-superposition finding.
+    box = pv["cert-box"]["rows"]
+    procs = sorted({r["corner"]["process"] for r in box})
+    cols = sorted({(r["corner"]["temp"], r["corner"]["vdd"]) for r in box})
+    for r in box:
+        i = procs.index(r["corner"]["process"])
+        j = cols.index((r["corner"]["temp"], r["corner"]["vdd"]))
+        two = len(r["pairs"]) >= 2
+        ax[1].plot(j, i, marker="o" if two else "X", ms=7 if two else 8,
+                   color=S.OK if two else S.BAD, mfc=S.OK if two else "none",
+                   mew=1.0 if two else 1.6, ls="none")
+    ax[1].set_yticks(range(len(procs)))
+    ax[1].set_yticklabels(procs, fontsize=6.5)
+    ax[1].set_xticks(range(len(cols)))
+    ax[1].set_xticklabels([f"{t:g}°C\n{v:.2f} V" for t, v in cols], fontsize=5.6)
+    ax[1].set_xlim(-0.6, len(cols) - 0.4)
+    # Leave an empty strip under the bottom row for the note, so it never sits on a point.
+    ax[1].set_ylim(-1.9, len(procs) - 0.4)
+    ax[1].set_title("(b) the certified window does not superpose")
+    sb = pv["cert-box"]["summary"]
+    S.note(ax[1], f"{sb['n_two_pair']}/{sb['n_corners']} keep two complex pairs;\n"
+                  f"✕ = one pair lost.  Each axis is\ncertified ALONE -- the cross "
+                  f"product\nis not, and 1.40 V at 0 °C shows it.", loc="lower center")
+    S.save(fig, "pvt_axes")
+    plt.close(fig)
+
+
+# ------------------------------------------------------- F7: Monte Carlo over mismatch --
+def fig_mc(pv):
+    mc = pv["mismatch"]
+    rows, s = mc["rows"], mc["summary"]
+    fig, ax = plt.subplots(1, 3, figsize=(S.WIDE * 1.2, 2.7))
+    for a, (vals, lab, unit) in zip(ax, (
+            ([r["scorecard"]["fc_hz"] for r in rows], r"$f_c$", "Hz"),
+            ([r["pairs"][1]["Q"] for r in rows], r"$Q_{hi}$", ""),
+            ([r["offset_in_uv"] for r in rows], "input-referred offset", "µV"))):
+        v = np.asarray(vals, float)
+        a.hist(v, bins=max(14, int(np.sqrt(v.size))), color=S.CYCLE[0]["color"],
+               alpha=0.8, edgecolor="white", linewidth=0.5)
+        a.axvline(v.mean(), color=S.BAD, lw=1.1, ls="--")
+        a.set_xlabel(f"{lab}  ({unit})" if unit else lab)
+        a.set_ylabel("draws")
+        S.note(a, f"mean {v.mean():.4g}\n$\\sigma$ {v.std(ddof=1):.4g}\n"
+                  f"[{v.min():.4g}, {v.max():.4g}]", loc="upper right")
+    # Relative sigma on both, because the PVT figure's headline is that shape is ~10x
+    # stiffer than scale and under MISMATCH that separation does not hold: a random
+    # per-device shift is not a global parameter shift, so it moves ratios too.
+    ax[0].set_title(f"(a) scale: $\\sigma$ = {s['fc_hz']['sigma']:.3f} Hz "
+                    f"({100 * s['fc_hz']['sigma'] / s['fc_hz']['mean']:.2f} %)")
+    ax[1].set_title(f"(b) shape: $\\sigma$ = {s['Q_hi']['sigma']:.4f} "
+                    f"({100 * s['Q_hi']['sigma'] / s['Q_hi']['mean']:.2f} %)")
+    ax[2].set_title(f"(c) {s['n_two_pair']}/{s['n_draws']} keep two pairs")
+    S.save(fig, "mc_mismatch")
+    plt.close(fig)
+
+
+# ------------------------------------- F8: supply rejection, CM rejection and offset --
+def fig_rejection(rj):
+    """The two rejection ratios, and the transfers they are built from.
+
+    CMRR and PSRR are defined against the DIFFERENTIAL output -- CMRR = A_dm /
+    A_(cm->dm), PSRR = A_dm / A_(vdd->dm) -- so panel (a) draws the numerator and the two
+    denominators on one axis and the rejection is the vertical gap between them.  Panel
+    (b) is the ratios themselves.  The common-mode-to-common-mode paths are a DIFFERENT
+    quantity, finite at nominal where the differential ones are symmetry-cancelled, and
+    they get their own panel (c) rather than sharing an axis with the rejection.
+    """
+    spots = rj["spots_hz"]
+    keys = [f"{x:g}" for x in spots]
+    cs = rj["corners"]
+    nom = cs["tt_27c_1v500"]
+    mc = rj["mismatch"]["curves"]
+    fm = np.asarray(mc["f"], float)
+    fig, ax = plt.subplots(1, 3, figsize=(S.WIDE * 1.2, 2.9))
+
+    # (a) the definition, drawn.
+    for i, (k, lab) in enumerate((("a_dm_db", r"$A_{dm}$  (signal)"),
+                                  ("cm_to_dm_db", r"CM in $\rightarrow$ DM out"),
+                                  ("supply_to_dm_db", r"supply $\rightarrow$ DM out"))):
+        b = mc[k]
+        ax[0].semilogx(fm, b["mean"], **cy(i, marker="", lw=1.2), label=lab)
+        ax[0].fill_between(fm, b["min"], b["max"], color=S.CYCLE[i]["color"],
+                           alpha=0.15, lw=0)
+    ax[0].set_xlabel("frequency (Hz)")
+    ax[0].set_ylabel("dB")
+    ax[0].set_xlim(fm.min(), 1e4)
+    ax[0].set_title("(a) the transfers the ratios are made of")
+    # Headroom above the 0 dB signal path so the note sits in empty axes rather than on
+    # top of the leakage curves it is describing.
+    ax[0].set_ylim(-165, 55)
+    ax[0].legend(loc="upper right", fontsize=6.0)
+    S.note(ax[0], "rejection is the VERTICAL GAP:\n"
+                  "CMRR = $A_{dm}$ $-$ (CM$\\rightarrow$DM),\n"
+                  "PSRR = $A_{dm}$ $-$ (supply$\\rightarrow$DM).\n"
+                  "Both leakage paths are measured\nto the DIFFERENTIAL output.",
+           loc="lower left")
+
+    # (b) the ratios.
+    for i, (k, lab) in enumerate((("cmrr_db", "CMRR"), ("psrr_db", "PSRR"))):
+        b = mc[k]
+        ax[1].semilogx(fm, b["mean"], **cy(i, marker="", lw=1.2), label=f"{lab} mean")
+        ax[1].fill_between(fm, b["min"], b["max"], color=S.CYCLE[i]["color"],
+                           alpha=0.15, lw=0)
+    ax[1].set_xlabel("frequency (Hz)")
+    ax[1].set_ylabel("dB")
+    ax[1].set_xlim(fm.min(), 1e4)
+    ax[1].set_title(f"(b) mismatch-limited, {rj['mismatch']['n_draws']} draws")
+    ax[1].set_ylim(-50, 150)
+    ax[1].legend(loc="lower left", fontsize=6.5)
+    mm = rj["mismatch"]
+    S.note(ax[1], f"at dc: CMRR {mm['cmrr_db']['0.1']['mean']:.1f} dB mean,\n"
+                  f"{mm['cmrr_db']['0.1']['min']:.1f} worst;  PSRR "
+                  f"{mm['psrr_db']['0.1']['mean']:.1f} /\n"
+                  f"{mm['psrr_db']['0.1']['min']:.1f}.  Input-referred offset\n"
+                  f"$\\sigma$ = {mm['offset_in_uv']['sigma']:.0f} µV\n"
+                  f"(line: mean of the dB values;\nshaded: min-max over draws)",
+           loc="upper right")
+
+    # (c) a different quantity: the common-mode paths, finite at nominal.
+    f = np.asarray(nom["curves"]["f"], float)
+    env = np.array([[c["curves"][k] for c in cs.values()]
+                    for k in ("supply_to_cm_db", "cm_to_cm_db")])
+    for i, (k, lab) in enumerate((("supply_to_cm_db", r"supply $\rightarrow$ CM"),
+                                  ("cm_to_cm_db", r"CM $\rightarrow$ CM"))):
+        ax[2].semilogx(f, nom["curves"][k], **cy(i, marker="", lw=1.2), label=lab)
+        ax[2].fill_between(f, env[i].min(0), env[i].max(0),
+                           color=S.CYCLE[i]["color"], alpha=0.15, lw=0)
+        # The four spot frequencies the tables quote, marked on the measured sweep.
+        ax[2].plot([float(x) for x in keys], [nom[k][s] for s in keys],
+                   ls="none", marker="o", ms=4, color=S.CYCLE[i]["color"])
+    ax[2].set_xlabel("frequency (Hz)")
+    ax[2].set_ylabel("dB")
+    ax[2].set_xlim(f.min(), 1e4)
+    ax[2].set_title("(c) nominal common-mode paths")
+    ax[2].legend(loc="lower right", fontsize=6.5)
+    ax[2].set_ylim(-80, 6)
+    S.note(ax[2], "NOT rejection: these end at the\noutput COMMON mode.  Shaded: the\n"
+                  "envelope over the nine certified\naxis points.  Symmetry-exact, so\n"
+                  "they are finite at nominal.", loc="center left")
+    S.save(fig, "rejection")
+    plt.close(fig)
+
+
+# ------------------------------------------------- F9: the sub-35 Hz residual, explained --
+def fig_residual(gr):
+    rows = gr["rows"]
+    f = np.array([r["fin"] for r in rows], float)
+    flat = gr["flat_band_hz"]
+    m = f <= flat
+    fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
+
+    ax[0].loglog(f, [abs(r["v3_measured_uv"]) for r in rows], **cy(0, marker="o", ms=4), label="measured $V_3$")
+    ax[0].loglog(f, [abs(r["v3_gate_model_uv"]) for r in rows], **cy(1, marker="s", ms=4), label=r"gate model  $2I_3(a)/I_0(a)$")
+    ax[0].loglog(f, [abs(r["v3_unexplained_uv"]) for r in rows], **cy(2, marker="^", ms=4), label="unexplained (measured $-$ model)")
+    ax[0].axvspan(f.min(), flat, color=S.GREY, alpha=0.10, lw=0)
+    ax[0].set_xlabel("input frequency (Hz)")
+    ax[0].set_ylabel(r"$V_3$  ($\mu$V)")
+    ax[0].set_title("(a) what section 6.2 leaves unexplained")
+    ax[0].legend(loc="upper left", fontsize=6.5)
+    S.note(ax[0], f"shaded: the flat band, $f_{{in}} \\leq$ {flat:g} Hz.\nThe residual is "
+                  f"flat in VOLTS there\nwhile the gate model moves 39$\\times$ --\nan "
+                  f"additive mechanism, not a\nmis-scaled one.", loc="lower right")
+
+    ax[1].plot(f[m], [r["v3_unexplained_uv"] for r in rows if r["fin"] <= flat],
+               **cy(2, marker="^", ms=5), label="unexplained")
+    ax[1].fill_between(f[m],
+                       [min(r["v3_by_window_uv"].values()) for r in rows if r["fin"] <= flat],
+                       [max(r["v3_by_window_uv"].values()) for r in rows if r["fin"] <= flat],
+                       color=S.CYCLE[1]["color"], alpha=0.18, lw=0,
+                       label=r"cubic $g_3A^3/24$, over the three fit windows")
+    ax[1].plot(f[m], [r["v3_gds_pred_uv"] for r in rows if r["fin"] <= flat],
+               **cy(1, marker="s", ms=4), label="cubic, mid window (pre-registered)")
+    ax[1].plot(f[m], [r["v3_gds_exact_uv"] for r in rows if r["fin"] <= flat],
+               **cy(3, marker="o", ms=4),
+               label="window-free, over each device's own swing")
+    ax[1].set_xlabel("input frequency (Hz)")
+    ax[1].set_ylabel(r"$V_3$  ($\mu$V)")
+    ax[1].set_ylim(0, None)
+    ax[1].set_title(r"(b) drain-conductance curvature, $g_{ds}$")
+    ax[1].legend(loc="upper left", fontsize=5.8)
+    rf = gr["refinement"]
+    S.note(ax[1], f"pre-registered point estimate:\nworst {gr['p1_worst_factor']:.2f}"
+                  f"$\\times$ → {gr['verdict']}\nwindow-free: "
+                  f"{rf['worst_factor']:.2f}$\\times$, i.e. "
+                  f"{rf['coverage_pct']:.0f} % of the\nresidual, and the band overlap "
+                  f"goes away.\nRight shape, about a fifth of the size.",
+           loc="center right")
+    S.save(fig, "gds_residual")
+    plt.close(fig)
+
+
+# ------------------------------------------------------------ F10: IIP3 over corners --
+def fig_iip3_corners(ic):
+    rows = list(ic["corners"].values())
+    slugs = list(ic["corners"])
+    x = np.arange(len(rows))
+    fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
+
+    ok = [i for i, r in enumerate(rows) if r.get("trusted")]
+    ax[0].plot(x[ok], [rows[i]["iip3_dbv"] for i in ok], **cy(0, marker="o", ms=5, ls="none"), label="IIP3")
+    lo, hi = ic["iip3_dbv_span"]
+    ax[0].axhspan(lo, hi, color=S.CYCLE[0]["color"], alpha=0.12, lw=0)
+    ax[0].axhline(rows[0]["iip3_dbv"], color=S.GREY, ls=":", lw=1.0, label="nominal")
+    ax[0].set_xticks(x)
+    ax[0].set_xticklabels([s.replace("_", "\n") for s in slugs], fontsize=5.4)
+    ax[0].set_ylabel("IIP3 (dBVp)")
+    # Headroom above the best corner so the note never covers a point.
+    vals = [r["iip3_dbv"] for r in rows]
+    ax[0].set_ylim(min(vals) - 0.25, max(vals) + 1.15)
+    ax[0].set_title("(a) IIP3 over the certified axes")
+    ax[0].legend(loc="lower left", fontsize=6.5)
+    S.note(ax[0], f"{lo:+.3f} .. {hi:+.3f} dBVp\nspread {hi - lo:.2f} dB over "
+                  f"{len(ok)}/{len(rows)} corners\ntones fixed at "
+                  f"{ic['tones_hz'][0]:g}/{ic['tones_hz'][1]:g} Hz", loc="upper right")
+
+    sl = [r["imd3_slope_db_per_decade"] for r in rows]
+    ax[1].plot(x, sl, **cy(1, marker="s", ms=5, ls="none"))
+    ax[1].axhline(ic["slope_ideal_db_per_decade"], color=S.OK, ls="--", lw=1.0,
+                  label="cubic law, 40 dB/decade")
+    ax[1].axhspan(ic["slope_ideal_db_per_decade"] - 10, ic["slope_ideal_db_per_decade"] + 10,
+                  color=S.OK, alpha=0.08, lw=0)
+    ax[1].set_xticks(x)
+    ax[1].set_xticklabels([s.replace("_", "\n") for s in slugs], fontsize=5.4)
+    ax[1].set_ylabel("measured IMD3 slope (dB/decade)")
+    ax[1].set_title("(b) an intercept, or an extrapolation?")
+    ax[1].legend(loc="lower left", fontsize=6.5)
+    S.note(ax[1], "Two drive levels per corner, so\nevery row reports its OWN slope\n"
+                  "instead of assuming 3:1.  A row\noutside the shaded band would\nnot be "
+                  "an intercept.", loc="upper right")
+    S.save(fig, "iip3_corners")
+    plt.close(fig)
+
+
+# ------------------------------------------------------------- F11: THD over corners --
+def fig_thd_corners(tc):
+    slugs = list(tc["corners"])
+    fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
+    # Nine corners need nine distinguishable colours; the four-entry house cycle would
+    # repeat and make two different corners look like one.
+    shades = plt.cm.viridis(np.linspace(0.05, 0.9, len(slugs)))
+    for i, s in enumerate(slugs):
+        pts = tc["corners"][s]["points"]
+        v = np.array([p["vpp_diff"] for p in pts]) * 1e3
+        ax[0].semilogx(v, [p["thd_db"] for p in pts], color=shades[i],
+                       lw=1.0, marker=".", ms=3.5, label=s)
+    ax[0].axhline(-40, color=S.BAD, lw=0.9, ls="--")
+    ax[0].axvline(tc["spec_vpp"] * 1e3, color=S.OK, lw=0.9, ls="--")
+    ax[0].set_xlabel("differential input (mVpp)")
+    ax[0].set_ylabel("THD (dBc)")
+    ax[0].set_title(f"(a) the ladder at every corner, $f_{{in}}$ = {tc['fin_hz']:g} Hz")
+    ax[0].legend(loc="upper left", fontsize=5.0, ncol=2, handlelength=1.4,
+                 columnspacing=0.9, labelspacing=0.25)
+    lo, hi = tc["thd_db_at_spec_span"]
+    S.note(ax[0], f"dashed: the S7 lines\n({tc['spec_vpp'] * 1e3:g} mVpp, $-$40 dB).\n"
+                  f"At that point the corners span\n{lo:.2f} .. {hi:.2f} dB.\n"
+                  f"Report-only: S7 is scored at\nnominal by make check.", loc="lower right")
+
+    x = np.arange(len(slugs))
+    ax[1].plot(x, [tc["corners"][s]["thd_db_at_spec"] for s in slugs], **cy(0, marker="o", ms=5, ls="none"), label=f"THD at {tc['spec_vpp'] * 1e3:g} mVpp")
+    ax[1].plot(x, [tc["corners"][s]["hd3_db_at_spec"] for s in slugs], **cy(1, marker="^", ms=5, ls="none"), label="HD3 at the same point")
+    ax[1].axhline(-40, color=S.BAD, lw=0.9, ls="--", label="S7 limit")
+    ax[1].set_xticks(x)
+    ax[1].set_xticklabels([s.replace("_", "\n") for s in slugs], fontsize=5.4)
+    ax[1].set_ylabel("dBc")
+    ax[1].set_title("(b) margin at the spec point")
+    # Both lower corners hold data; the free space is top-left.
+    ax[1].legend(loc="upper left", fontsize=6.5)
+    # THD is negative dBc: the WORST corner is the least negative one.
+    worst = max(tc["corners"][s]["thd_db_at_spec"] for s in slugs)
+    S.note(ax[1], f"worst corner {worst:.2f} dB, i.e.\n{abs(worst) - 40:.2f} dB of margin on "
+                  f"a limit\nthe spec defines at nominal only.\nBest {lo:.2f} dB; the nine "
+                  f"span {hi - lo:.2f} dB.", loc="upper right")
+    S.save(fig, "thd_corners")
+    plt.close(fig)
+
+
+# ------------------------------------------- F13: has the Monte Carlo converged? --
+def fig_mc_convergence(pv, rj):
+    """Running sigma against N, inside the band that (M1) allows it to wander in.
+
+    Both populations use seeds `1..N` in order, so the left-hand part of every trace IS
+    the smaller run that was reported before: a trace that passes through the old value
+    and then flattens shows the larger set is a superset, not a different population.
+    """
+    fig, ax = plt.subplots(1, 3, figsize=(S.WIDE * 1.25, 2.8))
+    band = dict(color=S.GREY, alpha=0.18, lw=0)
+    nmax = pv["mismatch"]["summary"]["n_draws"]
+    notes = {
+        "(a) extraction MC":
+            f"shaded: $\\pm 1/\\sqrt{{2(N-1)}}$, the standard\nerror of a sigma "
+            f"estimated from N\ndraws (M1) -- $\\pm${100 * MC_SE(nmax):.1f} % at N = {nmax}.  All four\n"
+            f"are inside it well before the end.",
+        "(b) rejection MC":
+            "rejection in dB is the log of a near-\ncancellation, so these tails are "
+            "longer\nthan (a)'s and (M1)'s normal assumption\nis a guide, not a bound.  "
+            "Here the trace,\nnot the formula, is the evidence.",
+    }
+
+    for a, (conv, title, keys) in zip(ax, (
+            (pv["mismatch"]["summary"]["convergence"], "(a) extraction MC",
+             (("fc_hz", r"$\sigma(f_c)$"), ("Q_lo", r"$\sigma(Q_{lo})$"),
+              ("Q_hi", r"$\sigma(Q_{hi})$"), ("offset_in_uv", r"$\sigma$(offset)"))),
+            (rj["mismatch"]["convergence"], "(b) rejection MC",
+             (("cmrr_db_0.1hz", r"$\sigma$(CMRR@dc)"),
+              ("psrr_db_0.1hz", r"$\sigma$(PSRR@dc)"),
+              ("offset_in_uv", r"$\sigma$(offset)"))))):
+        n = np.asarray(conv[keys[0][0]]["n"], float)
+        se = np.asarray(conv[keys[0][0]]["se_frac"], float)
+        a.fill_between(n, 1 - se, 1 + se, **band)
+        for i, (k, lab) in enumerate(keys):
+            v = np.asarray(conv[k]["sigma"], float)
+            a.semilogx(conv[k]["n"], v / v[-1], **cy(i, marker="", lw=1.1), label=lab)
+        a.axhline(1.0, color=S.GREY, lw=0.7, ls=":")
+        a.set_xlabel("draws used, in seed order")
+        a.set_ylabel(r"$\sigma(N)\ /\ \sigma(N_{max})$")
+        a.set_title(title)
+        a.set_ylim(0.4, 1.6)
+        a.legend(loc="lower right", fontsize=6.0, ncol=1)
+        S.note(a, notes[title], loc="upper right")
+
+    # (c) why the worst case is not a convergent number.
+    tr = pv["mismatch"]["summary"]["convergence"]["offset_in_uv"]
+    n = tr["n"]
+    for i, (k, lab, ls) in enumerate((("max", "max", "-"), ("p99", "p99", "--"),
+                                      ("p01", "p01", "--"), ("min", "min", "-"))):
+        ax[2].semilogx(n, tr[k], **cy(i % 2, marker="", lw=1.1, ls=ls), label=lab)
+    ax[2].set_xlabel("draws used, in seed order")
+    ax[2].set_ylabel("input-referred offset (µV)")
+    ax[2].set_title("(c) order statistics do not converge")
+    ax[2].legend(loc="center right", fontsize=6.0)
+    ax[2].margins(y=0.28)
+    S.note(ax[2], "min and max walk outward\nwith N by construction:\na longer run MUST "
+                  "report a\nworse worst case.  p01/p99\nstay comparable across N.",
+           loc="upper left")
+    S.save(fig, "mc_convergence")
+    plt.close(fig)
+
+
 def main() -> None:
     tf, nz, la = load("tf.json"), load("noise.json"), load("linearity_analysis.json")
     fig_half_circuit()
@@ -376,6 +769,15 @@ def main() -> None:
     fig_noise(nz)
     fig_thd(la)
     fig_iip3(la)
+    pv = load("pvt.json")
+    fig_pvt(pv)
+    fig_mc(pv)
+    rj = load("psrr_cmrr.json")
+    fig_rejection(rj)
+    fig_mc_convergence(pv, rj)
+    fig_residual(load("gds_residual.json"))
+    fig_iip3_corners(load("iip3_corners.json"))
+    fig_thd_corners(load("thd_corners.json"))
 
 
 if __name__ == "__main__":
