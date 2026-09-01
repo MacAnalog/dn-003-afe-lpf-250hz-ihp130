@@ -224,6 +224,16 @@ def _c_igid(d: dict) -> tuple[float, float]:
     return min(cs), max(cs)
 
 
+def _sgn(x: float, fmt: str = ".0f") -> str:
+    """A signed number carrying the typographic minus the rest of the pack uses."""
+    return format(x, fmt).replace("-", "\u2212")
+
+
+def _xspread(xc: dict) -> float:
+    """Worst disagreement, in %, between the fitted-law crossing and the bracket interpolation."""
+    return max(abs(c["method_spread_pct"]) for c in xc["per_dut"].values() if c["bracketed"])
+
+
 def tbl(head: list[str], rows: list[list[str]]) -> str:
     out = ["| " + " | ".join(head) + " |",
            "|" + "|".join("---" for _ in head) + "|"]
@@ -852,6 +862,7 @@ def _gm_shift_pct() -> float:
 
 def sec_lin(la: dict, lin: dict, sp_: dict) -> str:
     a = la["amplitude_law"]
+    xc = a["hd3_crossing"]
     fq = la["frequency_law"]
     ml = la["memoryless_test"]
     det = {r["fin"]: r for r in fq["model_detail"]["rows"]}
@@ -929,7 +940,38 @@ Beyond ~0.3 Vpp the ladder leaves the small-signal regime entirely — the funda
 growing (0.326 → 0.362 → 0.341 Vpp for 0.35 → 0.525 → 0.70 Vpp in) and THD saturates near
 −17 dB.  That is slew/compression, correctly *outside* the equation's window.
 **The −40 dB THD crossing is at {a['thd_minus40_vpp'] * 1e3:.1f} mVpp** — the compression
-point a reviewer asks for, 1.75× the S7 drive of 175 mVpp.
+point a reviewer asks for, 1.75× the S7 drive of 175 mVpp.  That one is an
+*extrapolation*: it lands past the last uncompressed measurement, where the fundamental
+has already stopped growing.
+
+#### The top of the dynamic range: HD3 = {_sgn(xc['target_db'])} dB
+
+The drive at which HD3 reaches **{_sgn(xc['target_db'])} dB** is the other crossing a
+reviewer asks for, because it is the numerator of dynamic range.  Unlike the −40 dB line
+it is **bracketed by two measured amplitudes**, so the fitted law can be checked against a
+plain log-linear interpolation between them rather than trusted on its own:
+
+{tbl(["DUT", f"V_in at HD3 = {_sgn(xc['target_db'])} dB (mVpp diff)", "same, mVrms",
+      "bracket interpolation (mVpp)", "IRN 0.5–200 Hz (µVrms)", "DR (dB)"],
+     [[f"`{lab}`", f"**{c['vpp_diff'] * 1e3:.2f}**", f"{c['v_rms'] * 1e3:.2f}",
+       f"{c['bracket_vpp_diff'] * 1e3:.2f} ({_sgn(c['method_spread_pct'], '+.1f')} %)"
+       if c["bracketed"] else "— (extrapolated)",
+       f"{c['irn_uv']:.3f}", f"**{c['dr_db']:.2f}**"]
+      for lab, c in xc["per_dut"].items()])}
+
+The two methods agree to {_xspread(xc):.1f} % in amplitude — under 0.25 dB of dynamic
+range — so the number does not depend on which one is used.  The post-layout row is the
+DUT of record.
+
+**The conventions, stated because a dynamic range is only comparable against another
+design measured the same way.**  The distortion criterion is HD3, not THD, at
+f_in = 50 Hz; the amplitude is **differential** peak-to-peak, converted to rms as
+`V_pp/(2√2)`; the noise is the certified input-referred value integrated over 0.5–200 Hz
+(§5), on the same DUT.  The other common convention in this class of filter is 1 % THD
+(−40 dB), which lands roughly 3× higher and would raise `DR` by about 9 dB — so a quoted
+`DR` without its criterion is not a comparable number.
+`csv/linearity_crossings.csv` carries the crossing with the slope and the anchor point it
+was solved from, so it need not be refitted.
 
 ### 6.2 HD3 versus frequency — the `ω²` law, and where the model stops
 

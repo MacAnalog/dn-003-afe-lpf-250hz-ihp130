@@ -140,6 +140,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | the noise budget: which device, which mechanism | `csv/noise_by_device_and_type.csv` | `device` (text) | `irn_uv_rms`, `pct_of_power` |
 | Group delay | `csv/group_delay.csv` | `f_hz` | `group_delay_ms_*` |
 | THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
+| the distortion-limited drive and the dynamic range it sets | `csv/linearity_crossings.csv` | `target_db` | `vpp_diff_v`, `dr_db` |
 | THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
 | `fc` and `Q` over the certified axes, pre- and post-layout | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_*`, `q_lo_*`, `q_hi_*` |
@@ -155,7 +156,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all twenty, plus five points to note before
+[`csv/README.md`](csv/README.md) covers all twenty-one, plus five points to note before
 plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
 two halves are exported beside them, why the phase and group-delay columns are blank above
 3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not

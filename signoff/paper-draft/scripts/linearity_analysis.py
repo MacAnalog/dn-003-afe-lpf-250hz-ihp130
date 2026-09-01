@@ -162,6 +162,13 @@ def hd3_model(fins, ampl_diff) -> dict:
                         for k, v in dev.items()}}
 
 
+#: Distortion criterion for the top of the dynamic range.  -60 dB HD3 at f_in = 50 Hz,
+#: differential drive.  Stated here because a dynamic range is only comparable against
+#: another design measured to the SAME criterion -- 1 % THD (-40 dB) is the other common
+#: convention and lands roughly 3x higher.
+HD3_TARGET_DB = -60.0
+
+
 def fit_power_law(x, y_db) -> tuple[float, float]:
     """Slope in dB per decade, and the worst residual, of y_db against log10(x)."""
     lx = np.log10(np.asarray(x, dtype=float))
@@ -192,6 +199,42 @@ def main() -> None:
     ref = lin_pts[-1]
     out["amplitude_law"]["thd_minus40_vpp"] = float(
         ref["vpp_diff"] * 10 ** ((-40.0 - ref["thd_db"]) / slope))
+
+    # The drive at which HD3 reaches -60 dB -- the top of the dynamic range, and the
+    # numerator of the filter figure of merit.  Same crossing convention as the -40 dB
+    # line above: walk the fitted A^2 law from the highest in-window point.  Unlike the
+    # -40 dB THD line this target is BRACKETED by two measured amplitudes, so a plain
+    # log-linear interpolation between them is an independent check on the fit; the two
+    # are reported side by side rather than averaged.
+    out["amplitude_law"]["hd3_crossing"] = {"target_db": HD3_TARGET_DB, "per_dut": {}}
+    for label in ("pre_mim", "post_pex"):
+        rows = lin["thd_ladder"][label]
+        pts = [r for r in rows if r["hd3_db"] < -45]        # the uncompressed end
+        sl, dv = fit_power_law([r["vpp_diff"] for r in pts], [r["hd3_db"] for r in pts])
+        anc = pts[-1]
+        vpp = float(anc["vpp_diff"] * 10 ** ((HD3_TARGET_DB - anc["hd3_db"]) / sl))
+        bra = [(lo, hi) for lo, hi in zip(pts, pts[1:])
+               if lo["hd3_db"] <= HD3_TARGET_DB <= hi["hd3_db"]]
+        bvpp = bsl = None
+        if bra:
+            lo, hi = bra[0]
+            bsl = float((hi["hd3_db"] - lo["hd3_db"])
+                        / np.log10(hi["vpp_diff"] / lo["vpp_diff"]))
+            bvpp = float(lo["vpp_diff"] * 10 ** ((HD3_TARGET_DB - lo["hd3_db"]) / bsl))
+        # Dynamic range: this drive as an rms differential voltage, over the certified
+        # input-referred noise of the SAME DUT.  `vpp_diff` is peak-to-peak differential,
+        # so its rms is vpp/(2*sqrt(2)); the noise is already rms over 0.5-200 Hz.
+        irn = json.loads((PACK / f"data/bench_{label}.json").read_text())["scorecard"]["irn_uv"]
+        vrms = vpp / (2 * 2 ** 0.5)
+        out["amplitude_law"]["hd3_crossing"]["per_dut"][label] = {
+            "vpp_diff": vpp, "v_rms": vrms,
+            "slope_db_per_decade": sl, "slope_residual_db": dv,
+            "anchor_vpp_diff": anc["vpp_diff"], "anchor_hd3_db": anc["hd3_db"],
+            "bracketed": bvpp is not None,
+            "bracket_vpp_diff": bvpp, "bracket_slope_db_per_decade": bsl,
+            "method_spread_pct": None if bvpp is None else float(100 * (vpp / bvpp - 1)),
+            "irn_uv": irn, "dr_db": float(20 * np.log10(vrms / (irn * 1e-6))),
+        }
 
     # ---- prediction 2: HD3 versus frequency, model vs measurement -----------------
     meas = hd3f["rows"]
@@ -274,6 +317,12 @@ def main() -> None:
     print(f"HD3 vs amplitude : {a['fitted_slope_db_per_decade']:.2f} dB/decade "
           f"(A^2 law = 40), residual {a['max_residual_db']:.3f} dB; "
           f"THD hits -40 dB at {a['thd_minus40_vpp'] * 1e3:.1f} mVpp")
+    for label, c in a["hd3_crossing"]["per_dut"].items():
+        print(f"    {label:9s} HD3 = {a['hd3_crossing']['target_db']:.0f} dB at "
+              f"{c['vpp_diff'] * 1e3:6.2f} mVpp diff = {c['v_rms'] * 1e3:5.2f} mVrms"
+              + (f" (bracket interp {c['bracket_vpp_diff'] * 1e3:.2f}, "
+                 f"{c['method_spread_pct']:+.1f} %)" if c["bracketed"] else " [EXTRAPOLATED]")
+              + f"  ->  DR {c['dr_db']:.2f} dB over {c['irn_uv']:.3f} uVrms")
     fr = out["frequency_law"]
     print(f"HD3 vs frequency : measured slope {fr['measured_slope_db_per_decade']:.1f} "
           f"dB/decade; model error max {fr['max_err_db']:.2f} dB "
