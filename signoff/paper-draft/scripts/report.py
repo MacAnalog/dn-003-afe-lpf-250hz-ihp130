@@ -8,8 +8,9 @@ re-extraction:
 
     .venv/bin/python signoff/paper-draft/scripts/report.py   # repo venv: needs >= 3.12
 
-It reads only `signoff/paper-draft/data/*.json` -- it never calls the simulator and never
-touches the small-signal model.
+It reads only `signoff/paper-draft/data/` -- the extracted JSON, plus the committed core
+netlist `post_lumped_core.sp` for the device geometries in section 5.2.  It never calls
+the simulator and never touches the small-signal model.
 """
 from __future__ import annotations
 
@@ -122,6 +123,99 @@ def _igig_port_evidence(d: dict) -> tuple[float, float, int, int]:
         m.append(gate - r["fit_dev_db"])
     dec = [x for x in m if x >= 0.01]
     return min(dec), max(dec), len(dec), len(m) - len(dec)
+
+
+#: Generator names folded onto the physical mechanism each one measures.  `idid` and
+#: `igig` are two halves of ONE channel thermal generator, split by its correlation with
+#: the induced gate noise (section 5.2) -- `igig` is not gate leakage, so the two are
+#: never shown as separate mechanisms.  `pvt_analysis.py` and `export_csv.py` carry the
+#: same fold.
+MECH_ORDER = ("channel thermal", "flicker (1/f)", "bulk–drain shot", "gate resistance")
+MECHANISM = {"idid": MECH_ORDER[0], "ididedge": MECH_ORDER[0], "igig": MECH_ORDER[0],
+             "flicker": MECH_ORDER[1], "ibd": MECH_ORDER[2], "rgate": MECH_ORDER[3]}
+
+
+def _sizes() -> dict:
+    """W, L and total gate area per device, from the committed core netlist.
+
+    Sizing is identical pre- and post-layout (section 1 measures the largest `gm` shift at
+    4e-04 %), so one netlist covers both.  Area is `W·L·m`; `ng` divides `W` into fingers
+    and does not change it.  The testbench's own bias devices are not in this subckt and
+    come back absent, which is what puts a dash in their row."""
+    out: dict = {}
+    for line in (DATA / "post_lumped_core.sp").read_text().splitlines():
+        f = line.split()
+        if len(f) < 6 or not f[0].startswith("x") or "mos" not in f[5]:
+            continue
+        kv = dict(t.split("=") for t in f[6:] if "=" in t)
+        w, l = float(kv["w"]) * 1e6, float(kv["l"]) * 1e6
+        out[f[0][1:]] = (w, l, w * l * float(kv.get("m", 1)))
+    return out
+
+
+def _vfmt(uv: float) -> str:
+    """A sub-µV voltage in the unit that keeps it a small integer-ish number."""
+    for scale, unit in ((1.0, "µV"), (1e-3, "nV")):
+        if uv >= scale:
+            return f"{uv / scale:.3g} {unit}"
+    return f"{uv / 1e-6:.3g} pV"
+
+
+def _zfmt(z) -> str:
+    """`|Z_T|` at dc in whatever unit keeps it readable -- this cell spans 38 Ω to 60 MΩ."""
+    if z is None:
+        return "—"
+    for scale, unit in ((1e6, "MΩ"), (1e3, "kΩ")):
+        if z >= scale:
+            return f"{z / scale:.3g} {unit}"
+    return f"{z:.3g} Ω"
+
+
+def _device_matrix(d: dict) -> dict:
+    """Per INSTANCE, the integrated IRN power split by mechanism, worst device first.
+
+    Instances are kept apart rather than merged into their roles because the two halves of
+    a differential pair are separate devices and their agreement is a check (`_pair_spread`).
+    The operating point is read off whichever of the instance's rows resolved it."""
+    by: dict = {}
+    for r in d["rows"]:
+        e = by.setdefault(r["inst"], {"role": r["role"], "id_na": None, "gm_ns": None,
+                                      "z": None, "p": dict.fromkeys(MECH_ORDER, 0.0)})
+        e["p"][MECHANISM[r["gen"]]] += r["irn_uv_rms"] ** 2
+        for k in ("id_na", "gm_ns"):
+            if e[k] is None and r.get(k) is not None:
+                e[k] = r[k]
+        if e["z"] is None and r.get("z_dc_gohm") is not None:
+            e["z"] = r["z_dc_gohm"] * 1e9
+    return dict(sorted(by.items(), key=lambda kv: -sum(kv[1]["p"].values())))
+
+
+def _pair_spread(d: dict) -> float:
+    """Largest gap, in µV, between the two halves of any differential pair."""
+    m = _device_matrix(d)
+    per_role: dict = {}
+    for e in m.values():
+        per_role.setdefault(e["role"], []).append(sum(e["p"].values()) ** 0.5)
+    return max((max(v) - min(v) for v in per_role.values() if len(v) == 2), default=0.0)
+
+
+def _matrix_delta(pre: dict, post: dict) -> tuple[float, str]:
+    """Largest pre->post change of any one cell of the matrix, and where it is."""
+    a, b = _device_matrix(pre), _device_matrix(post)
+    worst = max(((abs(a[i]["p"][m] ** 0.5 - b[i]["p"][m] ** 0.5), i, m)
+                 for i in a for m in MECH_ORDER), key=lambda t: t[0])
+    return worst[0], f"`{worst[1]}`, {worst[2]}"
+
+
+def _off_axis(d: dict) -> tuple[float, float]:
+    """The replica branch + bias mirror: their total IRN in µV, and its share of the power.
+
+    Ideally they sit ON the differential axis and contribute exactly nothing; what they do
+    contribute is a measure of how far the extracted cell departs from that ideal."""
+    tot = sum(r["irn_uv_rms"] ** 2 for r in d["rows"])
+    p = sum(r["irn_uv_rms"] ** 2 for r in d["rows"]
+            if (r["role"] or "").startswith(("rep_", "__")))
+    return p ** 0.5, 100 * p / tot
 
 
 def _c_igid(d: dict) -> tuple[float, float]:
@@ -611,24 +705,61 @@ injected current therefore makes
 in B — which is also why the design spends its capacitance there.  The replica branch and
 the testbench bias diode sit on the differential axis and contribute nothing measurable.
 
-And by role × generator:
+And by device × mechanism — the same budget with nothing folded away:
 """)
-    for key, label in CASES:
-        d = nz[key]
-        tot = sum(r["irn_uv_rms"] ** 2 for r in d["rows"])
-        agg: dict[tuple[str, str], float] = {}
-        for r in d["rows"]:
-            k = (r["role"] or "testbench bias devices", r["gen"])
-            agg[k] = agg.get(k, 0.0) + r["irn_uv_rms"] ** 2
-        top = sorted(agg.items(), key=lambda kv: -kv[1])[:10]
-        rr = [[ROLE_TEXT.get(k[0], str(k[0])), f"`{k[1]}`", f"{v ** 0.5:.4f}", f"{100 * v / tot:.2f}"]
-              for k, v in top]
-        rest = tot - sum(v for _, v in top)
-        rr.append(["*(all other role × generator terms)*", "—", f"{max(rest, 0) ** 0.5:.4f}",
-                   f"{100 * max(rest, 0) / tot:.2f}"])
-        out.append(f"""#### {label} (`{key}`) — total {tot ** 0.5:.4f} µV
+    d0, mech = nz["pre_mim"], _device_matrix(nz["pre_mim"])
+    tot0 = sum(r["irn_uv_rms"] ** 2 for r in d0["rows"])
+    rr, wl = [], _sizes()
+    for inst, e in mech.items():
+        s_ = sum(e["p"].values())
+        g = wl.get(inst)
+        rr.append([f"`{inst}`", ROLE_TEXT.get(e["role"], "testbench bias device"),
+                   "—" if g is None else f"{g[0]:.4g}/{g[1]:.4g}",
+                   "—" if g is None else f"{g[2]:.0f}",
+                   "—" if e["id_na"] is None else f"{e['id_na']:.3f}",
+                   "—" if e["gm_ns"] is None else f"{e['gm_ns']:.1f}", _zfmt(e["z"])]
+                  + [f"{e['p'][m] ** 0.5:.4f}" for m in MECH_ORDER]
+                  + [f"**{s_ ** 0.5:.4f}**", f"{100 * s_ / tot0:.2f}"])
+    rr.append(["**total**", "", "", "", "", "", ""]
+              + [f"**{sum(e['p'][m] for e in mech.values()) ** 0.5:.4f}**" for m in MECH_ORDER]
+              + [f"**{tot0 ** 0.5:.4f}**", "100.00"])
+    dmax, dwhere = _matrix_delta(nz["pre_mim"], nz["post_lumped"])
+    off = _off_axis(nz["post_lumped"])
+    # Compared within the CORE only: the replica sink `r3` is physically the largest
+    # device in the netlist (m=4) but sits on the differential axis and makes no noise.
+    core = [i for i in wl if (mech[i]["role"] or "") in ROLE_ORDER[:6]]
+    flk, big = min(core, key=lambda i: wl[i][2]), max(core, key=lambda i: wl[i][2])
+    out.append(f"""{tbl(["device", "role", "W/L (µm)", "area (µm²)", "I_D (nA)", "gm (nS)",
+                         "\\|Z_T\\| dc"]
+                        + [f"{m} (µV)" for m in MECH_ORDER] + ["total (µV)", "% power"], rr)}
 
-{tbl(["role", "generator", "IRN contribution (µV)", "% of power"], rr)}
+Read it along a row for *which device*, down a column for *which mechanism*.  The column
+totals are the generator table above with `idid` and `igig` already summed; the rows pair
+up into the role table.  Nothing is truncated — these
+{len(mech)} devices × {len(MECH_ORDER)} mechanisms are the entire IRN.
+
+**Every signal device appears twice**, as the two halves of a differential pair
+(`m2`/`m5`, `m9`/`m10`, `m0`/`m1`, `m14`/`m15`, `mst`/`mstn`, `m4`/`m8`).  A pair sees the
+same `|Z_T|` by symmetry, and the two halves agree here to
+{_vfmt(_pair_spread(nz['pre_mim']))} — a check on the extraction rather than a result.
+
+**The two mechanisms rank the devices differently, and the geometry columns say why.**
+Channel noise is `2qI_D` propagated by `Z_T`, so it peaks on the biquad-A pair: `m2`/`m5`
+carry the *least* current in the cell and still lead, because their node sees
+{_z_of(nz['pre_mim'], 'm2') / 1e6:.0f} MΩ.  Flicker does not scale with current at all —
+it scales with gate area — so it peaks instead on the pair containing `{flk}`, the
+smallest-area devices in the core at {wl[flk][2]:.0f} µm² against
+{wl[big][2]:.0f} µm² on the {ROLE_TEXT[mech[big]["role"]]}.  That is the actionable
+split: the channel term is bought back with capacitance at biquad A, the flicker term with
+area on the biquad-B follower, and neither fix helps the other.
+
+The post-layout cell reproduces the table to
+{_vfmt(dmax)} on any single entry ({dwhere}).  Its one qualitative difference is that
+the replica branch and the bias mirror are no longer exactly on the differential axis, so
+they pick up {_vfmt(off[0])} between them — {off[1]:.1e} % of the power, still
+nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all three
+DUTs, one row per device per *named* generator, each with its identified port.
+
 """)
     d = nz["pre_mim"]
     # `z_dc_gohm` is present only on rows whose port the data-driven identification

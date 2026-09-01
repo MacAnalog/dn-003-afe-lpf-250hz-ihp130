@@ -137,6 +137,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 |---|---|---|---|
 | AC response, magnitude and phase | `csv/ac_response.csv` | `f_hz` | `mag_db_*`, `phase_deg_*` |
 | Input-referred noise vs frequency | `csv/input_referred_noise.csv` | `f_hz` | `inoise_v_per_rthz_*` |
+| the noise budget: which device, which mechanism | `csv/noise_by_device_and_type.csv` | `device` (text) | `irn_uv_rms`, `pct_of_power` |
 | Group delay | `csv/group_delay.csv` | `f_hz` | `group_delay_ms_*` |
 | THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
@@ -154,7 +155,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all nineteen, plus five points to note before
+[`csv/README.md`](csv/README.md) covers all twenty, plus five points to note before
 plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
 two halves are exported beside them, why the phase and group-delay columns are blank above
 3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not

@@ -472,39 +472,57 @@ injected current therefore makes
 in B — which is also why the design spends its capacitance there.  The replica branch and
 the testbench bias diode sit on the differential axis and contribute nothing measurable.
 
-And by role × generator:
+And by device × mechanism — the same budget with nothing folded away:
 
-#### pre-layout (`pre_mim`) — total 29.1990 µV
+| device | role | W/L (µm) | area (µm²) | I_D (nA) | gm (nS) | \|Z_T\| dc | channel thermal (µV) | flicker (1/f) (µV) | bulk–drain shot (µV) | gate resistance (µV) | total (µV) | % power |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `m5` | biquad-A input follower (`gm_ia`) | 16/10 | 160 | 0.663 | 16.6 | 60.1 MΩ | 12.6204 | 3.2508 | 0.0140 | 0.0000 | **13.0324** | 19.92 |
+| `m2` | biquad-A input follower (`gm_ia`) | 16/10 | 160 | 0.663 | 16.6 | 60.1 MΩ | 12.6204 | 3.2508 | 0.0140 | 0.0000 | **13.0324** | 19.92 |
+| `m10` | biquad-A internal bias sink | 24/25 | 600 | 0.663 | 18.6 | 60.1 MΩ | 12.6587 | 2.4000 | 0.0369 | 0.0001 | **12.8842** | 19.47 |
+| `m9` | biquad-A internal bias sink | 24/25 | 600 | 0.663 | 18.6 | 60.1 MΩ | 12.6587 | 2.4000 | 0.0369 | 0.0001 | **12.8842** | 19.47 |
+| `m1` | biquad-B input follower (`gm_ib`) | 4/15 | 60 | 2.646 | 62.0 | 16.1 MΩ | 5.5132 | 5.2628 | 0.0023 | 0.0000 | **7.6218** | 6.81 |
+| `m0` | biquad-B input follower (`gm_ib`) | 4/15 | 60 | 2.646 | 62.0 | 16.1 MΩ | 5.5132 | 5.2628 | 0.0023 | 0.0000 | **7.6218** | 6.81 |
+| `m15` | biquad-B shunt-feedback device (`gm_fb`) | 12/31 | 372 | 2.646 | 63.5 | 7.76 MΩ | 3.9030 | 1.1084 | 0.0022 | 0.0000 | **4.0573** | 1.93 |
+| `m14` | biquad-B shunt-feedback device (`gm_fb`) | 12/31 | 372 | 2.646 | 63.5 | 7.76 MΩ | 3.9030 | 1.1084 | 0.0022 | 0.0000 | **4.0573** | 1.93 |
+| `mstn` | current-reuse bridge (`gm_br`) | 5/33 | 165 | 2.646 | 58.8 | 8.37 MΩ | 3.1754 | 1.6093 | 0.0013 | 0.0000 | **3.5600** | 1.49 |
+| `mst` | current-reuse bridge (`gm_br`) | 5/33 | 165 | 2.646 | 58.8 | 8.37 MΩ | 3.1754 | 1.6093 | 0.0013 | 0.0000 | **3.5600** | 1.49 |
+| `m8` | biquad-A shunt-feedback device (`gm_fa`) | 1.5/45 | 68 | 1.984 | 44.7 | 14.3 kΩ | 1.6433 | 0.7184 | 0.0009 | 0.0001 | **1.7935** | 0.38 |
+| `m4` | biquad-A shunt-feedback device (`gm_fa`) | 1.5/45 | 68 | 1.984 | 44.7 | 14.3 kΩ | 1.6433 | 0.7184 | 0.0009 | 0.0001 | **1.7935** | 0.38 |
+| `mbn` | testbench bias-mirror diode | — | — | 0.662 | 18.6 | 38.4 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `r3` | replica branch, sink | 24/25 | 2400 | 2.649 | 74.4 | 9.59 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `r2` | replica branch, bridge copy | 5/33 | 165 | 2.649 | 58.8 | 4.98 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `r1` | replica branch, `gm_fb` copy | 12/31 | 372 | 2.649 | 63.6 | 4.61 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `mbp` | testbench bias device | — | — | — | — | — | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `mbpd` | testbench bias device | — | — | — | — | — | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| **total** |  |  |  |  |  |  | **27.4929** | **9.8346** | **0.0560** | **0.0002** | **29.1990** | 100.00 |
 
-| role | generator | IRN contribution (µV) | % of power |
-|---|---|---|---|
-| biquad-A internal bias sink | `idid` | 14.8996 | 26.04 |
-| biquad-A input follower (`gm_ia`) | `idid` | 14.8549 | 25.88 |
-| biquad-A internal bias sink | `igig` | 9.9240 | 11.55 |
-| biquad-A input follower (`gm_ia`) | `igig` | 9.8935 | 11.48 |
-| biquad-B input follower (`gm_ib`) | `flicker` | 7.4427 | 6.50 |
-| biquad-B input follower (`gm_ib`) | `idid` | 6.5304 | 5.00 |
-| biquad-B shunt-feedback device (`gm_fb`) | `idid` | 4.6154 | 2.50 |
-| biquad-A input follower (`gm_ia`) | `flicker` | 4.5974 | 2.48 |
-| biquad-B input follower (`gm_ib`) | `igig` | 4.2597 | 2.13 |
-| current-reuse bridge (`gm_br`) | `idid` | 3.7770 | 1.67 |
-| *(all other role × generator terms)* | — | 6.3764 | 4.77 |
+Read it along a row for *which device*, down a column for *which mechanism*.  The column
+totals are the generator table above with `idid` and `igig` already summed; the rows pair
+up into the role table.  Nothing is truncated — these
+18 devices × 4 mechanisms are the entire IRN.
 
-#### post-layout (`post_lumped`) — total 29.1959 µV
+**Every signal device appears twice**, as the two halves of a differential pair
+(`m2`/`m5`, `m9`/`m10`, `m0`/`m1`, `m14`/`m15`, `mst`/`mstn`, `m4`/`m8`).  A pair sees the
+same `|Z_T|` by symmetry, and the two halves agree here to
+4.81 pV — a check on the extraction rather than a result.
 
-| role | generator | IRN contribution (µV) | % of power |
-|---|---|---|---|
-| biquad-A internal bias sink | `idid` | 14.8999 | 26.04 |
-| biquad-A input follower (`gm_ia`) | `idid` | 14.8552 | 25.89 |
-| biquad-A internal bias sink | `igig` | 9.9242 | 11.55 |
-| biquad-A input follower (`gm_ia`) | `igig` | 9.8937 | 11.48 |
-| biquad-B input follower (`gm_ib`) | `flicker` | 7.4410 | 6.50 |
-| biquad-B input follower (`gm_ib`) | `idid` | 6.5199 | 4.99 |
-| biquad-B shunt-feedback device (`gm_fb`) | `idid` | 4.6141 | 2.50 |
-| biquad-A input follower (`gm_ia`) | `flicker` | 4.5974 | 2.48 |
-| biquad-B input follower (`gm_ib`) | `igig` | 4.2529 | 2.12 |
-| current-reuse bridge (`gm_br`) | `idid` | 3.7727 | 1.67 |
-| *(all other role × generator terms)* | — | 6.3810 | 4.78 |
+**The two mechanisms rank the devices differently, and the geometry columns say why.**
+Channel noise is `2qI_D` propagated by `Z_T`, so it peaks on the biquad-A pair: `m2`/`m5`
+carry the *least* current in the cell and still lead, because their node sees
+60 MΩ.  Flicker does not scale with current at all —
+it scales with gate area — so it peaks instead on the pair containing `m0`, the
+smallest-area devices in the core at 60 µm² against
+600 µm² on the biquad-A internal bias sink.  That is the actionable
+split: the channel term is bought back with capacitance at biquad A, the flicker term with
+area on the biquad-B follower, and neither fix helps the other.
+
+The post-layout cell reproduces the table to
+10.1 nV on any single entry (`m4`, channel thermal).  Its one qualitative difference is that
+the replica branch and the bias mirror are no longer exactly on the differential axis, so
+they pick up 3.54 nV between them — 1.5e-06 % of the power, still
+nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all three
+DUTs, one row per device per *named* generator, each with its identified port.
+
 ### 5.3 Are the generators what they claim to be?
 
 Two per-generator sanity checks, applied to the 12 devices

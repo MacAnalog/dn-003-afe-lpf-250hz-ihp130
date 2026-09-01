@@ -144,6 +144,56 @@ def noise(bench: dict) -> Path:
     return write_csv("input_referred_noise.csv", cols)
 
 
+#: Generator names folded onto the physical mechanism each one measures.  `idid` and
+#: `igig` are the two halves of ONE channel thermal generator, split by its correlation
+#: with the induced gate noise -- see `validation.md` §5.2.  `igig` is not gate leakage.
+#: Kept local so this script stays a pure re-serialiser; `report.py` and `pvt_analysis.py`
+#: carry the same fold for the same reason.
+MECHANISM = {"idid": "channel_thermal", "ididedge": "channel_thermal",
+             "igig": "channel_thermal", "flicker": "flicker_1_over_f",
+             "ibd": "bulk_drain_shot", "rgate": "gate_resistance"}
+
+
+def noise_by_device(nz: dict) -> Path:
+    """The noise budget untruncated: one row per (DUT, device, generator).
+
+    `validation.md` §5.2 folds this onto mechanisms and prints one DUT, to stay readable.
+    Nothing is folded here: every device, every named generator, and both halves of the
+    channel split kept apart, so the table can be re-aggregated any way the reader wants.
+
+    Unlike every other export this one is categorical rather than a curve -- six columns
+    are text and it is meant to be read or pivoted, not plotted.  It derives from the
+    committed `data/noise.json`, so unlike the other noise file it regenerates in a fresh
+    clone without `extract_bench.py`.  `post_pex` carries no per-generator decomposition
+    and is absent, exactly as in §5.2.
+    """
+    keys = ("dut", "device", "role", "generator", "mechanism", "port", "irn_uv_rms",
+            "pct_of_power", "id_na", "gm_ns", "z_dc_ohm", "si_over_2qid", "si_over_4ktgm")
+    cols: dict[str, list] = {k: [] for k in keys}
+    print("  the per-device noise budget closes on the certified IRN:")
+    for d in ("pre_ideal", "pre_mim", "post_lumped"):
+        rows = nz[d]["rows"]
+        tot = sum(r["irn_uv_rms"] ** 2 for r in rows)
+        want = nz[d]["irn_uv_certified"]
+        assert abs(tot ** 0.5 - want) < 1e-5, f"{d}: budget {tot ** 0.5} != certified {want}"
+        for r in sorted(rows, key=lambda r: -r["irn_uv_rms"]):
+            z = r.get("z_dc_gohm")
+            for k, v in (("dut", d), ("device", r["inst"]),
+                         ("role", r["role"] or "testbench_bias"), ("generator", r["gen"]),
+                         ("mechanism", MECHANISM[r["gen"]]),
+                         ("port", "-".join(r["port"]) if r.get("port") else ""),
+                         ("irn_uv_rms", r["irn_uv_rms"]),
+                         ("pct_of_power", 100.0 * r["irn_uv_rms"] ** 2 / tot),
+                         ("id_na", r.get("id_na")), ("gm_ns", r.get("gm_ns")),
+                         ("z_dc_ohm", None if z is None else z * 1e9),
+                         ("si_over_2qid", r.get("si_over_2qid")),
+                         ("si_over_4ktgm", r.get("si_over_4ktgm"))):
+                cols[k].append(v)
+        print(f"    {d:12s} {tot ** 0.5:.4f} uV over {len(rows)} generators on "
+              f"{len({r['inst'] for r in rows})} devices")
+    return write_csv("noise_by_device_and_type.csv", [(k, cols[k]) for k in keys])
+
+
 def _harmonic_cols(rows_by_dut: dict, x_key: str) -> list[tuple[str, list]]:
     duts = list(rows_by_dut)
     grid = [r[x_key] for r in rows_by_dut[duts[0]]]
@@ -479,6 +529,7 @@ def main() -> None:
     print("cross-checks against the certified data:")
     written = ac_and_group_delay(bench)
     written.append(noise(bench))
+    written.append(noise_by_device(load("noise.json")))
     written.append(ac_model(tf))
     written += harmonics(lin, hd3f)
     written += iip3(lin, ana)
