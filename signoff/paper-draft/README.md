@@ -146,20 +146,20 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | the extracted cell across 20–300 Hz (§6.5) | `csv/thd_vs_frequency_pex_50mvpp.csv` | `fin_hz` | `thd_db_post_pex`, `hd3_db_post_pex`, `hd2_db_post_pex` |
 | the amplitude ladder at its worst frequency (§6.5) | `csv/thd_vs_amplitude_pex_200hz.csv` | `vpp_diff_v` | `thd_db_post_pex`, `hd3_db_post_pex`, `hd2_db_post_pex` |
 | IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
-| `fc` and `Q` over the certified axes, pre- and post-layout | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_*`, `q_lo_*`, `q_hi_*` |
-| the same over the 45-point box | `csv/pvt_cert_box.csv` | `corner` | `fc_hz`, `q_hi`, `n_complex_pairs` |
-| the mismatch draws | `csv/mc_draws.csv` | `seed` | `fc_hz`, `q_hi`, `offset_in_uv` |
-| PSRR / CMRR / common-mode transfers vs frequency | `csv/rejection_nominal.csv` | `freq_hz` | `psrr_db`, `cmrr_db`, `supply_to_cm_db`, … |
-| the mismatch-limited rejection band | `csv/rejection_mismatch_curves.csv` | `freq_hz` | `psrr_db_mean`, `psrr_db_min`, `psrr_db_max`, … |
-| IIP3 over corners | `csv/iip3_corners.csv` | `corner` | `iip3_dbv`, `imd3_slope_db_per_decade` |
-| the THD ladder over corners | `csv/thd_corners.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
+| `fc` and `Q` over the certified axes, all three DUTs | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_pre`, `fc_hz_post`, `fc_hz_pex`, `q_lo_*`, `q_hi_*` |
+| the same over the 45-point box | `csv/pvt_cert_box.csv` | `corner` | `fc_hz`, `fc_hz_pex`, `q_hi`, `n_complex_pairs` |
+| the mismatch draws | `csv/mc_draws.csv`, `csv/mc_draws_post_pex.csv` | `seed` | `fc_hz`, `q_hi`, `offset_in_uv` |
+| PSRR / CMRR / common-mode transfers vs frequency | `csv/rejection_nominal.csv`, `csv/rejection_nominal_post_pex.csv` | `freq_hz` | `psrr_db`, `cmrr_db`, `supply_to_cm_db`, … |
+| the mismatch-limited rejection band | `csv/rejection_mismatch_curves.csv`, `csv/rejection_mismatch_curves_post_pex.csv` | `freq_hz` | `psrr_db_mean`, `psrr_db_min`, `psrr_db_max`, … |
+| IIP3 over corners | `csv/iip3_corners.csv`, `csv/iip3_corners_post_pex.csv` | `corner` | `iip3_dbv`, `imd3_slope_db_per_decade` |
+| the THD ladder over corners | `csv/thd_corners.csv`, `csv/thd_corners_post_pex.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
 | the low-frequency residual and both `g_ds` predictions | `csv/gds_residual.csv` | `fin_hz` | `v3_unexplained_uv`, `v3_gds_cubic_uv`, `v3_gds_exact_uv` |
 | running σ against draw count, both MC populations | `csv/mc_convergence.csv` | `n_draws` | `sigma_fc_hz`, `sigma_q_hi`, `sigma_cmrr_db_dc`, … |
 
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all twenty-three, plus five points to note before
+[`csv/README.md`](csv/README.md) covers all of them, plus five points to note before
 plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
 two halves are exported beside them, why the phase and group-delay columns are blank above
 3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not
@@ -188,9 +188,15 @@ Then, from the repo root:
 # 1. simulation lane -- op + ac + per-generator noise for all four DUTs   (~2 min)
 .venv/bin/python signoff/paper-draft/scripts/extract_bench.py
 # 2. simulation lane -- THD ladder, THD profile, two-tone, spacing sweep  (~25 min)
+#    Every campaign that takes --dut is run TWICE: once on the pre-layout cell and once
+#    on the raw extraction, so §7.1's provenance table can say "extraction" on every row
+#    it claims to.  The pre-layout run keeps the bare filename; the extracted one lands
+#    beside it as `<name>_post_pex.json`.
 .venv/bin/python signoff/paper-draft/scripts/linearity_runs.py
-.venv/bin/python signoff/paper-draft/scripts/twotone_spacing.py
-.venv/bin/python signoff/paper-draft/scripts/hd3_vs_fin.py
+for d in pre_mim post_pex; do
+  .venv/bin/python signoff/paper-draft/scripts/twotone_spacing.py --dut $d
+  .venv/bin/python signoff/paper-draft/scripts/hd3_vs_fin.py --dut $d
+done
 #    ...and the reviewer sweeps of §6.5: 20-300 Hz on the extracted netlist, then an
 #    amplitude ladder at the frequency that comes out worst  (~5 min)
 .venv/bin/python signoff/paper-draft/scripts/pex_distortion_sweeps.py
@@ -217,16 +223,23 @@ $PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
 #    the fast setting here.  ~15 min for the two 1024-draw runs.
 E="signoff/paper-draft/scripts"
 export OMP_NUM_THREADS=1 LPF_JOBS=32
-for s in cert-axes cert-box both; do
-  LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt $s --dut pre_mim
+for d in pre_mim post_pex; do
+  for s in cert-axes cert-box both; do
+    LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt $s --dut $d
+  done
+  .venv/bin/python $E/extract_bench.py --mc 1024 --dut $d          # ~10 min each
+  .venv/bin/python $E/psrr_cmrr.py --dut $d --seeds 1024
+  LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/iip3_corners.py --dut $d
+  LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/thd_corners.py --dut $d   # 54 transients each
 done
-.venv/bin/python $E/extract_bench.py --mc 1024 --dut pre_mim   # ~10 min
 LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt cert-axes --dut post_lumped
-.venv/bin/python $E/psrr_cmrr.py --seeds 1024
-.venv/bin/python $E/gds_probe.py
-LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/iip3_corners.py
-LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/thd_corners.py    # 54 transients, ~20 min
+# The device-curvature probe re-creates one device from its own netlist card, so it needs
+# a netlist whose instances ARE the drawn devices: pre-layout, and `post_lumped` for the
+# post-layout operating point.  The raw extraction has split every device into fingers.
+.venv/bin/python $E/gds_probe.py --dut pre_mim
+.venv/bin/python $E/gds_probe.py --dut post_lumped
 $PF $E/pvt_analysis.py --mc --set cert-axes --set cert-box --set both
+$PF $E/pvt_analysis.py --mc --set cert-axes --set cert-box --set both --dut post_pex
 $PF $E/pvt_analysis.py --set cert-axes --dut post_lumped
 $PF $E/gds_residual.py
 ```
@@ -262,12 +275,14 @@ step 6 writes.
 
 Committed: the scripts, the figures, the CSVs, `validation.md`, `theory.md`, and the small
 analysis JSON (`tf.json`, `noise.json`, `linearity*.json`, `pex_distortion_sweeps.json`,
-`twotone_spacing.json`, `hd3_vs_fin.json`,
-`post_lumped_core.sp`, and for §8–§10 `pvt.json`, `psrr_cmrr.json`, `gds_taylor.json`,
-`gds_residual.json`, `iip3_corners.json`, `thd_corners.json`, `pvt_index_*.json`, `mc_index_*.json`).  **Not committed**: `data/bench_*.json` — the raw op + ac + noise
-vectors, 2.7 MB for the four nominal DUTs and ~90 MB more for the 156 per-corner and
-per-draw extractions, regenerated by steps 1 and 6 above, and simulator output under the
-repo's never-commit rule.  If they are absent, every downstream script names the missing
+`twotone_spacing*.json`, `hd3_vs_fin*.json`, `post_lumped_core.sp`, and for §8–§10
+`pvt.json`, `psrr_cmrr*.json`, `gds_taylor*.json`, `gds_residual.json`,
+`iip3_corners*.json`, `thd_corners*.json`, `pvt_index_*.json`, `mc_index_*.json`).  The
+`*_post_pex` and `*_post_lumped` siblings are the same campaign on the other DUT — §7.1
+says which section reads which.  **Not committed**: `data/bench_*.json` — the raw op + ac
++ noise vectors, 2.7 MB for the four nominal DUTs and several hundred MB more for the
+per-corner and per-draw extractions of both DUTs, regenerated by steps 1 and 6 above, and
+simulator output under the repo's never-commit rule.  If they are absent, every downstream script names the missing
 path: `tf_analysis.py` prints `[<case>] SKIPPED` and continues, and the `report.py` render
 then raises on the missing case, so a stale `validation.md` cannot be produced silently.
 

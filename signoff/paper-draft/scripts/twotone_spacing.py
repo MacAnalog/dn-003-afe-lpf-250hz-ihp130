@@ -87,13 +87,15 @@ def score(plots, f1, f2, tag):
 
 
 def main() -> None:
-    d = LR.design_of("H12-pdk-cap")
+    dut = LR.dut_argv()
+    sfx = LR.dut_suffix(dut)
+    d = LR.campaign_design(dut)
 
     def one(sp_hz):
         f1, f2 = FC - sp_hz / 2, FC + sp_hz / 2
         deck = LR.tran_twotone(d, AMPL, AMPL, f1=f1, f2=f2, fg=FG,
                                cycles=CYCLES, settle=SETTLE, ppc=PPC)
-        plots = ng.simulate(deck, f"rev_ttsp_{sp_hz:g}hz", timeout=7200)
+        plots = ng.simulate(deck, f"rev_ttsp{sfx}_{sp_hz:g}hz", timeout=7200)
         return score(plots, f1, f2, f"sp{sp_hz:g}")
 
     rows = P.batch(list(SPACINGS), one)
@@ -101,8 +103,8 @@ def main() -> None:
     for r in rows:
         if isinstance(r, Exception):
             print("FAILED:", r, flush=True)
-    (OUT / "twotone_spacing.json").write_text(json.dumps(
-        {"centre_hz": FC, "ampl_per_tone_v": AMPL, "fg": FG,
+    (OUT / f"twotone_spacing{sfx}.json").write_text(json.dumps(
+        {"dut": dut, "centre_hz": FC, "ampl_per_tone_v": AMPL, "fg": FG,
          "cycles": CYCLES, "settle": SETTLE, "ppc": PPC, "rows": good}, indent=1))
     for r in good:
         print(f"spacing {r['spacing']:5.1f} Hz  IMD3 {r['imd3_db']:8.3f} dBc  "

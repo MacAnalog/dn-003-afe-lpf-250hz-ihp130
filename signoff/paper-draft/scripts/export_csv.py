@@ -153,9 +153,13 @@ def noise(bench: dict) -> Path:
 #: with the induced gate noise -- see `validation.md` §5.2.  `igig` is not gate leakage.
 #: Kept local so this script stays a pure re-serialiser; `report.py` and `pvt_analysis.py`
 #: carry the same fold for the same reason.
+#: `ibs` joins `ibd` in one mechanism -- the two junctions of the same device, the same
+#: physics.  It appears only on the extracted netlist: on the schematic DUTs the
+#: p-channel bulk IS its source, so the source junction is degenerate.
 MECHANISM = {"idid": "channel_thermal", "ididedge": "channel_thermal",
              "igig": "channel_thermal", "flicker": "flicker_1_over_f",
-             "ibd": "bulk_drain_shot", "rgate": "gate_resistance"}
+             "ibd": "bulk_junction_shot", "ibs": "bulk_junction_shot",
+             "rgate": "gate_resistance"}
 
 
 def noise_by_device(nz: dict) -> Path:
@@ -168,14 +172,20 @@ def noise_by_device(nz: dict) -> Path:
     Unlike every other export this one is categorical rather than a curve -- six columns
     are text and it is meant to be read or pivoted, not plotted.  It derives from the
     committed `data/noise.json`, so unlike the other noise file it regenerates in a fresh
-    clone without `extract_bench.py`.  `post_pex` carries no per-generator decomposition
-    and is absent, exactly as in §5.2.
+    clone without `extract_bench.py`.  `post_pex` is present too, on the measured lane:
+    the raw extraction has no small-signal model to hang a port or a `Z_T` on, so those
+    columns are blank there while `irn_uv_rms`, `pct_of_power`, `id_na` and `gm_ns` --
+    all of which come out of the simulator -- are filled exactly as for the others.  Its
+    `device` column carries the extractor's own finger names, with the `role` resolved
+    from the nets each finger touches (`noise_analysis.roles_by_nets`).
     """
     keys = ("dut", "device", "role", "generator", "mechanism", "port", "irn_uv_rms",
             "pct_of_power", "id_na", "gm_ns", "z_dc_ohm", "si_over_2qid", "si_over_4ktgm")
     cols: dict[str, list] = {k: [] for k in keys}
     print("  the per-device noise budget closes on the certified IRN:")
-    for d in ("pre_ideal", "pre_mim", "post_lumped"):
+    for d in ("pre_ideal", "pre_mim", "post_lumped", "post_pex"):
+        if d not in nz:
+            continue
         rows = nz[d]["rows"]
         tot = sum(r["irn_uv_rms"] ** 2 for r in rows)
         want = nz[d]["irn_uv_certified"]
@@ -228,7 +238,7 @@ def harmonics(lin: dict, hd3f: dict) -> list[Path]:
                          [("fin_hz", [r["fin"] for r in prof["pre_mim"]])]
                          + _harmonic_cols(prof, "fin")))
 
-    small = {"pre_mim": hd3f["rows"]}
+    small = {"pre_mim": hd3f["rows"], "post_pex": load("hd3_vs_fin_post_pex.json")["rows"]}
     mv = f"{hd3f['vpp_diff'] * 1e3:g}".replace(".", "p")
     out.append(write_csv(f"thd_vs_frequency_{mv}mvpp.csv",
                          [("fin_hz", [r["fin"] for r in hd3f["rows"]])]
@@ -390,12 +400,14 @@ def _pair_cols(rows: list[dict], sfx: str = "") -> list[tuple[str, list]]:
     be able to see the gap.
     """
     def at(r, i, k):
-        return r["pairs"][i][k] if len(r["pairs"]) > i else None
+        pp = r["pairs"]
+        return pp[i][k] if pp and len(pp) > i else None
     return [(f"f0_loq_hz{sfx}", [at(r, 0, "f0_hz") for r in rows]),
             (f"q_lo{sfx}", [at(r, 0, "Q") for r in rows]),
             (f"f0_hiq_hz{sfx}", [at(r, 1, "f0_hz") for r in rows]),
             (f"q_hi{sfx}", [at(r, 1, "Q") for r in rows]),
-            (f"n_complex_pairs{sfx}", [len(r["pairs"]) for r in rows])]
+            (f"n_complex_pairs{sfx}",
+             [None if r["pairs"] is None else len(r["pairs"]) for r in rows])]
 
 
 def _sc_cols(rows: list[dict], sfx: str = "") -> list[tuple[str, list]]:
@@ -404,31 +416,47 @@ def _sc_cols(rows: list[dict], sfx: str = "") -> list[tuple[str, list]]:
             (f"irn_uv{sfx}", [r["scorecard"].get("irn_uv") for r in rows])]
 
 
+def _aligned(pv: dict, key: str, ax: list[dict]) -> list[dict]:
+    """One corner set re-ordered onto another's corner order, so columns line up."""
+    by = {r["slug"]: r for r in pv[key]["rows"]}
+    out = [by[r["slug"]] for r in ax]
+    assert [r["slug"] for r in out] == [r["slug"] for r in ax], f"{key}: corner order differs"
+    return out
+
+
 def pvt(pv: dict) -> list[Path]:
-    """The certified axes (pre- and post-layout side by side) and the cross-product box."""
+    """The certified axes, all three DUTs side by side, and the cross-product box.
+
+    `_pre` is the pre-layout cell, `_post` the post-layout parasitics on the schematic
+    device list, and `_pex` the raw extraction.  `_pex` carries the measured scorecard
+    only: the pole/Q columns need a small-signal model the extracted netlist cannot
+    provide (`pvt_analysis.NO_PENCIL`), which is what `_post` is for.
+    """
     ax = pv["cert-axes"]["rows"]
-    post = {r["slug"]: r for r in pv["cert-axes:post_lumped"]["rows"]}
-    order = [post[r["slug"]] for r in ax]
-    assert [r["slug"] for r in order] == [r["slug"] for r in ax], "corner order differs"
+    lump = _aligned(pv, "cert-axes:post_lumped", ax)
+    pex = _aligned(pv, "cert-axes:post_pex", ax)
     a = write_csv("pvt_certified_axes.csv",
                   _corner_cols(ax) + _sc_cols(ax, "_pre") + _pair_cols(ax, "_pre")
-                  + _sc_cols(order, "_post") + _pair_cols(order, "_post"))
+                  + _sc_cols(lump, "_post") + _pair_cols(lump, "_post")
+                  + _sc_cols(pex, "_pex"))
 
     box = pv["cert-box"]["rows"]
+    pbox = _aligned(pv, "cert-box:post_pex", box)
     b = write_csv("pvt_cert_box.csv",
-                  _corner_cols(box) + _sc_cols(box) + _pair_cols(box))
+                  _corner_cols(box) + _sc_cols(box) + _pair_cols(box)
+                  + _sc_cols(pbox, "_pex"))
     lost = sum(1 for r in box if len(r["pairs"]) < 2)
     assert lost == len(box) - pv["cert-box"]["summary"]["n_two_pair"], "box census differs"
-    print(f"  pvt: {len(ax)} certified axes (pre + post), {len(box)} box points, "
-          f"{lost} of them short of two complex pairs")
+    print(f"  pvt: {len(ax)} certified axes (pre + post + extracted), {len(box)} box "
+          f"points, {lost} of them short of two complex pairs")
     return [a, b]
 
 
-def monte_carlo(pv: dict) -> Path:
+def monte_carlo(pv: dict, key: str = "mismatch", name: str = "mc_draws.csv") -> Path:
     """One row per mismatch draw -- the samples, not their moments."""
-    rows = pv["mismatch"]["rows"]
-    s = pv["mismatch"]["summary"]
-    path = write_csv("mc_draws.csv",
+    rows = pv[key]["rows"]
+    s = pv[key]["summary"]
+    path = write_csv(name,
                      [("seed", [r["seed"] for r in rows])]
                      + _sc_cols(rows) + _pair_cols(rows)
                      # Both offsets and the gain between them: the tables quote the
@@ -448,7 +476,7 @@ def monte_carlo(pv: dict) -> Path:
     return path
 
 
-def rejection(rj: dict) -> list[Path]:
+def rejection(rj: dict, sfx: str = "") -> list[Path]:
     """The measured rejection sweeps, not just the four spot frequencies.
 
     Four interpolated points joined by a line would draw a shape between them that was
@@ -470,7 +498,7 @@ def rejection(rj: dict) -> list[Path]:
         for sp in spots:
             got = float(np.interp(np.log10(float(sp)), np.log10(f), nom["curves"][k]))
             assert abs(got - nom[k][sp]) < 1e-9, f"{k} at {sp} Hz differs from the table"
-    a = write_csv("rejection_nominal.csv", cols)
+    a = write_csv(f"rejection_nominal{sfx}.csv", cols)
 
     mc = rj["mismatch"]["curves"]
     fm = np.asarray(mc["f"], float)
@@ -485,11 +513,11 @@ def rejection(rj: dict) -> list[Path]:
         # The band's own spot values must agree with the table the report quotes.
         got = float(np.interp(np.log10(0.1), np.log10(fm), mc[k]["mean"]))
         assert abs(got - rj["mismatch"][k]["0.1"]["mean"]) < 5e-3, f"{k} band vs table"
-    b = write_csv("rejection_mismatch_curves.csv", cols)
+    b = write_csv(f"rejection_mismatch_curves{sfx}.csv", cols)
 
     draws = rj["mismatch"]["draws"]
     keys = [k for k in draws[0] if k != "seed"]
-    c = write_csv("rejection_mismatch_draws.csv",
+    c = write_csv(f"rejection_mismatch_draws{sfx}.csv",
                   [("seed", [d["seed"] for d in draws])]
                   + [(k.replace(".", "p"), [d[k] for d in draws]) for k in keys])
     got = float(np.std([d["offset_in_uv"] for d in draws], ddof=1))
@@ -499,7 +527,7 @@ def rejection(rj: dict) -> list[Path]:
     return [a, b, c]
 
 
-def iip3_corners(ic: dict) -> Path:
+def iip3_corners(ic: dict, sfx: str = "") -> Path:
     """One row per corner, with both drive levels, the measured slope and the trust flag."""
     rows = list(ic["corners"].values())
     slugs = list(ic["corners"])
@@ -525,7 +553,7 @@ def iip3_corners(ic: dict) -> Path:
              # fit flags: the published span is over TRUSTED rows only, and a bare
              # column invites a span that disagrees with the pack.
              ("trusted", [1 if r.get("trusted") else 0 for r in rows])]
-    path = write_csv("iip3_corners.csv", cols)
+    path = write_csv(f"iip3_corners{sfx}.csv", cols)
     v = [r["iip3_dbv"] for r in rows if r.get("trusted")]
     assert [min(v), max(v)] == ic["iip3_dbv_span"], "IIP3 span differs"
     print(f"  iip3 corners: {len(rows)} rows, span {min(v):+.3f} .. {max(v):+.3f} dBVp "
@@ -533,7 +561,7 @@ def iip3_corners(ic: dict) -> Path:
     return path
 
 
-def thd_corners(tc: dict) -> Path:
+def thd_corners(tc: dict, sfx: str = "") -> Path:
     """The amplitude ladder, one column per corner -- the shape a THD-vs-drive plot wants."""
     slugs = list(tc["corners"])
     vpp = tc["vpp_diff"]
@@ -545,7 +573,7 @@ def thd_corners(tc: dict) -> Path:
     for k, short in (("thd_db", "thd_db"), ("hd3_db", "hd3_db"), ("hd2_db", "hd2_db")):
         for slug in slugs:
             cols.append((f"{short}_{slug}", series(slug, k)))
-    path = write_csv("thd_corners.csv", cols)
+    path = write_csv(f"thd_corners{sfx}.csv", cols)
     spec = [tc["corners"][s]["thd_db_at_spec"] for s in slugs]
     assert [min(spec), max(spec)] == tc["thd_db_at_spec_span"], "THD span differs"
     print(f"  thd corners: {len(vpp)} amplitudes x {len(slugs)} corners, at the "
@@ -632,13 +660,20 @@ def main() -> None:
     written += pex_sweeps(load("pex_distortion_sweeps.json"))
     written += iip3(lin, ana)
     written.append(linearity_crossings(ana))
-    written += pvt(load("pvt.json"))
-    written.append(monte_carlo(load("pvt.json")))
+    pv = load("pvt.json")
+    written += pvt(pv)
+    written.append(monte_carlo(pv))
+    written.append(monte_carlo(pv, "mismatch:post_pex", "mc_draws_post_pex.csv"))
     rj = load("psrr_cmrr.json")
     written += rejection(rj)
-    written.append(mc_convergence(load("pvt.json"), rj))
+    written += rejection(load("psrr_cmrr_post_pex.json"), "_post_pex")
+    written.append(mc_convergence(pv, rj))
+    # The same three campaigns on the raw extraction, beside the pre-layout ones rather
+    # than instead of them: the pack's argument is the pre -> post comparison.
     written.append(iip3_corners(load("iip3_corners.json")))
+    written.append(iip3_corners(load("iip3_corners_post_pex.json"), "_post_pex"))
     written.append(thd_corners(load("thd_corners.json")))
+    written.append(thd_corners(load("thd_corners_post_pex.json"), "_post_pex"))
     written.append(gds_residual(load("gds_residual.json")))
 
     print(f"\nwrote {len(written)} files to {OUT.relative_to(REPO)}/")

@@ -37,6 +37,7 @@ actually sees, with no window to choose.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -61,6 +62,13 @@ from lab.deck import _libs  # noqa: E402
 from lab.dut import subckt  # noqa: E402
 from lab.parallel import batch  # noqa: E402
 
+#: Which DUT's operating point to pin the device probes at.  `post_lumped`, not
+#: `post_pex`: the probe re-creates one device from its own netlist card, so it needs a
+#: netlist whose instances ARE the drawn devices -- the raw extraction has split every
+#: one of them into layout fingers.  `post_lumped` is the same layout's 68 extracted
+#: parasitic capacitors on the schematic device list, measured-equivalent to the raw
+#: extraction in `validation.md` Section 7, so it is the post-layout operating point.
+DUT_LABELS = ("pre_mim", "post_lumped")
 LABEL = "pre_mim"
 #: Half-widths to fit over, in volts.  Three of them on purpose: a cubic coefficient that
 #: changes with the window is not a local derivative, it is a curve-fitting artefact, and
@@ -126,8 +134,13 @@ def fit_cubic(v: np.ndarray, i: np.ndarray, v0: float) -> dict:
 
 
 def main() -> None:
-    d, cell, _ = dut_design(LABEL)
-    bench = json.loads((OUT / f"bench_{LABEL}.json").read_text())
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--dut", default=LABEL, choices=DUT_LABELS,
+                    help="which DUT's operating point to probe (default: %(default)s)")
+    label = ap.parse_args().dut
+    sfx = "" if label == LABEL else f"_{label}"
+    d, cell, _ = dut_design(label)
+    bench = json.loads((OUT / f"bench_{label}.json").read_text())
     nodes, ops, cs = bench["nodes"], bench["op"], cards(d)
 
     jobs = ([(inst, cs[inst], w, False) for inst in ops if inst in cs for w in WINDOWS]
@@ -136,8 +149,9 @@ def main() -> None:
     def one(job):
         inst, card, w, raw = job
         v = {t: (0.0 if n == "0" else nodes[n]) for t, n in card["nets"].items()}
-        plots = ng.plots(ng.run(probe_deck(d, card, v, w, CURVE_NPTS if raw else NPTS),
-                                f"gds_{inst}_{'curve' if raw else 'w'}{w*1e3:.0f}"))
+        plots = ng.plots(ng.run(
+            probe_deck(d, card, v, w, CURVE_NPTS if raw else NPTS),
+            f"gds{sfx}_{inst}_{'curve' if raw else 'w'}{w * 1e3:.0f}"))
         dc = R.pick(plots, "dc")
         vv = np.asarray(np.real(dc["v(nd)"]), float)
         ii = -np.asarray(np.real(dc["i(vd)"]), float)
@@ -179,11 +193,12 @@ def main() -> None:
     worst = max(abs(r["g1_vs_gds_op_pct"]) for r in devs.values())
     print(f"\nprobe g1 vs the DUT's own PSP gds: worst {worst:.3f} % "
           f"-- the probe reproduces the in-circuit operating point")
-    (OUT / "gds_taylor.json").write_text(json.dumps(
-        {"cell": cell, "label": LABEL, "windows_v": list(WINDOWS), "npts": NPTS,
+    out = OUT / f"gds_taylor{sfx}.json"
+    out.write_text(json.dumps(
+        {"cell": cell, "label": label, "windows_v": list(WINDOWS), "npts": NPTS,
          "curve_win_v": CURVE_WIN, "curve_npts": CURVE_NPTS,
          "worst_g1_vs_gds_op_pct": worst, "devices": devs}, indent=1))
-    print(f"wrote {(OUT / 'gds_taylor.json').relative_to(REPO)}")
+    print(f"wrote {out.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

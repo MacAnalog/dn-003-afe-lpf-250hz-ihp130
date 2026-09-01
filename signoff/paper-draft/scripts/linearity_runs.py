@@ -80,6 +80,44 @@ def design_of(cell: str, *, pex: bool = False) -> Design:
     return d.with_(dut_override=PEX.read_text().replace("$", "_")) if pex else d
 
 
+# ------------------------------------------------ pointing a campaign at a DUT --
+#: The DUTs every reviewer-facing campaign in this pack can be pointed at.  `pre_mim`
+#: is the pre-layout cell -- schematic devices, PDK MIM capacitors -- and `post_pex` is
+#: the SAME sizing as the extractor produced it: `layout/H12-pdk-cap/asbuilt/core_pex.sp`
+#: spliced in whole, 36 instances of split layout fingers plus the parasitic R and C.
+#: Anything measured (a transient, an ac sweep, the certified scorecard) runs on either;
+#: anything that needs a 1:1 device model -- the symbolic pole/zero solve -- does not,
+#: because kpex splits fingers and leaves an n-channel half whose source is not its bulk.
+CAMPAIGN_DUTS = ("pre_mim", "post_pex")
+
+
+def campaign_design(dut: str, cell: str = "H12-pdk-cap") -> Design:
+    """The `Design` a campaign should run, given its `--dut`."""
+    if dut not in CAMPAIGN_DUTS:
+        raise ValueError(f"unknown campaign DUT {dut!r}; expected one of {CAMPAIGN_DUTS}")
+    return design_of(cell, pex=(dut == "post_pex"))
+
+
+def dut_suffix(dut: str) -> str:
+    """Output-file suffix for a campaign's DUT.
+
+    The pre-layout DUT keeps the bare filename so every earlier reference to it stays
+    valid and its regeneration stays byte-comparable; any other DUT is namespaced beside
+    it rather than overwriting it.  Same convention as `pvt.json`'s `cert-axes:post_lumped`
+    key.
+    """
+    return "" if dut == "pre_mim" else f"_{dut}"
+
+
+def dut_argv(default: str = "pre_mim") -> str:
+    """`--dut {pre_mim,post_pex}`, parsed identically by every campaign script."""
+    import argparse
+    ap = argparse.ArgumentParser(add_help=True)
+    ap.add_argument("--dut", default=default, choices=CAMPAIGN_DUTS,
+                    help="which DUT to run the campaign on (default: %(default)s)")
+    return ap.parse_known_args()[0].dut
+
+
 # --------------------------------------------------------------- two-tone bench --
 def tran_twotone(d: Design, a1: float, a2: float, *, f1: float = F1, f2: float = F2,
                  fg: float = FG, cycles: int = TT_CYCLES, settle: int = TT_SETTLE,

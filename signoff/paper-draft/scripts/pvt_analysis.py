@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -132,7 +133,42 @@ def _pairs(pz: dict) -> tuple[list[dict], int]:
     return sorted(allp[:2], key=lambda p: p["Q"]), len(allp)
 
 
-def analyse_corner(entry: dict, corner: dict | None = None) -> dict:
+#: DUTs whose netlist is the RAW EXTRACTION, on which the symbolic route cannot run.
+#: kpex splits every drawn transistor into its layout fingers and labels each finger by
+#: geometry, so an n-channel half arrives with its `source` on the non-ground node while
+#: its bulk stays at 0 -- and `n2tf_model.bind_op` folds `gmb`/`cgb` on the `bulk ==
+#: source` identity, so it refuses the netlist rather than folding a term that is not
+#: there.  That refusal is correct, and it is the same reason `post_lumped` exists.
+#:
+#: So the pack splits the two lanes rather than forcing one: the POLE/ZERO decomposition
+#: (f0, Q, the cancellation census) is taken on `post_lumped` -- the same layout's 68
+#: extracted parasitic capacitors on the schematic device list, measured-equivalent to
+#: the raw extraction in `validation.md` Section 7 -- while everything that needs no
+#: device model runs on the extraction itself: the certified scorecard, the differential
+#: offset, and the per-generator noise budget, all of which come out of the simulator's
+#: own output for the extracted netlist.
+NO_PENCIL = frozenset({"post_pex"})
+
+
+def _dc_gain_db_measured(rec: dict) -> float:
+    """|H| at the bottom of the ac sweep, in dB -- the DC gain as the BENCH measured it.
+
+    The pencil route reports `dc_gain_db` from the small-signal model, and the offset
+    referral needs it; a DUT that route refuses still has an ac sweep, and the ac sweep
+    already carries the answer.  `_dc_gain_check` asserts the two agree wherever both
+    exist, so the substitution is measured rather than assumed.
+    """
+    ac = rec["ac"]
+    return 20.0 * math.log10(abs(complex(ac["re"][0], ac["im"][0])))
+
+
+def _dc_gain_check(rec: dict, model_db: float) -> float:
+    """How far the measured DC gain sits from the modelled one, in dB."""
+    return abs(_dc_gain_db_measured(rec) - model_db)
+
+
+def analyse_corner(entry: dict, corner: dict | None = None, *,
+                   pencil: bool = True) -> dict:
     """One index entry -> its poles, offset and noise budget.
 
     `corner` is the fallback for index files that carry it once at the top rather than
@@ -140,8 +176,13 @@ def analyse_corner(entry: dict, corner: dict | None = None) -> dict:
     """
     bench = DATA / entry["file"]
     rec = json.loads(bench.read_text())
-    pz = pz_map(CORE_MIM, bench)
-    pp, n_all = _pairs(pz)
+    if pencil:
+        pz = pz_map(CORE_MIM, bench)
+        pp, n_all = _pairs(pz)
+        dc_gain_db = pz["dc_gain_db"]
+    else:
+        pz, pp, n_all = None, [], None
+        dc_gain_db = _dc_gain_db_measured(rec)
     row = {
         "slug": entry.get("slug") or f"s{entry['seed']:05d}",
         "corner": entry.get("corner") or corner,
@@ -151,15 +192,22 @@ def analyse_corner(entry: dict, corner: dict | None = None) -> dict:
         # output offset is what the bench measures, `offset_in_uv` is what the tables
         # quote.
         "offset_out_uv": _offset_uv(rec),
-        "offset_in_uv": _refer_in(_offset_uv(rec), pz["dc_gain_db"]),
+        "offset_in_uv": _refer_in(_offset_uv(rec), dc_gain_db),
         "scorecard": entry["scorecard"],
-        "dc_gain_db": pz["dc_gain_db"],
-        "n_poles": pz["n_poles"], "n_zeros": pz["n_zeros"],
-        "n_cancelled": len(pz["cancelled"]),
-        "n_complex_pairs_all": n_all,
-        "pairs": [{"f0_hz": p["f0_hz"], "Q": p["Q"]} for p in pp],
+        "dc_gain_db": dc_gain_db,
+        "pencil": pencil,
         "noise": budget(rec),
     }
+    if pencil:
+        row.update({"n_poles": pz["n_poles"], "n_zeros": pz["n_zeros"],
+                    "n_cancelled": len(pz["cancelled"]),
+                    "n_complex_pairs_all": n_all,
+                    "dc_gain_meas_vs_model_db": _dc_gain_check(rec, dc_gain_db),
+                    "pairs": [{"f0_hz": p["f0_hz"], "Q": p["Q"]} for p in pp]})
+    else:
+        # No pole/Q row rather than an empty one: a corner with zero pairs would read as
+        # a filter that lost its poles, which is not what happened here.
+        row["pairs"] = None
     if len(pp) >= 2:
         # f0 of the high-Q pair over f0 of the low-Q pair: 1.0 would be exactly
         # coincident sections.  Both this and q_ratio are gm RATIOS -- the shape.
@@ -178,33 +226,51 @@ def _span(rows: list[dict], get) -> dict | None:
 
 
 def summarise(rows: list[dict]) -> dict:
+    # A DUT the pencil route refuses (see `NO_PENCIL`) has no pole/Q columns at all, and
+    # the summary says so once instead of reporting them as zeros or as degeneracies.
+    pencil = all(r.get("pairs") is not None for r in rows)
+
     def pair(i, key):
-        return lambda r: (r["pairs"][i][key] if len(r["pairs"]) > i else None)
+        return lambda r: (r["pairs"][i][key]
+                          if r["pairs"] and len(r["pairs"]) > i else None)
     # Report the pole-pair CENSUS before any Q span, because a Q span is only
     # meaningful across corners that still have the pair to measure.  "Two true
     # biquads" is what S1 buys; where a pair splits into two real poles the filter
     # has changed order-shape, and averaging a Q over that is a category error.
     census = {}
     for r in rows:
-        census[len(r["pairs"])] = census.get(len(r["pairs"]), 0) + 1
+        if r["pairs"] is not None:
+            census[len(r["pairs"])] = census.get(len(r["pairs"]), 0) + 1
     out = {
         "n_corners": len(rows),
-        "pole_pair_census": {f"{k}_pairs": v for k, v in sorted(census.items())},
-        "n_two_pair": census.get(2, 0),
-        "two_pair_corners": [r["slug"] for r in rows if len(r["pairs"]) == 2],
-        "degenerate_corners": [r["slug"] for r in rows if len(r["pairs"]) != 2],
-        # SCALE -- expected to move; set by gm/C.
+        "pencil": pencil,
+        # SCALE -- expected to move; set by gm/C.  Measured, so it exists on every DUT.
         "fc_hz": _span(rows, lambda r: r["scorecard"].get("fc_hz")),
-        "f0_loQ_hz": _span(rows, pair(0, "f0_hz")),
-        "f0_hiQ_hz": _span(rows, pair(1, "f0_hz")),
-        # SHAPE -- gm RATIOS; this is the question the nominal analysis could not answer.
-        "Q_lo": _span(rows, pair(0, "Q")),
-        "Q_hi": _span(rows, pair(1, "Q")),
-        "pair_ratio": _span(rows, lambda r: r.get("pair_ratio")),
-        "q_ratio": _span(rows, lambda r: r.get("q_ratio")),
         "irn_uv": _span(rows, lambda r: r["scorecard"].get("irn_uv")),
+        "ph_max_deg": _span(rows, lambda r: r["scorecard"].get("ph_max_deg")),
         "dc_gain_db": _span(rows, lambda r: r["dc_gain_db"]),
+        "offset_in_abs_uv": _span(
+            rows, lambda r: (None if r["offset_in_uv"] is None else abs(r["offset_in_uv"]))),
     }
+    if pencil:
+        out.update({
+            "pole_pair_census": {f"{k}_pairs": v for k, v in sorted(census.items())},
+            "n_two_pair": census.get(2, 0),
+            "two_pair_corners": [r["slug"] for r in rows if len(r["pairs"]) == 2],
+            "degenerate_corners": [r["slug"] for r in rows if len(r["pairs"]) != 2],
+            "f0_loQ_hz": _span(rows, pair(0, "f0_hz")),
+            "f0_hiQ_hz": _span(rows, pair(1, "f0_hz")),
+            # SHAPE -- gm RATIOS; the question the nominal analysis could not answer.
+            "Q_lo": _span(rows, pair(0, "Q")),
+            "Q_hi": _span(rows, pair(1, "Q")),
+            "pair_ratio": _span(rows, lambda r: r.get("pair_ratio")),
+            "q_ratio": _span(rows, lambda r: r.get("q_ratio")),
+            # How far the measured DC gain sits from the modelled one, over the set.
+            # This is what licenses the measured value as the offset referral on a DUT
+            # the pencil route refuses.
+            "dc_gain_meas_vs_model_db": _span(
+                rows, lambda r: r.get("dc_gain_meas_vs_model_db")),
+        })
     # Does the noise budget keep the same shape, or does a different mechanism take over?
     kinds = sorted({k for r in rows for k in r["noise"]["by_kind"]})
     out["noise_by_kind_pct"] = {
@@ -239,16 +305,15 @@ def run_mc(dut: str = "pre_mim") -> dict:
                  f"  .venv/bin/python signoff/paper-draft/scripts/extract_bench.py "
                  f"--mc 64 --dut {dut}")
     idx = json.loads(idx_p.read_text())
-    rows = [analyse_corner(e, idx["corner"]) for e in idx["draws"]]
-    two = [r for r in rows if len(r["pairs"]) == 2]
+    pencil = dut not in NO_PENCIL
+    rows = [analyse_corner(e, idx["corner"], pencil=pencil) for e in idx["draws"]]
+    two = [r for r in rows if r["pairs"] and len(r["pairs"]) == 2]
 
     def pick(i, key):
         return [r["pairs"][i][key] for r in two]
 
     summary = {
-        "n_draws": len(rows), "n_two_pair": len(two),
-        "pole_pair_census": {f"{k}_pairs": sum(1 for r in rows if len(r["pairs"]) == k)
-                             for k in sorted({len(r["pairs"]) for r in rows})},
+        "n_draws": len(rows), "pencil": pencil,
         "fc_hz": _stat([r["scorecard"].get("fc_hz") for r in rows]),
         "ph_max_deg": _stat([r["scorecard"].get("ph_max_deg") for r in rows]),
         "irn_uv": _stat([r["scorecard"].get("irn_uv") for r in rows]),
@@ -257,13 +322,22 @@ def run_mc(dut: str = "pre_mim") -> dict:
         # The raw output offset is kept beside it so the size of the referral is
         # readable from the file rather than taken on trust.
         "offset_out_uv": _stat([r["offset_out_uv"] for r in rows]),
-        "f0_loQ_hz": _stat(pick(0, "f0_hz")), "Q_lo": _stat(pick(0, "Q")),
-        "f0_hiQ_hz": _stat(pick(1, "f0_hz")), "Q_hi": _stat(pick(1, "Q")),
-        "pair_ratio": _stat([r["pair_ratio"] for r in two]),
+        "dc_gain_db": _stat([r["dc_gain_db"] for r in rows]),
         "noise_closure_max_pct": 100.0 * max(
             abs(r["noise"]["irn_uv_from_generators"] - r["scorecard"]["irn_uv"])
             / max(r["scorecard"]["irn_uv"], 1e-12) for r in rows),
     }
+    if pencil:
+        summary.update({
+            "n_two_pair": len(two),
+            "pole_pair_census": {f"{k}_pairs": sum(1 for r in rows if len(r["pairs"]) == k)
+                                 for k in sorted({len(r["pairs"]) for r in rows})},
+            "f0_loQ_hz": _stat(pick(0, "f0_hz")), "Q_lo": _stat(pick(0, "Q")),
+            "f0_hiQ_hz": _stat(pick(1, "f0_hz")), "Q_hi": _stat(pick(1, "Q")),
+            "pair_ratio": _stat([r["pair_ratio"] for r in two]),
+            "dc_gain_meas_vs_model_db": _stat(
+                [r["dc_gain_meas_vs_model_db"] for r in rows]),
+        })
     # (M1) on every sigma, and the running trace behind the three headline
     # distributions -- `mc_stats` explains why sigma needs an error bar and why the
     # min/max columns must not be read as convergent quantities.
@@ -273,8 +347,10 @@ def run_mc(dut: str = "pre_mim") -> dict:
     summary["se_sigma_frac"] = MC.se_frac(len(rows))
     summary["convergence"] = {
         "fc_hz": MC.trace([r["scorecard"].get("fc_hz") for r in rows]),
-        "Q_lo": MC.trace(pick(0, "Q")), "Q_hi": MC.trace(pick(1, "Q")),
+        "irn_uv": MC.trace([r["scorecard"].get("irn_uv") for r in rows]),
         "offset_in_uv": MC.trace([r["offset_in_uv"] for r in rows]),
+        **({"Q_lo": MC.trace(pick(0, "Q")), "Q_hi": MC.trace(pick(1, "Q"))}
+           if pencil else {}),
     }
 
     # The per-draw payload is trimmed to what the figures and the CSV read.  At a
@@ -282,7 +358,7 @@ def run_mc(dut: str = "pre_mim") -> dict:
     # noise split -- is megabytes of committed JSON that nothing consumes; the complete
     # record stays in `data/bench_mc_*.json`, which is regenerable and gitignored.
     keep = ("seed", "slug", "scorecard", "pairs", "offset_in_uv", "offset_out_uv",
-            "dc_gain_db",
+            "dc_gain_db", "pencil",
             "n_complex_pairs_all", "pair_ratio", "q_ratio")
     lean = [{k: r[k] for k in keep if k in r} for r in rows]
     return {"set": "mismatch", "dut": dut, "corner": idx["corner"],
@@ -296,15 +372,18 @@ def run(which: str, dut: str = "pre_mim", alpha: str = "_a1p1") -> dict:
                  f"  LPF_BIAS_ALPHA=1.1 .venv/bin/python "
                  f"signoff/paper-draft/scripts/extract_bench.py --pvt {which} --dut {dut}")
     idx = json.loads(idx_p.read_text())
+    pencil = dut not in NO_PENCIL
     rows = []
     for e in idx["corners"]:
-        rows.append(analyse_corner(e))
+        rows.append(analyse_corner(e, pencil=pencil))
         r = rows[-1]
         pp = r["pairs"]
         print(f"  [{r['slug']:16s}] "
-              + (f"loQ {pp[0]['f0_hz']:7.2f} Hz Q {pp[0]['Q']:6.3f} | "
-                 f"hiQ {pp[1]['f0_hz']:7.2f} Hz Q {pp[1]['Q']:6.3f}"
-                 if len(pp) >= 2 else f"{len(pp)} pairs")
+              + ("measured only (no pencil lane on this DUT)" if pp is None
+                 else f"loQ {pp[0]['f0_hz']:7.2f} Hz Q {pp[0]['Q']:6.3f} | "
+                      f"hiQ {pp[1]['f0_hz']:7.2f} Hz Q {pp[1]['Q']:6.3f}"
+                      if len(pp) >= 2 else f"{len(pp)} pairs")
+              + f" | fc {r['scorecard'].get('fc_hz', float('nan')):7.2f} Hz"
               + f" | IRN {r['scorecard'].get('irn_uv', float('nan')):8.2f} uV")
     return {"set": which, "dut": dut, "bias_alpha": idx.get("bias_alpha"),
             "rows": rows, "summary": summarise(rows)}
@@ -320,15 +399,24 @@ def main() -> None:
     a = ap.parse_args()
     out = {}
     if a.mc:
-        print("=== mismatch ===")
-        out["mismatch"] = run_mc(a.dut)
-        s = out["mismatch"]["summary"]
+        print(f"=== mismatch ({a.dut}) ===")
+        # Same namespacing as the corner sets below: the pre-layout DUT keeps the bare
+        # key so every earlier reference stays valid, any other DUT sits beside it.
+        mkey = "mismatch" if a.dut == "pre_mim" else f"mismatch:{a.dut}"
+        out[mkey] = run_mc(a.dut)
+        s = out[mkey]["summary"]
         for k in ("fc_hz", "ph_max_deg", "irn_uv", "Q_lo", "Q_hi",
                   "offset_in_abs_uv"):
-            v = s[k]
+            v = s.get(k)
+            if not v:
+                continue
             print(f"  {k:14s} mean {v['mean']:10.4f}  sigma {v['sigma']:9.4f}  "
                   f"[{v['min']:10.4f} .. {v['max']:10.4f}]")
-        print(f"  two complex pairs at {s['n_two_pair']}/{s['n_draws']} draws")
+        if s["pencil"]:
+            print(f"  two complex pairs at {s['n_two_pair']}/{s['n_draws']} draws")
+        else:
+            print(f"  {s['n_draws']} draws, measured lane only "
+                  f"(the pole/Q decomposition is on post_lumped)")
     for which in (a.sets or []):
         print(f"=== {which} ({a.dut}) ===")
         # The pre-layout DUT keeps the bare key so every earlier reference to it stays
@@ -337,9 +425,12 @@ def main() -> None:
         out[key] = run(which, a.dut, a.alpha)
         s = out[key]["summary"]
         print(f"  -> fc {s['fc_hz']['span_x']:.3f}x, "
-              f"Q_lo {s['Q_lo']['span_x']:.3f}x, Q_hi {s['Q_hi']['span_x']:.3f}x, "
-              f"noise closure {s['noise_closure_max_pct']:.2e} %\n"
-              f"     two complex pairs at {s['n_two_pair']}/{s['n_corners']} corners")
+              + (f"Q_lo {s['Q_lo']['span_x']:.3f}x, Q_hi {s['Q_hi']['span_x']:.3f}x, "
+                 if s["pencil"] else "")
+              + f"noise closure {s['noise_closure_max_pct']:.2e} %\n"
+              + (f"     two complex pairs at {s['n_two_pair']}/{s['n_corners']} corners"
+                 if s["pencil"] else
+                 f"     {s['n_corners']} corners, measured lane only"))
     if (DATA / "pvt.json").exists():
         out = {**json.loads((DATA / "pvt.json").read_text()), **out}
     (DATA / "pvt.json").write_text(json.dumps(out, indent=1))

@@ -47,7 +47,7 @@ os.environ.setdefault("LPF_NGSPICE", os.path.expanduser("~/local/bin/ngspice"))
 
 from extract_bench import CERT_AXES  # noqa: E402
 from lab import config as C, metrics as M, parallel as P, thd as T  # noqa: E402
-from linearity_runs import THD_VPP, design_of  # noqa: E402
+from linearity_runs import THD_VPP, campaign_design, dut_argv, dut_suffix  # noqa: E402
 
 CELL = "H12-pdk-cap"
 FIN = M.THD_FIN                     #: the S7 frequency, 50 Hz
@@ -55,9 +55,13 @@ SPEC_VPP = 175e-3                   #: the S7 amplitude, flagged in every row
 
 
 def main() -> None:
-    d = design_of(CELL)
+    dut = dut_argv()
+    sfx = dut_suffix(dut)
+    d = campaign_design(dut, CELL)
     fcs = {}
-    idx = OUT / "pvt_index_pre_mim_a1p1_cert-axes.json"
+    # The fc column beside each corner comes from that corner's own extraction, so it
+    # has to be the SAME DUT and the same bias-alpha convention as the transients.
+    idx = OUT / f"pvt_index_{dut}_a1p1_cert-axes.json"
     if idx.exists():
         fcs = {c["slug"]: c["scorecard"].get("fc_hz")
                for c in json.loads(idx.read_text())["corners"]}
@@ -68,7 +72,7 @@ def main() -> None:
 
     def one(job):
         c, v = job
-        tag = f"thdc_{c.slug}_{v * 1e3:.4g}mvpp".replace(".", "p")
+        tag = f"thdc{sfx}_{c.slug}_{v * 1e3:.4g}mvpp".replace(".", "p")
         # Open loop (explicit ampl, no servo) and gate=False, the ladder convention of
         # `linearity_runs.py`: the sim-economy gate scores the NOMINAL hard box, which a
         # corner point is not required to pass.
@@ -108,13 +112,14 @@ def main() -> None:
     print(f"\nTHD at the S7 point ({SPEC_VPP * 1e3:g} mVpp, {FIN:g} Hz) over "
           f"{len(spec_vals)} corners: {min(spec_vals):.3f} .. {max(spec_vals):.3f} dB "
           f"(spread {max(spec_vals) - min(spec_vals):.3f} dB)")
-    (OUT / "thd_corners.json").write_text(json.dumps(
-        {"cell": CELL, "fin_hz": FIN, "vpp_diff": list(THD_VPP),
+    out = OUT / f"thd_corners{sfx}.json"
+    out.write_text(json.dumps(
+        {"cell": CELL, "dut": dut, "fin_hz": FIN, "vpp_diff": list(THD_VPP),
          "spec_vpp": SPEC_VPP, "bias_alpha": C.BIAS_ALPHA,
          "report_only": True, "corners": rows,
          "thd_db_at_spec_span": [min(spec_vals), max(spec_vals)] if spec_vals else None},
         indent=1))
-    print(f"wrote {(OUT / 'thd_corners.json').relative_to(REPO)}")
+    print(f"wrote {out.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

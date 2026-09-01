@@ -474,7 +474,7 @@ the testbench bias diode sit on the differential axis and contribute nothing mea
 
 And by device × mechanism — the same budget with nothing folded away:
 
-| device | role | W/L (µm) | area (µm²) | I_D (nA) | gm (nS) | \|Z_T\| dc | channel thermal (µV) | flicker (1/f) (µV) | bulk–drain shot (µV) | gate resistance (µV) | total (µV) | % power |
+| device | role | W/L (µm) | area (µm²) | I_D (nA) | gm (nS) | \|Z_T\| dc | channel thermal (µV) | flicker (1/f) (µV) | bulk junction shot (µV) | gate resistance (µV) | total (µV) | % power |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `m5` | biquad-A input follower (`gm_ia`) | 16/10 | 160 | 0.663 | 16.6 | 60.1 MΩ | 12.6204 | 3.2508 | 0.0140 | 0.0000 | **13.0324** | 19.92 |
 | `m2` | biquad-A input follower (`gm_ia`) | 16/10 | 160 | 0.663 | 16.6 | 60.1 MΩ | 12.6204 | 3.2508 | 0.0140 | 0.0000 | **13.0324** | 19.92 |
@@ -520,8 +520,34 @@ The post-layout cell reproduces the table to
 10.1 nV on any single entry (`m4`, channel thermal).  Its one qualitative difference is that
 the replica branch and the bias mirror are no longer exactly on the differential axis, so
 they pick up 3.54 nV between them — 1.5e-06 % of the power, still
-nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all three
+nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all four
 DUTs, one row per device per *named* generator, each with its identified port.
+
+#### The same budget on the raw extraction
+
+The two tables above are built on `post_lumped`, because the mechanism columns need the
+`Z_T` a small-signal model provides and the extracted netlist cannot carry one (§7.1).
+The *budget* does not need a model: ngspice emits one noise vector per generator per
+instance for `post_pex` as well, and dividing by `onoise/inoise` — the simulator's own
+|H| — refers each of them to the input.  Done that way, the extracted netlist's
+174 generators on 38 instances — 36 in the extracted core plus the
+2 testbench bias devices — sum to **29.1944 µV**, which is its
+certified IRN to every digit (2.0e-07 % worst closure), and split by mechanism as:
+
+| mechanism | pre-layout (µV / % power) | post-layout (µV / % power) | extracted (µV / % power) |
+|---|---|---|---|
+| channel thermal | 27.4929 / 88.66 % | 27.4898 / 88.65 % | 27.4883 / 88.65 % |
+| flicker (1/f) | 9.8346 / 11.34 % | 9.8339 / 11.35 % | 9.8339 / 11.35 % |
+| bulk junction shot | 0.0560 / 0.00 % | 0.0560 / 0.00 % | 0.0560 / 0.00 % |
+| gate resistance | 0.0002 / 0.00 % | 0.0002 / 0.00 % | 0.0002 / 0.00 % |
+
+The extraction splits every drawn transistor into its layout fingers, so its rows carry
+the extractor's names rather than the schematic's; the `role` column is recovered from the
+nets each finger touches, which is unique per role in this cell and asserted to be
+(`noise_analysis.roles_by_nets`).  Summed back onto roles, the extracted budget puts the
+same role on top as the schematic one — `in_a`, at **39.85 %** of the
+power against **39.84 %** pre-layout — so the actionable split above
+survives the layout.
 
 ### 5.3 Are the generators what they claim to be?
 
@@ -684,22 +710,28 @@ was solved from, so it need not be refitted.
 At 43.75 mVpp differential, one decade and a half of f_in.  `a` is the modulation index
 the follower's own gate–source excursion produces; it is *computed*, not fitted.
 
-**This check runs pre-layout only, and that is sufficient.**  The equation's inputs are
-the `gm`, `I_D` and `n` of §1 — and the layout moves every one of those by at most
-4.0e-04 % (§1.3), so the *modelled* HD3 is identical to the digits printed
-here for either DUT.  What the layout can move is the *measured* HD3, and that is reported
-independently, on the extracted netlist, in §6.1 and §6.3.
+**Both DUTs are measured; the model is built pre-layout, and that is sufficient.**  The
+equation's inputs are the `gm`, `I_D` and `n` of §1 — and the layout moves every one of
+those by at most 4.0e-04 % (§1.3), so the *modelled* HD3 is identical to the
+digits printed here for either DUT and only one model column is printed.  The measured
+column is not assumed to carry over, so the same sweep was run again on the extracted
+netlist: over the 6 points at and above 35 Hz the two measured
+columns agree to **0.66 dB**, which is the direct evidence that the parasitics do
+not change this mechanism.  The two points below that disagree by up to
+3.3 dB, and that is the DFT floor rather than the cell: HD3 there is 93–100 dB
+down, where the harmonic bin is a handful of nanovolts and a decibel costs nothing.
+§6.5 takes the extracted cell further out in frequency and further up in drive.
 
-| f_in (Hz) | HD3 measured (dB) | HD3 model, coherent (dB) | HD3 model, worst-case (dB) | model − measured (dB) | dominant device | max `a` |
-|---|---|---|---|---|---|---|
-| 10 | -100.272 | -115.535 | -114.262 | -15.263 | biquad-B input follower (`gm_ib`) | 0.0286 |
-| 20 | -92.907 | -97.747 | -95.460 | -4.840 | biquad-B input follower (`gm_ib`) | 0.0573 |
-| 35 | -82.148 | -83.692 | -80.091 | -1.545 | biquad-B input follower (`gm_ib`) | 0.1009 |
-| 50 | -76.271 | -74.386 | -70.310 | +1.885 | biquad-A shunt-feedback device (`gm_fa`) | 0.1454 |
-| 65 | -65.897 | -66.432 | -63.387 | -0.535 | biquad-A shunt-feedback device (`gm_fa`) | 0.1914 |
-| 100 | -50.411 | -55.268 | -54.660 | -4.857 | biquad-A shunt-feedback device (`gm_fa`) | 0.3070 |
-| 150 | -42.889 | -50.575 | -49.653 | -7.685 | biquad-A shunt-feedback device (`gm_fa`) | 0.5004 |
-| 200 | -38.203 | -49.131 | -47.070 | -10.928 | biquad-A shunt-feedback device (`gm_fa`) | 0.7061 |
+| f_in (Hz) | HD3 measured, pre (dB) | HD3 measured, extracted (dB) | HD3 model, coherent (dB) | HD3 model, worst-case (dB) | model − measured (dB) | dominant device | max `a` |
+|---|---|---|---|---|---|---|---|
+| 10 | -100.272 | -98.339 | -115.535 | -114.262 | -15.263 | biquad-B input follower (`gm_ib`) | 0.0286 |
+| 20 | -92.907 | -96.216 | -97.747 | -95.460 | -4.840 | biquad-B input follower (`gm_ib`) | 0.0573 |
+| 35 | -82.148 | -82.249 | -83.692 | -80.091 | -1.545 | biquad-B input follower (`gm_ib`) | 0.1009 |
+| 50 | -76.271 | -76.413 | -74.386 | -70.310 | +1.885 | biquad-A shunt-feedback device (`gm_fa`) | 0.1454 |
+| 65 | -65.897 | -65.233 | -66.432 | -63.387 | -0.535 | biquad-A shunt-feedback device (`gm_fa`) | 0.1914 |
+| 100 | -50.411 | -50.069 | -55.268 | -54.660 | -4.857 | biquad-A shunt-feedback device (`gm_fa`) | 0.3070 |
+| 150 | -42.889 | -42.564 | -50.575 | -49.653 | -7.685 | biquad-A shunt-feedback device (`gm_fa`) | 0.5004 |
+| 200 | -38.203 | -38.062 | -49.131 | -47.070 | -10.928 | biquad-A shunt-feedback device (`gm_fa`) | 0.7061 |
 
 * **Inside 35–65 Hz the model is within ±2 dB** on the absolute
   level, and it tracks the slope there: measured
@@ -811,21 +843,28 @@ that HD3 rises at ~60 dB/decade through this band, so the third-order response
 is strongly frequency dependent and the cell is by construction *not* memoryless.  The
 question is which kind of memory, and the spacing sweep answers it:
 
-| f₁ / f₂ (Hz) | spacing (Hz) | IMD3 (dBc) | IIP3 (dBV) |
-|---|---|---|---|
-| 49 / 51 | 2 | -59.529 | -3.436 |
-| 48 / 52 | 4 | -59.556 | -3.423 |
-| 45 / 55 | 10 | -59.720 | -3.341 |
-| 40 / 60 | 20 | -60.269 | -3.067 |
-| 35 / 65 | 30 | -61.289 | -2.556 |
+| f₁ / f₂ (Hz) | spacing (Hz) | IMD3 pre (dBc) | IMD3 extracted (dBc) | IIP3 pre (dBV) | IIP3 extracted (dBV) |
+|---|---|---|---|---|---|
+| 49 / 51 | 2 | -59.529 | -59.248 | -3.436 | -3.577 |
+| 48 / 52 | 4 | -59.556 | -59.277 | -3.423 | -3.563 |
+| 45 / 55 | 10 | -59.720 | -59.448 | -3.341 | -3.477 |
+| 40 / 60 | 20 | -60.269 | -60.062 | -3.067 | -3.170 |
+| 35 / 65 | 30 | -61.289 | -61.004 | -2.556 | -2.699 |
 
 Over a **15× change in tone spacing** — which is a 15× change in the
 envelope frequency the cell must follow — IMD3 moves only
-**1.76 dB**.  Envelope (baseband) memory would show up
-here as a strong spacing dependence and does not.  The 6.95 dB excess is
+**1.760 dB**, and on the raw extraction
+**1.756 dB** over the same five spacings.  Envelope (baseband) memory
+would show up here as a strong spacing dependence and does so on neither DUT.  The 6.95 dB excess is
 therefore attributable to the *carrier*-frequency dependence of the third-order response —
 the same mechanism §6.2 measured — and not to envelope memory.  That is the useful engineering
 statement: **HD3 at one frequency does not predict IMD3 for this cell; measure IMD3.**
+
+The extracted cell carries the same verdict at a slightly worse level: its IMD3 sits
+**+0.265 dB** against pre-layout, and that offset is nearly the same at
+every spacing (spread 0.078 dB).  A constant offset shifts how
+much third-order product the cell makes; it does not change whether that product remembers
+the envelope, which is what the 1.756 dB of spacing dependence answers.
 
 All spacings are constrained to even values so both tones and all four intermodulation
 products land exactly on DFT bins; an odd spacing puts the tones on half-bins and the
@@ -966,6 +1005,29 @@ quoted on `post_pex`.
 | output noise (µVrms) | 34.2949 | 34.2843 | 34.2413 | 34.2402 |
 | core power (nW) | 11.9124 | 11.9125 | 11.9136 | 11.9124 |
 | total C (pF) | 183.7300 | 183.7792 | 183.7792 | 183.7792 |
+
+### 7.1 Which DUT every section is measured on
+
+The split above is a rule, so this table is where it is applied — one row per section,
+saying which netlist produced its numbers and, where the raw extraction was not used,
+exactly what stopped it.  There is only one such reason in the whole pack:
+`n2tf_model.bind_op` folds `gmb` and `cgb` on the `bulk == source` identity, and the
+extracted netlist does not have it.
+
+| § | what it reports | DUT(s) | extraction? | why, if not |
+|---|---|---|---|---|
+| 1 | the DC operating point | `pre_mim`, `post_lumped` | lumped | the Δgm column compares two 1:1 device lists; the extraction splits fingers |
+| 2–4 | H(s), the model check, the pole/zero map | `pre_ideal`, `pre_mim`, `post_lumped` | lumped | symbolic — `bind_op` refuses the raw extraction |
+| 5 | the noise budget, generator by generator | all four | **yes** | `post_pex` on the measured lane: per-generator noise and the certified IRN come out of the simulator, so only the `Z_T`-normalised columns need the model |
+| 6.1, 6.3 | THD/HD3/HD2 ladder, IMD3, IIP3 | `pre_mim`, `post_pex` | **yes** | — |
+| 6.2 | HD3 versus frequency | `pre_mim`, `post_pex` | **yes** | measured on both; one model column, because the layout moves its inputs by 4.0e-04 % |
+| 6.4 | the memoryless test and the tone-spacing sweep | `pre_mim`, `post_pex` | **yes** | — |
+| 6.5 | the band sweep and the worst-frequency ladder | `post_pex` | **yes** | — |
+| 7 | the four scorecards | all four | **yes** | — |
+| 8 | PVT and mismatch | `pre_mim`, `post_lumped`, `post_pex` | **yes** | the scorecard, offset and noise columns are on the extraction; the pole/Q decomposition beside them is on `post_lumped` |
+| 9 | PSRR, CMRR, offset | `pre_mim`, `post_pex` | **yes** | — |
+| 10.2, 10.3 | IIP3 and THD over the certified axes | `pre_mim`, `post_pex` | **yes** | — |
+| 10.1 | the sub-35 Hz residual | `pre_mim`, `post_lumped` | lumped | a pre-registered hypothesis test: it stays on the DUT it was registered on, and the post-layout device curves are tabulated beside it, not substituted into it |
 
 Pre → post (`pre_mim` → `post_pex`, both signed post minus pre): `fc`
 **-1.111 Hz**
@@ -1133,6 +1195,59 @@ layout capacitance the extraction adds — but the SENSITIVITY, which is what th
 about, is the same measurement.  The post-layout `fc` is drawn as hollow circles in
 `figures/pvt_axes.png`.
 
+### 8.5 The same campaigns, on the raw extraction
+
+§8.4 answers the transfer question with the lumped stand-in, because that is the DUT the
+pencil solve accepts.  This subsection removes the stand-in: the certified axes, the
+45-point box, the 29-point harness box and all 1024 mismatch
+draws re-run on `post_pex` itself — the extracted netlist, spliced in whole.  What survives that move is everything the simulator
+measures directly (the certified scorecard, the per-generator noise budget and its
+closure, and the differential offset); what does not is the pole/`Q` decomposition, for
+the one reason §7.1 gives.  The offset is referred to the input by the **measured** dc
+gain here rather than the modelled one, and `data/pvt.json` records how far those two sit
+apart wherever both exist.
+
+| quantity | pre-layout | extracted | extracted / pre |
+|---|---|---|---|
+| `fc` over the certified axes (Hz) | 247.056 … 252.502 | 245.997 … 251.524 | 1.0004× the span |
+| `fc` over the 45-point box (Hz) | 202.846 … 339.820 | 201.533 … 337.301 | 0.9991× the span |
+| `fc` over the 29-point harness box (Hz) | 70.128 … 449.361 | 69.172 … 445.236 | 1.0045× the span |
+| IRN over the certified axes (µV) | 27.681 … 31.708 | 27.677 … 31.705 | 1.0000× the span |
+| Σ generators vs certified IRN | 1.1e-06 % | 1.1e-06 % | — |
+| σ(`fc`) over 1024 mismatch draws (Hz) | 3.907 | 3.667 | 0.9384× |
+| σ(IRN) over the same draws (µV) | 0.1972 | 0.1897 | 0.9623× |
+| σ(input-referred offset) (µV) | 2107.95 | 2139.40 | 1.0149× |
+| \|offset\| p99 (µV) | 5546.84 | 6024.46 | 1.0861× |
+
+**Over the certified sets the corner spans are the pre-layout spans to a part in a
+thousand** (0.04 % on `fc`
+over the axes, 0.09 % over
+the box, 0.00 % on IRN).
+The harness box moves further —
+0.45 % on `fc` — and that is
+expected rather than contradictory: its extremes (69.172 … 445.236 Hz) sit far outside
+the certified window, at corners where the followers are already leaving their operating
+point, and a ratio of two large spans is the least stable statistic in this table.  The
+mismatch σ move by a few per cent:
+-6.2 % on `fc`,
+-3.8 % on IRN and
++1.5 % on the
+offset.  Those last three are **not** sampling noise — (M1) allows
+±2.2 % at 1024 draws and both runs use the same
+seeds — they are the layout, and two of the three move the right way: the extraction adds
+capacitance, which damps the scale scatter.  The tail moves further than the σ
+(+8.6 % on the
+|offset| p99), which is what a quantile does when a distribution is not Gaussian.
+
+That is the substantive result, and it is stronger than §8.4's: the *sensitivity* of this
+cell to process, supply, temperature and mismatch is a property of the sizing, and the
+layout — 36 extracted instances and every parasitic R and C the extractor found — changes
+it by single-digit per cent.  `mismatch:post_pex`, `cert-axes:post_pex`,
+`cert-box:post_pex` and `both:post_pex` in
+`data/pvt.json` carry the per-draw and per-corner rows;
+`csv/mc_draws_post_pex.csv` and the `_pex` columns of `csv/pvt_certified_axes.csv` and
+`csv/pvt_cert_box.csv` carry them as CSV.
+
 ## 9. Supply rejection, common-mode rejection, and offset
 
 `doc/paper/README.md` G12 records these three as unmeasured.  Generated by
@@ -1240,6 +1355,36 @@ That agreement is what the referral bought.  Compared un-referred, the two σ di
 correction Section 8.3 used to omit.  A residual that small is easy to attribute to the
 benches; dividing by the gain shows it was never theirs.
 
+### 9.4 The same bench on the extracted netlist
+
+Everything above is the pre-layout cell.  The whole bench — the nine certified axes and
+all 1024 mismatch draws — was re-run on `post_pex`, and nothing here needs a
+model, so the extraction is used directly:
+
+| quantity | pre-layout | extracted | extracted − pre |
+|---|---|---|---|
+| CMRR mean at dc (dB) | 98.41 | 98.38 | -0.03 |
+| CMRR p01 at dc (dB) | 88.75 | 88.87 | +0.11 |
+| PSRR mean at dc (dB) | 105.81 | 105.95 | +0.14 |
+| PSRR p01 at dc (dB) | 92.65 | 92.53 | -0.12 |
+| supply → output CM at dc (dB) | -61.72 | -61.69 | +0.03 |
+| CM in → CM out at dc (dB) | -0.01 | -0.01 | +0.00 |
+| σ(input-referred offset) (µV) | 2107.95 | 2139.40 | +31.45 |
+| \|offset\| p99 (µV) | 5546.85 | 6024.46 | +477.61 |
+
+The mismatch-limited rejection numbers are the ones that matter, and every one of them
+moves by **less than 0.14 dB**.
+That is the expected shape of the answer: CMRR and PSRR on this cell are set by *device*
+mismatch in the two halves, and the extraction adds capacitance to both halves alike, so
+it changes the frequency at which the rejection rolls off long before it changes the dc
+value.  The offset rows move more in relative terms
+(+1.5 % on σ,
++8.6 % on the p99) and agree draw-for-draw with
+§8.5's independent extraction of the same quantity, which is the cross-check that says
+the move is the layout and not the bench.  `csv/rejection_nominal_post_pex.csv`,
+`csv/rejection_mismatch_curves_post_pex.csv` and
+`csv/rejection_mismatch_draws_post_pex.csv` carry the sweeps and the draws.
+
 ## 10. The sub-35 Hz residual, and linearity over corners
 
 ### 10.1 A named mechanism for the residual
@@ -1320,6 +1465,38 @@ construction is the cross-term, gate and drain swinging together, which in a sou
 they do.  That is where the remaining 82 % is expected to sit; testing it needs a
 two-dimensional device probe this pack does not have, and it is left open rather than fitted.
 
+**Does the layout change the device curvature this test rests on?**  It does not, and the
+probe was re-run at the post-layout operating point to say so rather than assume it.  The
+probe re-creates one device from its own netlist card, which needs a netlist whose
+instances are the drawn devices, so it runs on `post_lumped` — the same layout's
+parasitics on the schematic device list (§7).  Every device's `g₃`, the coefficient the
+whole prediction is built from:
+
+| device | role | g₃ pre-layout (A/V³) | g₃ post-layout (A/V³) | change (%) | window spread, post |
+|---|---|---|---|---|---|
+| `m2` | biquad-A input follower (`gm_ia`) | 7.2605e-09 | 7.2605e-09 | -0.0006 | 5.416× |
+| `m5` | biquad-A input follower (`gm_ia`) | 7.2604e-09 | 7.2603e-09 | -0.0012 | 5.416× |
+| `m4` | biquad-A shunt-feedback device (`gm_fa`) | 2.8231e-11 | 2.8231e-11 | -0.0001 | 1.003× |
+| `m8` | biquad-A shunt-feedback device (`gm_fa`) | 2.8231e-11 | 2.8231e-11 | -0.0006 | 1.003× |
+| `m9` | biquad-A internal bias sink | 4.7494e-12 | 4.7494e-12 | +0.0003 | 1.009× |
+| `m10` | biquad-A internal bias sink | 4.7494e-12 | 4.7494e-12 | -0.0001 | 1.009× |
+| `mst` | current-reuse bridge (`gm_br`) | 5.4429e-10 | 5.4429e-10 | +0.0001 | 1.137× |
+| `mstn` | current-reuse bridge (`gm_br`) | 5.4429e-10 | 5.4429e-10 | -0.0001 | 1.137× |
+| `m0` | biquad-B input follower (`gm_ib`) | 2.1757e-10 | 2.1757e-10 | +0.0001 | 1.023× |
+| `m1` | biquad-B input follower (`gm_ib`) | 2.1757e-10 | 2.1757e-10 | +0.0005 | 1.023× |
+| `m14` | biquad-B shunt-feedback device (`gm_fb`) | 6.8325e-10 | 6.8325e-10 | +0.0000 | 1.264× |
+| `m15` | biquad-B shunt-feedback device (`gm_fb`) | 6.8325e-10 | 6.8325e-10 | -0.0003 | 1.264× |
+| `r1` | replica branch, `gm_fb` copy | 3.4178e-11 | 3.4178e-11 | +0.0000 | 1.012× |
+| `r2` | replica branch, bridge copy | 2.7418e-11 | 2.7418e-11 | +0.0000 | 1.012× |
+| `r3` | replica branch, sink | 1.6949e-10 | 1.6949e-10 | +0.0000 | 1.109× |
+
+The largest change on any device is **0.0012 %**, and the `in_a` window spread that
+dominates the uncertainty above is
+5.42× pre-layout against
+5.42× post.  So the pre-registered test is
+reported on the DUT it was registered on, and the numbers that would have carried it over
+are tabulated here instead of being substituted into it.
+
 `figures/gds_residual.png` plots both panels of this argument.
 
 ### 10.2 IIP3 over the certified axes
@@ -1386,3 +1563,31 @@ measures at nominal.  Whether that mechanism also carries this temperature depen
 tested here; the ladder measures it, it does not explain it.
 
 `figures/thd_corners.png` plots the ladder at every corner and the margin at the spec point.
+
+### 10.4 Both corner campaigns on the extracted netlist
+
+§10.2 and §10.3 are the pre-layout cell.  Neither bench needs a small-signal model — both
+are transients scored by DFT — so both were re-run on `post_pex`, all
+9 certified axes each, with the `fc` column taken from that DUT's own
+per-corner extraction rather than borrowed from the pre-layout one.
+
+| quantity | pre-layout | extracted | extracted − pre |
+|---|---|---|---|
+| THD at the S7 point (175 mVpp, 50 Hz), over the axes (dB) | -51.901 … -47.280 | -51.944 … -46.247 | +1.033 on the worst corner |
+| worst corner at that point | `tt_27c_1v400` | `tt_0c_1v500` | — |
+| IIP3 over the trusted axes (dBVp) | -7.044 … -3.159 | -7.077 … -3.059 | -0.033 on the worst |
+| corners whose IMD3 slope is trusted | 9/9 | 9/9 | — |
+
+**Both spreads widen slightly and both worst cases stay far inside spec.**  THD at the S7
+point spreads 4.62 dB
+pre-layout against 5.70 dB extracted, and the corner that lands worst is
+not the same one — `tt_27c_1v400`
+pre-layout, `tt_0c_1v500` extracted — so this is a re-ordering inside a
+1 dB band, not a corner the layout newly exposes.  The extracted worst corner still
+clears the -40 dB S7 limit by **6.25 dB**.  IIP3 moves
+even less: -0.033 dB on the worst corner,
+with all 9 rows still reporting a trusted IMD3 slope, so every one is
+an intercept rather than an extrapolation.  What moves is the level, not the sensitivity —
+the same statement §8.5 makes for `fc`, IRN and offset, and the reason the certified
+window does not have to be re-argued after layout.
+`csv/iip3_corners_post_pex.csv` and `csv/thd_corners_post_pex.csv` carry every row.

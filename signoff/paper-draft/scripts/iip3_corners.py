@@ -40,7 +40,8 @@ import numpy as np  # noqa: E402
 from extract_bench import CERT_AXES  # noqa: E402
 from lab import ngspice as ng  # noqa: E402
 from lab.parallel import batch  # noqa: E402
-from linearity_runs import F1, F2, design_of, score_twotone, tran_twotone  # noqa: E402
+from linearity_runs import (F1, F2, campaign_design, dut_argv, dut_suffix,  # noqa: E402
+                            score_twotone, tran_twotone)
 
 CELL = "H12-pdk-cap"
 #: Both inside the cubic regime at nominal (IMD3 -71.9 and -59.8 dBc), one decade of
@@ -50,9 +51,12 @@ SLOPE_IDEAL = 40.0
 
 
 def main() -> None:
-    d = design_of(CELL)
+    dut = dut_argv()
+    sfx = dut_suffix(dut)
+    d = campaign_design(dut, CELL)
     fcs = {}
-    idx = OUT / "pvt_index_pre_mim_a1p1_cert-axes.json"
+    # Same DUT, same bias-alpha convention as the transients -- see `thd_corners.py`.
+    idx = OUT / f"pvt_index_{dut}_a1p1_cert-axes.json"
     if idx.exists():
         fcs = {c["slug"]: c["scorecard"].get("fc_hz")
                for c in json.loads(idx.read_text())["corners"]}
@@ -64,7 +68,8 @@ def main() -> None:
     def one(job):
         c, a = job
         deck = tran_twotone(d, a, a, corner=c.process, temp=c.temp, vdd=c.vdd)
-        plots = ng.plots(ng.run(deck, f"iip3_{c.slug}_a{a * 1e3:.4f}".replace(".", "p")))
+        plots = ng.plots(ng.run(
+            deck, f"iip3{sfx}_{c.slug}_a{a * 1e3:.4f}".replace(".", "p")))
         return c, a, score_twotone(plots, a, f"iip3_{c.slug}")
 
     rows: dict[str, dict] = {}
@@ -100,12 +105,13 @@ def main() -> None:
         v = [r["iip3_dbv"] for r in good]
         print(f"\nIIP3 over {len(good)}/{len(rows)} trusted corners: "
               f"{min(v):+.3f} .. {max(v):+.3f} dBVp (spread {max(v) - min(v):.3f} dB)")
-    (OUT / "iip3_corners.json").write_text(json.dumps(
-        {"cell": CELL, "tones_hz": [F1, F2], "ampls_v": list(AMPLS),
+    out = OUT / f"iip3_corners{sfx}.json"
+    out.write_text(json.dumps(
+        {"cell": CELL, "dut": dut, "tones_hz": [F1, F2], "ampls_v": list(AMPLS),
          "bias_alpha": os.environ.get("LPF_BIAS_ALPHA", "0"),
          "slope_ideal_db_per_decade": SLOPE_IDEAL, "corners": rows,
          "iip3_dbv_span": [min(v), max(v)] if good else None}, indent=1))
-    print(f"wrote {(OUT / 'iip3_corners.json').relative_to(REPO)}")
+    print(f"wrote {out.relative_to(REPO)}")
 
 
 if __name__ == "__main__":
