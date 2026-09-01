@@ -140,6 +140,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | the noise budget: which device, which mechanism | `csv/noise_by_device_and_type.csv` | `device` (text) | `irn_uv_rms`, `pct_of_power` |
 | Group delay | `csv/group_delay.csv` | `f_hz` | `group_delay_ms_*` |
 | THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
+| the distortion-limited drive and the dynamic range it sets | `csv/linearity_crossings.csv` | `target_db` | `vpp_diff_v`, `dr_db` |
 | THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
 | `fc` and `Q` over the certified axes, pre- and post-layout | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_*`, `q_lo_*`, `q_hi_*` |
@@ -155,7 +156,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all twenty, plus five points to note before
+[`csv/README.md`](csv/README.md) covers all twenty-one, plus five points to note before
 plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
 two halves are exported beside them, why the phase and group-delay columns are blank above
 3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not
@@ -192,6 +193,8 @@ PF=../../spicexplorer-platform/.venv/bin/python
 $PF signoff/paper-draft/scripts/tf_analysis.py
 $PF signoff/paper-draft/scripts/noise_analysis.py
 $PF signoff/paper-draft/scripts/linearity_analysis.py
+#    ...then confirm the §6.1 crossing by simulating at it (needs ngspice, ~30 s)
+.venv/bin/python signoff/paper-draft/scripts/hd3_crossing_probe.py
 # 4. the pack
 #    report.py is stdlib-only but needs Python >= 3.12 (it uses backslash escapes inside
 #    f-string expressions), so it runs in the REPO venv, not the platform's 3.11 one.
@@ -243,6 +246,7 @@ step 6 writes.
 | `iip3_corners.py` | IIP3 over the certified axes, two amplitudes per corner (§10.2) |
 | `thd_corners.py` | the THD amplitude ladder over the certified axes (§10.3) |
 | `mc_stats.py` | how much a σ estimated from N draws is allowed to move, and the running traces that show whether it did |
+| `hd3_crossing_probe.py` | re-simulates the §6.1 dynamic-range crossing at exactly the drive the `A²` law solved for, so the number is confirmed rather than interpolated |
 | `gate_leakage_probe.py` | one device, one load: the gate current is exactly zero, the model's gate-leakage generators `igs`/`igd` are exactly zero, and `idid` + `igig` is the full shot noise `2qI_D` (§5.2) |
 
 ---

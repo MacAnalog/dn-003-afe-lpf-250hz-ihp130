@@ -24,6 +24,7 @@ There are no comment lines, no units row and no blank first line, so the default
 | **Where the noise comes from — device by device** | `noise_by_device_and_type.csv` | `device` (text) | `irn_uv_rms`, `pct_of_power` |
 | **Group delay** | `group_delay.csv` | `f_hz` | `group_delay_ms_*` |
 | **THD / HD3 vs amplitude** | `thd_vs_amplitude.csv` | `vpp_diff_v` or `ampl_v` | `thd_db_*`, `hd3_db_*` |
+| **the drive at a distortion limit, and the resulting DR** | `linearity_crossings.csv` | `target_db` | `vpp_diff_v`, `dr_db` |
 | **HD2 vs amplitude** | `thd_vs_amplitude.csv` | `vpp_diff_v` or `ampl_v` | `hd2_db_*` |
 | **THD / HD3 vs frequency** | `thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*` |
 | **HD2 vs frequency** | `thd_vs_frequency_175mvpp.csv` | `fin_hz` | `hd2_db_*` |
@@ -52,6 +53,20 @@ The remaining files support those:
 * `thd_vs_frequency_43p75mvpp.csv` — the same harmonic-vs-frequency sweep at 43.75 mVpp
   instead of 175 mVpp, where distortion is still cubic in amplitude.  This is the sweep
   the distortion equation is checked against.
+* `linearity_crossings.csv` — the drive at which distortion reaches a stated limit, and
+  the dynamic range that follows.  Three rows: HD3 = −60 dB on both DUTs, and the
+  THD = −40 dB compression point.  Each carries the fit it was solved from —
+  `vpp_diff_v = anchor_vpp_diff_v · 10^((target_db − anchor_db)/slope_db_per_decade)` — so
+  the number can be checked without refitting.  The HD3 target sits **between** two
+  measured amplitudes, and `bracket_vpp_diff_v` is an independent log-linear interpolation
+  between them; the THD one is past the compression knee and has no bracket, which is why
+  that cell is blank.  `dr_db` is `20·log10(vrms_v / irn_uv_rms)` against the same DUT's
+  certified 0.5–200 Hz noise.  **A dynamic range is only comparable against another design
+  measured to the same criterion** — this one is HD3 = −60 dB at f_in = 50 Hz, differential
+  peak-to-peak converted to rms as `V_pp/(2√2)`.  `fom_fj` is `P/(N·f_c·DR)` in fJ and
+  inherits that criterion.  `measured_hd3_db` is the crossing **re-simulated at exactly
+  the solved drive** (`scripts/hd3_crossing_probe.py`), so `measured_err_db` says how far
+  the solved number is from a measured one rather than leaving you to trust the fit.
 * `iip3_extrapolation.csv` — the two extrapolation lines, so you need not fit anything.
   Two rows: the low-amplitude end, then the intercept.  Plot `fund_line_dbvp_*` (slope 1)
   and `imd3_line_dbvp_*` (slope 3) against `x_dbvp_*`; they meet at the published intercept.
@@ -121,7 +136,11 @@ the magnitude is below the −100 dB floor and the swept phase aliases between p
 its unwrapping and its derivative would be wrong; the pack neither scores nor plots them
 there.  Magnitude is valid over the whole sweep.  Veusz skips empty cells as missing data.
 
-**The IIP3 fit uses a subset of the rows.**  `iip3_twotone.csv` has five amplitudes, but
+**The distortion fits use a subset of the rows.**  This applies to two files.
+`thd_vs_amplitude.csv` has six amplitudes, but the top three are compressing — the
+fundamental has stopped growing — and a line through all six gives a different slope and a
+different crossing from the published one.  `in_fit_*` = 1 marks the three rows the `A²`
+fit uses.  Likewise for IIP3: `iip3_twotone.csv` has five amplitudes, but
 the top two are compressing — a line through all five gives a different intercept from the
 published one.  Two flag columns mark what was used: `in_fit_*` = 1 on the three rows
 still following the 3:1 law, and `in_ip3_avg_*` = 1 on the two rows whose `iip3_dbvp_*`

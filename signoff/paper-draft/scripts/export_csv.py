@@ -45,6 +45,10 @@ import numpy as np  # noqa: E402
 
 from lab import metrics as M, raw as R  # noqa: E402
 
+#: The HD3 ceiling that defines the uncompressed end of the amplitude ladder -- the same
+#: window `linearity_analysis.py` fits the A^2 law over. Rows above it are compressing.
+HD3_FIT_MAX_DB = -45.0
+
 AC_DUTS = ("pre_ideal", "pre_mim", "post_lumped", "post_pex")
 MODEL_DUTS = ("pre_ideal", "pre_mim", "post_lumped")
 LIN_DUTS = ("pre_mim", "post_pex")
@@ -211,7 +215,13 @@ def harmonics(lin: dict, hd3f: dict) -> list[Path]:
     ladder = {d: lin["thd_ladder"][d] for d in LIN_DUTS}
     amp = [("vpp_diff_v", [r["vpp_diff"] for r in ladder["pre_mim"]]),
            ("ampl_v", [r["ampl"] for r in ladder["pre_mim"]])]
-    out = [write_csv("thd_vs_amplitude.csv", amp + _harmonic_cols(ladder, "vpp_diff"))]
+    # Which rows the published A^2 fit uses. The top of the ladder is compressing, so a
+    # line through all six gives a different slope and a different crossing -- the same
+    # trap `in_fit_*` guards against in `iip3_twotone.csv`.
+    fit_flags = [(f"in_fit_{d}", [int(r["hd3_db"] < HD3_FIT_MAX_DB) for r in ladder[d]])
+                 for d in LIN_DUTS]
+    out = [write_csv("thd_vs_amplitude.csv",
+                     amp + _harmonic_cols(ladder, "vpp_diff") + fit_flags)]
 
     prof = {d: lin["thd_profile"][d] for d in LIN_DUTS}
     out.append(write_csv("thd_vs_frequency_175mvpp.csv",
@@ -224,6 +234,66 @@ def harmonics(lin: dict, hd3f: dict) -> list[Path]:
                          [("fin_hz", [r["fin"] for r in hd3f["rows"]])]
                          + _harmonic_cols(small, "fin")))
     return out
+
+
+def linearity_crossings(ana: dict) -> Path:
+    """The distortion-limited drive, with the fit it was solved from -- so nobody refits.
+
+    `validation.md` §6.1 publishes two crossings and this file carries both inputs to each:
+    the fitted `A^2` slope and the measured point the law was walked from
+    (`vpp = anchor_vpp * 10**((target - anchor_db)/slope)`). The HD3 target is BRACKETED by
+    two measured amplitudes, so `bracket_vpp_diff_v` is an independent log-linear
+    interpolation between them; the THD one is past the compression knee and has none.
+    `dr_db` is `20*log10(vrms / IRN)` with the same DUT's certified 0.5-200 Hz noise.
+    """
+    a = ana["amplitude_law"]
+    xc = a["hd3_crossing"]
+    # The crossing was re-simulated at exactly the solved drive; carry what it measured
+    # so the column is a confirmation and not just a restatement of the fit.
+    probe = {r["dut"]: r for r in load("hd3_crossing_probe.json")["rows"]}
+    rows = []
+    for d, c in xc["per_dut"].items():
+        assert abs(c["anchor_vpp_diff"] * 10 ** ((xc["target_db"] - c["anchor_hd3_db"])
+                                                 / c["slope_db_per_decade"])
+                   - c["vpp_diff"]) < 1e-12, f"{d}: crossing does not reproduce from slope+anchor"
+        rows.append({"dut": d, "metric": "hd3", "target_db": xc["target_db"],
+                     "vpp_diff_v": c["vpp_diff"], "vrms_v": c["v_rms"],
+                     "bracket_vpp_diff_v": c["bracket_vpp_diff"],
+                     "slope_db_per_decade": c["slope_db_per_decade"],
+                     "anchor_vpp_diff_v": c["anchor_vpp_diff"],
+                     "anchor_db": c["anchor_hd3_db"],
+                     "irn_uv_rms": c["irn_uv"], "dr_db": c["dr_db"],
+                     "fom_fj": c["fom_fj"],
+                     "measured_hd3_db": probe[d]["measured_hd3_db"],
+                     "measured_err_db": probe[d]["err_db"]})
+    # `points` carries only the HD3 column, so the THD anchor comes from the full ladder.
+    va = a["points"][-1]["vpp_diff"]
+    ta = next(r["thd_db"] for r in a["all_points"] if r["vpp_diff"] == va)
+    sl = a["fitted_slope_db_per_decade"]
+    assert abs(va * 10 ** ((-40.0 - ta) / sl) - a["thd_minus40_vpp"]) < 1e-12, \
+        "THD crossing does not reproduce from slope+anchor"
+    rows.append({"dut": "pre_mim", "metric": "thd", "target_db": -40.0,
+                 "vpp_diff_v": a["thd_minus40_vpp"],
+                 "vrms_v": a["thd_minus40_vpp"] / (2 * 2 ** 0.5),
+                 "bracket_vpp_diff_v": None, "slope_db_per_decade": sl,
+                 "anchor_vpp_diff_v": va, "anchor_db": ta,
+                 "irn_uv_rms": None, "dr_db": None, "fom_fj": None,
+                 "measured_hd3_db": None, "measured_err_db": None})
+    # The pre-layout noise this DR is built on is the same number section 5 certifies.
+    nz = load("noise.json")["pre_mim"]["irn_uv_certified"]
+    got = xc["per_dut"]["pre_mim"]["irn_uv"]
+    assert abs(got - nz) < 1e-6, f"DR uses IRN {got}, section 5 certifies {nz}"
+    print("  the distortion-limited drive reproduces from its own slope and anchor:")
+    for r in rows:
+        print(f"    {r['dut']:9s} {r['metric']:4s} {r['target_db']:+.0f} dB -> "
+              f"{r['vpp_diff_v'] * 1e3:6.2f} mVpp"
+              + (f"   measured {r['measured_hd3_db']:.3f} dB there"
+                 f"   DR {r['dr_db']:.2f} dB   FoM {r['fom_fj']:.2f} fJ"
+                 if r["dr_db"] else ""))
+    keys = ("dut", "metric", "target_db", "vpp_diff_v", "vrms_v", "bracket_vpp_diff_v",
+            "measured_hd3_db", "measured_err_db", "slope_db_per_decade",
+            "anchor_vpp_diff_v", "anchor_db", "irn_uv_rms", "dr_db", "fom_fj")
+    return write_csv("linearity_crossings.csv", [(k, [r[k] for r in rows]) for k in keys])
 
 
 def iip3(lin: dict, ana: dict) -> list[Path]:
@@ -533,6 +603,7 @@ def main() -> None:
     written.append(ac_model(tf))
     written += harmonics(lin, hd3f)
     written += iip3(lin, ana)
+    written.append(linearity_crossings(ana))
     written += pvt(load("pvt.json"))
     written.append(monte_carlo(load("pvt.json")))
     rj = load("psrr_cmrr.json")

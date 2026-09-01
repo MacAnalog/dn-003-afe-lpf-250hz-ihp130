@@ -622,7 +622,62 @@ Beyond ~0.3 Vpp the ladder leaves the small-signal regime entirely — the funda
 growing (0.326 → 0.362 → 0.341 Vpp for 0.35 → 0.525 → 0.70 Vpp in) and THD saturates near
 −17 dB.  That is slew/compression, correctly *outside* the equation's window.
 **The −40 dB THD crossing is at 306.9 mVpp** — the compression
-point a reviewer asks for, 1.75× the S7 drive of 175 mVpp.
+point a reviewer asks for, 1.75× the S7 drive of 175 mVpp.  That one is an
+*extrapolation*: it lands past the last uncompressed measurement, where the fundamental
+has already stopped growing.
+
+#### The top of the dynamic range: HD3 = −60 dB
+
+The drive at which HD3 reaches **−60 dB** is the other crossing a
+reviewer asks for, because it is the numerator of dynamic range.  Unlike the −40 dB line
+it is **bracketed by two measured amplitudes**, so the fitted law can be checked against a
+plain log-linear interpolation between them rather than trusted on its own:
+
+| DUT | V_in at HD3 = −60 dB (mVpp diff) | same, mVrms | bracket interpolation (mVpp) | IRN 0.5–200 Hz (µVrms) | DR (dB) | FoM (fJ) |
+|---|---|---|---|---|---|---|
+| `pre_mim` | **105.36** | 37.25 | 108.42 (−2.8 %) | 29.199 | **62.11** | **9.35** |
+| `post_pex` | **103.30** | 36.52 | 105.08 (−1.7 %) | 29.194 | **61.94** | **9.57** |
+
+The two methods agree to 2.8 % in amplitude — under 0.25 dB of dynamic
+range — so the number does not depend on which one is used.  The post-layout row is the
+DUT of record.
+
+**Confirmed by simulation, not left as an interpolation.**  The solved drive was fed back
+into the pack's own THD instrument — the same coherent strobed transient and DFT that
+produced the ladder, driven open loop at exactly the solved amplitude with nothing re-tuned
+to make it pass (`scripts/hd3_crossing_probe.py`):
+
+| DUT | drive (mVpp diff) | HD3 measured there (dB) | error vs the target (dB) |
+|---|---|---|---|
+| `pre_mim` | 105.36 | **−60.790** | −0.790 |
+| `post_pex` | 103.30 | **−60.612** | −0.612 |
+
+Both land within **0.79 dB** of the target, against a
+1.0 dB tolerance and a ladder whose own fit residual is
+0.513 dB.  The error has a sign worth stating: it is
+**negative on both DUTs**, so the cell is *quieter* in distortion at the solved drive than
+the law predicts, the true −60 dB point sits about
+4 % higher in amplitude, and the published dynamic range is therefore
+a slight **under**-estimate — roughly 0.35 dB
+of it.  Conservative in the direction a claim should be conservative.
+
+**The conventions, stated because a dynamic range is only comparable against another
+design measured the same way.**  The distortion criterion is HD3, not THD, at
+f_in = 50 Hz; the amplitude is **differential** peak-to-peak, converted to rms as
+`V_pp/(2√2)`; the noise is the certified input-referred value integrated over 0.5–200 Hz
+(§5), on the same DUT.  The other common convention in this class of filter is 1 % THD
+(−40 dB), which lands roughly 3× higher and would raise `DR` by about 9 dB — so a quoted
+`DR` without its criterion is not a comparable number.  The figure of merit is the usual
+continuous-time-filter form, `FoM = P / (N · f_c · DR)` with `DR` linear — here
+11.914 nW over
+4 poles at
+248.66 Hz, post-layout — and it inherits the same
+criterion: `FoM` goes as `1/DR`, so at the 1 % THD convention — a
+3.0× higher drive — the same
+cell would report about a third of it.  That is a statement about the convention, not
+about the filter.
+`csv/linearity_crossings.csv` carries the crossing with the slope and the anchor point it
+was solved from, so it need not be refitted.
 
 ### 6.2 HD3 versus frequency — the `ω²` law, and where the model stops
 
