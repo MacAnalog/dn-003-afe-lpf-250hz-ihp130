@@ -296,15 +296,118 @@ def analyse(label: str) -> dict:
     }
 
 
+# ----------------------------------------------- the raw extraction, model-free --
+
+def roles_by_nets(rec: dict, ref: str = "pre_mim") -> dict:
+    """Instance -> design role for a DUT whose instance NAMES carry no role.
+
+    kpex renames every device and splits each drawn transistor into its layout fingers,
+    so `xm_1 ... xm_35` cannot be matched to `in_a`/`gmf_b`/... by name.  The WIRING still
+    can be: each finger keeps the schematic's own net names, and in this cell every role
+    has a unique (gate, {drain, source}, bulk) net signature -- drain and source as an
+    unordered pair because the extractor labels a finger's two diffusions by geometry and
+    freely swaps them.  Both halves of that claim are asserted, so a topology change that
+    broke the uniqueness would stop the script rather than mislabel a device.
+    """
+    sch = json.loads((PACK / f"data/bench_{ref}.json").read_text())["op"]
+
+    def sig(n):
+        return (frozenset((n["d"], n["s"])), n["g"], n["b"])
+
+    table: dict = {}
+    for inst, o in sch.items():
+        if not o.get("nets"):
+            continue
+        k = sig(o["nets"])
+        if k in table and table[k] != (o.get("role") or inst):
+            raise ValueError(f"net signature {k} is not unique in {ref}: "
+                             f"{table[k]} and {o.get('role')}")
+        table[k] = o.get("role") or inst
+    # Keyed lower-case: the op probe reads the instance name off the netlist card while
+    # the noise vectors come back from ngspice, which lower-cases everything.
+    out = {}
+    for inst, o in rec["op"].items():
+        if not o.get("nets"):
+            continue
+        k = sig(o["nets"])
+        if k not in table:
+            raise ValueError(f"{inst}: net signature {k} has no counterpart in {ref}")
+        out[inst.lower()] = table[k]
+    missing = {i.lower() for i in rec["op"]} - set(out)
+    if missing:
+        raise ValueError(f"unresolved instances: {sorted(missing)}")
+    return out
+
+
+def analyse_measured(label: str, ref: str = "pre_mim") -> dict:
+    """The noise budget of a DUT the small-signal model cannot be built on.
+
+    `analyse` needs `n2tf_model.bind_op`, which folds `gmb`/`cgb` on the `bulk == source`
+    identity and therefore refuses the raw extraction (kpex leaves an n-channel finger
+    whose source is not its bulk).  Everything in this function comes out of the
+    SIMULATOR instead: the per-generator output densities ngspice emits, referred to the
+    input through `onoise/inoise` -- which is the simulator's own |H|, so no model enters
+    -- and the per-instance `id`/`gm` from the same operating point.  What is therefore
+    absent, and only this, is the model-derived half of `analyse`'s row: the port
+    identification and the `Z_T`-normalised current PSD (`si_over_2qid`, `si_over_4ktgm`).
+    Those stay on `post_lumped`, which is the same layout's parasitics on a device list
+    the model does accept.
+    """
+    rec = json.loads((PACK / f"data/bench_{label}.json").read_text())
+    per_gen, _totals, f = parse_contrib(rec["noise"])
+    onoise = np.asarray(rec["noise"]["onoise"], float)
+    inoise = np.asarray(rec["noise"]["inoise"], float)
+    h_noise = np.where(inoise > 0, onoise / np.maximum(inoise, 1e-300), 1.0)
+    roles = roles_by_nets(rec, ref)
+
+    op_lc = {k.lower(): v for k, v in rec["op"].items()}
+    rows = []
+    for (inst, gen), dens in sorted(per_gen.items()):
+        o = op_lc.get(inst.lower(), {})
+        rows.append({
+            "inst": inst, "role": roles.get(inst), "gen": gen, "modelled": None,
+            "id_na": None if o.get("ids") is None else 1e9 * abs(o["ids"]),
+            "gm_ns": None if o.get("gm") is None else 1e9 * o["gm"],
+            "onoise_uv_rms": 1e6 * integrate_noise(f, dens, *IRN_BAND),
+            "irn_uv_rms": 1e6 * integrate_noise(f, dens / h_noise, *IRN_BAND),
+        })
+    rows.sort(key=lambda r: -r["irn_uv_rms"])
+
+    sum_dens = np.sqrt(sum(v ** 2 for v in per_gen.values()))
+    irn_sim = 1e6 * integrate_noise(f, inoise, *IRN_BAND)
+    irn_sum = float(np.sqrt(sum(r["irn_uv_rms"] ** 2 for r in rows)))   # already uV
+    return {
+        "label": label,
+        "measured_only": True,
+        "role_source": ref,
+        "f": f.tolist(),
+        "onoise_sim": onoise.tolist(),
+        "onoise_sum_of_generators": sum_dens.tolist(),
+        "inoise_sim": inoise.tolist(),
+        "h_mag": h_noise.tolist(),
+        "rows": rows,
+        "irn_uv_sim": irn_sim,
+        "irn_uv_sum_of_generators": irn_sum,
+        "irn_uv_certified": rec["scorecard"].get("irn_uv"),
+        "onoise_closure_max_pct": float(
+            100 * np.max(np.abs(sum_dens - onoise) / np.maximum(onoise, 1e-30))),
+        "inoise_vs_onoise_over_h_max_pct": 0.0,
+        "transimpedance_cross_check": None,
+    }
+
+
 def main() -> None:
     out = {}
-    for label in ("pre_ideal", "pre_mim", "post_lumped"):
-        r = analyse(label)
+    for label in ("pre_ideal", "pre_mim", "post_lumped", "post_pex"):
+        # `post_pex` is the raw extraction: measured lane only, for the reason in
+        # `analyse_measured`'s docstring.
+        r = analyse_measured(label) if label == "post_pex" else analyse(label)
         out[label] = r
         print(f"[{label}] IRN sim {r['irn_uv_sim']:.4f} uV | certified "
               f"{r['irn_uv_certified']:.4f} | sum-of-generators "
               f"{r['irn_uv_sum_of_generators']:.4f} uV | onoise closure "
-              f"{r['onoise_closure_max_pct']:.4g} %")
+              f"{r['onoise_closure_max_pct']:.4g} %"
+              + ("  [measured only]" if r.get("measured_only") else ""))
         cc = r["transimpedance_cross_check"]
         if cc:
             print(f"          netlist2tf.transimpedance vs pencil: "

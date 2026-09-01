@@ -273,17 +273,35 @@ def fig_noise(nz):
             return S.CYCLE[0]["color"]
         return S.CYCLE[1]["color"] if "flicker" in k else S.CYCLE[2]["color"]
 
-    ax[1].barh(y, [100 * v / tot for _k, v in items],
+    # The same ranking on the raw extraction, folded onto (role, generator) so the two
+    # DUTs are comparable: the extractor splits a drawn device into fingers, so its bars
+    # only line up with the schematic's once the fingers of one role are summed.
+    px: dict[str, float] = {}
+    for r in nz["post_pex"]["rows"]:
+        key = f"{r['role']} / {r['gen']}"
+        px[key] = px.get(key, 0.0) + r.get("irn_uv_rms", 0.0) ** 2
+    ptot = sum(px.values())
+
+    ax[1].barh(y - 0.19, [100 * v / tot for _k, v in items], height=0.36,
                color=[_colour(k) for k, _v in items])
+    ax[1].barh(y + 0.19, [100 * px.get(k, 0.0) / ptot for k, _v in items], height=0.36,
+               color=[_colour(k) for k, _v in items], alpha=0.45)
     ax[1].set_yticks(y)
     ax[1].set_yticklabels([k for k, _v in items], fontsize=6.4)
     ax[1].invert_yaxis()
     ax[1].set_xlabel("share of input-referred noise POWER (%)")
     ax[1].set_title("(b) where the noise comes from")
     ax[1].grid(axis="y", alpha=0)
+    # Grey proxies: colour already means MECHANISM in this panel, so a legend keyed on
+    # one bar's colour would say the opposite of the note below it.
+    from matplotlib.patches import Patch
+    ax[1].legend(handles=[Patch(facecolor="0.35", label="pre-layout"),
+                          Patch(facecolor="0.35", alpha=0.45, label="extracted")],
+                 loc="lower right", fontsize=6.4)
     S.note(ax[1], "one colour = one mechanism:\n"
                   "  idid + igig = channel thermal\n"
-                  "  flicker separate", loc="lower right")
+                  "  flicker separate\n"
+                  "solid pre-layout, pale extracted", loc="center right")
     S.save(fig, "noise_budget")
     plt.close(fig)
 
@@ -461,7 +479,14 @@ def fig_pvt(pv):
     ax[0].plot(x, qhi, **cy(2, ls="none", ms=6), label=r"$Q_{hi}$  (shape: ratio)")
     ax[0].plot(x, norm([post[r["slug"]]["scorecard"]["fc_hz"] for r in ax_rows]),
                color=S.GREY, ls="none", marker="o", ms=9, mfc="none", mew=0.9,
-               label=r"$f_c$, post-layout")
+               label=r"$f_c$, post-layout (lumped)")
+    # The raw extraction's own fc, normalised the same way.  Plotted as a third series
+    # rather than instead of the lumped one: the point of the panel is that all three
+    # track, and dropping either would remove half of that statement.
+    pex = {r["slug"]: r for r in pv["cert-axes:post_pex"]["rows"]}
+    ax[0].plot(x, norm([pex[r["slug"]]["scorecard"]["fc_hz"] for r in ax_rows]),
+               color=S.BAD, ls="none", marker="x", ms=6, mew=0.9,
+               label=r"$f_c$, post-layout (extracted)")
     for xi in x:
         ax[0].axvline(xi, color="0.92", lw=0.5, zorder=0)
     lo_y = min(fc.min(), qlo.min(), qhi.min())
@@ -480,7 +505,10 @@ def fig_pvt(pv):
                   f"two complex pairs {s['n_two_pair']}/{s['n_corners']}\n"
                   f"post-layout: {sp['fc_hz']['span_x']:.3f}$\\times$ / "
                   f"{sp['Q_lo']['span_x']:.3f}$\\times$ / "
-                  f"{sp['Q_hi']['span_x']:.3f}$\\times$", loc="lower left")
+                  f"{sp['Q_hi']['span_x']:.3f}$\\times$\n"
+                  f"extracted $f_c$ "
+                  f"{pv['cert-axes:post_pex']['summary']['fc_hz']['span_x']:.3f}"
+                  f"$\\times$", loc="lower left")
 
     # (b) the 45-point cross product.  One marker per point, filled where both complex
     # pairs survive and hollow-red where one is lost -- the non-superposition finding.
@@ -514,19 +542,33 @@ def fig_pvt(pv):
 def fig_mc(pv):
     mc = pv["mismatch"]
     rows, s = mc["rows"], mc["summary"]
+    # The same campaign on the raw extraction.  Two of the three panels have a
+    # counterpart there (`fc` and the offset are measured); `Q_hi` does not, because the
+    # pole decomposition needs a model the extracted netlist cannot carry -- so that
+    # panel stays single-DUT and says so.
+    px = pv["mismatch:post_pex"]["rows"]
     fig, ax = plt.subplots(1, 3, figsize=(S.WIDE * 1.2, 2.7))
-    for a, (vals, lab, unit) in zip(ax, (
-            ([r["scorecard"]["fc_hz"] for r in rows], r"$f_c$", "Hz"),
-            ([r["pairs"][1]["Q"] for r in rows], r"$Q_{hi}$", ""),
-            ([r["offset_in_uv"] for r in rows], "input-referred offset", "µV"))):
+    for a, (vals, over, lab, unit) in zip(ax, (
+            ([r["scorecard"]["fc_hz"] for r in rows],
+             [r["scorecard"]["fc_hz"] for r in px], r"$f_c$", "Hz"),
+            ([r["pairs"][1]["Q"] for r in rows], None, r"$Q_{hi}$", ""),
+            ([r["offset_in_uv"] for r in rows],
+             [r["offset_in_uv"] for r in px], "input-referred offset", "µV"))):
         v = np.asarray(vals, float)
         a.hist(v, bins=max(14, int(np.sqrt(v.size))), color=S.CYCLE[0]["color"],
-               alpha=0.8, edgecolor="white", linewidth=0.5)
-        a.axvline(v.mean(), color=S.BAD, lw=1.1, ls="--")
+               alpha=0.8, edgecolor="white", linewidth=0.5, label="pre-layout")
+        a.axvline(v.mean(), color=S.BAD, lw=1.1, ls="--", label="pre-layout mean")
+        if over:
+            w = np.asarray(over, float)
+            a.hist(w, bins=max(14, int(np.sqrt(w.size))), histtype="step",
+                   color=S.CYCLE[1]["color"], lw=1.1, label="extracted")
         a.set_xlabel(f"{lab}  ({unit})" if unit else lab)
         a.set_ylabel("draws")
         S.note(a, f"mean {v.mean():.4g}\n$\\sigma$ {v.std(ddof=1):.4g}\n"
-                  f"[{v.min():.4g}, {v.max():.4g}]", loc="upper right")
+                  f"[{v.min():.4g}, {v.max():.4g}]"
+                  + (f"\nextracted $\\sigma$ {np.asarray(over).std(ddof=1):.4g}"
+                     if over else "\n(pre-layout only:\nneeds the model)"),
+               loc="upper right")
     # Relative sigma on both, because the PVT figure's headline is that shape is ~10x
     # stiffer than scale and under MISMATCH that separation does not hold: a random
     # per-device shift is not a global parameter shift, so it moves ratios too.
@@ -535,12 +577,16 @@ def fig_mc(pv):
     ax[1].set_title(f"(b) shape: $\\sigma$ = {s['Q_hi']['sigma']:.4f} "
                     f"({100 * s['Q_hi']['sigma'] / s['Q_hi']['mean']:.2f} %)")
     ax[2].set_title(f"(c) {s['n_two_pair']}/{s['n_draws']} keep two pairs")
+    # Let matplotlib pair each label with its own artist: passing a bare list of strings
+    # relabels the handles in whatever order it collected them, which silently swapped
+    # "extracted" onto the pre-layout bars.
+    ax[0].legend(loc="upper left", fontsize=6.0)
     S.save(fig, "mc_mismatch")
     plt.close(fig)
 
 
 # ------------------------------------- F8: supply rejection, CM rejection and offset --
-def fig_rejection(rj):
+def fig_rejection(rj, rx):
     """The two rejection ratios, and the transfers they are built from.
 
     CMRR and PSRR are defined against the DIFFERENTIAL output -- CMRR = A_dm /
@@ -549,6 +595,10 @@ def fig_rejection(rj):
     (b) is the ratios themselves.  The common-mode-to-common-mode paths are a DIFFERENT
     quantity, finite at nominal where the differential ones are symmetry-cancelled, and
     they get their own panel (c) rather than sharing an axis with the rejection.
+
+    `rx` is the same bench on the extracted netlist; its mismatch means are drawn over
+    panel (b) as dashed lines, without the band, so the comparison reads without three
+    overlapping shaded regions.
     """
     spots = rj["spots_hz"]
     keys = [f"{x:g}" for x in spots]
@@ -586,6 +636,11 @@ def fig_rejection(rj):
         ax[1].semilogx(fm, b["mean"], **cy(i, marker="", lw=1.2), label=f"{lab} mean")
         ax[1].fill_between(fm, b["min"], b["max"], color=S.CYCLE[i]["color"],
                            alpha=0.15, lw=0)
+    xmc = rx["mismatch"]["curves"]
+    fx = np.asarray(xmc["f"], float)
+    for i, k in enumerate(("cmrr_db", "psrr_db")):
+        ax[1].semilogx(fx, xmc[k]["mean"], color=S.CYCLE[i]["color"], ls=":", lw=1.2,
+                       label=f"{'CMRR' if i == 0 else 'PSRR'} mean, extracted")
     ax[1].set_xlabel("frequency (Hz)")
     ax[1].set_ylabel("dB")
     ax[1].set_xlim(fm.min(), 1e4)
@@ -598,7 +653,8 @@ def fig_rejection(rj):
                   f"{mm['psrr_db']['0.1']['mean']:.1f} /\n"
                   f"{mm['psrr_db']['0.1']['min']:.1f}.  Input-referred offset\n"
                   f"$\\sigma$ = {mm['offset_in_uv']['sigma']:.0f} µV\n"
-                  f"(line: mean of the dB values;\nshaded: min-max over draws)",
+                  f"(solid: pre-layout mean, shaded\nits min-max; dotted: the same\n"
+                  f"draws on the extracted netlist)",
            loc="upper right")
 
     # (c) a different quantity: the common-mode paths, finite at nominal.
@@ -675,9 +731,11 @@ def fig_residual(gr):
 
 
 # ------------------------------------------------------------ F10: IIP3 over corners --
-def fig_iip3_corners(ic):
+def fig_iip3_corners(ic, icx):
+    """`icx` is the same corner campaign on the extracted netlist, drawn over it."""
     rows = list(ic["corners"].values())
     slugs = list(ic["corners"])
+    xrows = [icx["corners"][s] for s in slugs]
     x = np.arange(len(rows))
     fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
 
@@ -686,11 +744,15 @@ def fig_iip3_corners(ic):
     lo, hi = ic["iip3_dbv_span"]
     ax[0].axhspan(lo, hi, color=S.CYCLE[0]["color"], alpha=0.12, lw=0)
     ax[0].axhline(rows[0]["iip3_dbv"], color=S.GREY, ls=":", lw=1.0, label="nominal")
+    xok = [i for i, r in enumerate(xrows) if r.get("trusted")]
+    ax[0].plot(x[xok], [xrows[i]["iip3_dbv"] for i in xok],
+               **cy(1, marker="x", ms=5, ls="none"), label="IIP3, extracted")
     ax[0].set_xticks(x)
     ax[0].set_xticklabels([s.replace("_", "\n") for s in slugs], fontsize=5.4)
     ax[0].set_ylabel("IIP3 (dBVp)")
     # Headroom above the best corner so the note never covers a point.
-    vals = [r["iip3_dbv"] for r in rows]
+    vals = [r["iip3_dbv"] for r in rows] + [r["iip3_dbv"] for r in xrows
+                                            if r.get("iip3_dbv") is not None]
     ax[0].set_ylim(min(vals) - 0.25, max(vals) + 1.15)
     ax[0].set_title("(a) IIP3 over the certified axes")
     ax[0].legend(loc="lower left", fontsize=6.5)
@@ -699,7 +761,9 @@ def fig_iip3_corners(ic):
                   f"{ic['tones_hz'][0]:g}/{ic['tones_hz'][1]:g} Hz", loc="upper right")
 
     sl = [r["imd3_slope_db_per_decade"] for r in rows]
-    ax[1].plot(x, sl, **cy(1, marker="s", ms=5, ls="none"))
+    ax[1].plot(x, sl, **cy(1, marker="s", ms=5, ls="none"), label="pre-layout")
+    ax[1].plot(x, [r.get("imd3_slope_db_per_decade") for r in xrows],
+               **cy(2, marker="x", ms=5, ls="none"), label="extracted")
     ax[1].axhline(ic["slope_ideal_db_per_decade"], color=S.OK, ls="--", lw=1.0,
                   label="cubic law, 40 dB/decade")
     ax[1].axhspan(ic["slope_ideal_db_per_decade"] - 10, ic["slope_ideal_db_per_decade"] + 10,
@@ -717,7 +781,8 @@ def fig_iip3_corners(ic):
 
 
 # ------------------------------------------------------------- F11: THD over corners --
-def fig_thd_corners(tc):
+def fig_thd_corners(tc, tcx):
+    """`tcx` is the same ladder on the extracted netlist, drawn over panel (b)."""
     slugs = list(tc["corners"])
     fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
     # Nine corners need nine distinguishable colours; the four-entry house cycle would
@@ -743,6 +808,8 @@ def fig_thd_corners(tc):
     x = np.arange(len(slugs))
     ax[1].plot(x, [tc["corners"][s]["thd_db_at_spec"] for s in slugs], **cy(0, marker="o", ms=5, ls="none"), label=f"THD at {tc['spec_vpp'] * 1e3:g} mVpp")
     ax[1].plot(x, [tc["corners"][s]["hd3_db_at_spec"] for s in slugs], **cy(1, marker="^", ms=5, ls="none"), label="HD3 at the same point")
+    ax[1].plot(x, [tcx["corners"][s]["thd_db_at_spec"] for s in slugs],
+               **cy(2, marker="x", ms=5, ls="none"), label="THD, extracted")
     ax[1].axhline(-40, color=S.BAD, lw=0.9, ls="--", label="S7 limit")
     ax[1].set_xticks(x)
     ax[1].set_xticklabels([s.replace("_", "\n") for s in slugs], fontsize=5.4)
@@ -834,11 +901,11 @@ def main() -> None:
     fig_pvt(pv)
     fig_mc(pv)
     rj = load("psrr_cmrr.json")
-    fig_rejection(rj)
+    fig_rejection(rj, load("psrr_cmrr_post_pex.json"))
     fig_mc_convergence(pv, rj)
     fig_residual(load("gds_residual.json"))
-    fig_iip3_corners(load("iip3_corners.json"))
-    fig_thd_corners(load("thd_corners.json"))
+    fig_iip3_corners(load("iip3_corners.json"), load("iip3_corners_post_pex.json"))
+    fig_thd_corners(load("thd_corners.json"), load("thd_corners_post_pex.json"))
 
 
 if __name__ == "__main__":

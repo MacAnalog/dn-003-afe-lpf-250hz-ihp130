@@ -130,9 +130,22 @@ def _igig_port_evidence(d: dict) -> tuple[float, float, int, int]:
 #: the induced gate noise (section 5.2) -- `igig` is not gate leakage, so the two are
 #: never shown as separate mechanisms.  `pvt_analysis.py` and `export_csv.py` carry the
 #: same fold.
-MECH_ORDER = ("channel thermal", "flicker (1/f)", "bulk–drain shot", "gate resistance")
+MECH_ORDER = ("channel thermal", "flicker (1/f)", "bulk junction shot",
+              "gate resistance")
+# `ibs` joins `ibd` in one mechanism rather than getting a fifth column: they are the two
+# junctions of the same device and the same physics.  It appears only on the extracted
+# netlist -- on the schematic DUTs the p-channel bulk IS its source, so the source
+# junction is degenerate and the model emits nothing for it.
 MECHANISM = {"idid": MECH_ORDER[0], "ididedge": MECH_ORDER[0], "igig": MECH_ORDER[0],
-             "flicker": MECH_ORDER[1], "ibd": MECH_ORDER[2], "rgate": MECH_ORDER[3]}
+             "flicker": MECH_ORDER[1], "ibd": MECH_ORDER[2], "ibs": MECH_ORDER[2],
+             "rgate": MECH_ORDER[3]}
+
+
+def _gen_cell_mech(d: dict, mech: str) -> str:
+    """One DUT's contribution from one MECHANISM: rms voltage and share of IRN power."""
+    tot = sum(r["irn_uv_rms"] ** 2 for r in d["rows"])
+    p = sum(r["irn_uv_rms"] ** 2 for r in d["rows"] if MECHANISM.get(r["gen"]) == mech)
+    return f"{p ** 0.5:.4f} / {100 * p / tot:.2f} %"
 
 
 def _sizes() -> dict:
@@ -750,6 +763,22 @@ And by device × mechanism — the same budget with nothing folded away:
     # device in the netlist (m=4) but sits on the differential axis and makes no noise.
     core = [i for i in wl if (mech[i]["role"] or "") in ROLE_ORDER[:6]]
     flk, big = min(core, key=lambda i: wl[i][2]), max(core, key=lambda i: wl[i][2])
+    # The extracted netlist's own budget, measured lane -- see `noise_analysis`.
+    pxr = nz["post_pex"]["rows"]
+    px_ngen, px_ndev = len(pxr), len({r["inst"] for r in pxr})
+    px_irn = sum(r["irn_uv_rms"] ** 2 for r in pxr) ** 0.5
+    px_close = nz["post_pex"]["onoise_closure_max_pct"]
+    def _byrole(rows):
+        out: dict = {}
+        for r in rows:
+            out[r["role"]] = out.get(r["role"], 0.0) + r["irn_uv_rms"] ** 2
+        t = sum(out.values())
+        return {k: 100 * v / t for k, v in sorted(out.items(), key=lambda kv: -kv[1])}
+
+    _pxrole, _prerole = _byrole(pxr), _byrole(nz["pre_mim"]["rows"])
+    px_top = next(iter(_pxrole))
+    px_top_pct, px_top_pre_pct = _pxrole[px_top], _prerole[px_top]
+    px_ncore = len({r["inst"] for r in pxr if r["role"] is not None})
     out.append(f"""{tbl(["device", "role", "W/L (µm)", "area (µm²)", "I_D (nA)", "gm (nS)",
                          "\\|Z_T\\| dc"]
                         + [f"{m} (µV)" for m in MECH_ORDER] + ["total (µV)", "% power"], rr)}
@@ -778,8 +807,32 @@ The post-layout cell reproduces the table to
 {_vfmt(dmax)} on any single entry ({dwhere}).  Its one qualitative difference is that
 the replica branch and the bias mirror are no longer exactly on the differential axis, so
 they pick up {_vfmt(off[0])} between them — {off[1]:.1e} % of the power, still
-nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all three
+nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all four
 DUTs, one row per device per *named* generator, each with its identified port.
+
+#### The same budget on the raw extraction
+
+The two tables above are built on `post_lumped`, because the mechanism columns need the
+`Z_T` a small-signal model provides and the extracted netlist cannot carry one (§7.1).
+The *budget* does not need a model: ngspice emits one noise vector per generator per
+instance for `post_pex` as well, and dividing by `onoise/inoise` — the simulator's own
+|H| — refers each of them to the input.  Done that way, the extracted netlist's
+{px_ngen} generators on {px_ndev} instances — {px_ncore} in the extracted core plus the
+{px_ndev - px_ncore} testbench bias devices — sum to **{px_irn:.4f} µV**, which is its
+certified IRN to every digit ({px_close:.1e} % worst closure), and split by mechanism as:
+
+{tbl(["mechanism"] + [f"{lab} (µV / % power)" for _, lab in CASES]
+     + ["extracted (µV / % power)"],
+     [[m, _gen_cell_mech(nz["pre_mim"], m), _gen_cell_mech(nz["post_lumped"], m),
+       _gen_cell_mech(nz["post_pex"], m)] for m in MECH_ORDER])}
+
+The extraction splits every drawn transistor into its layout fingers, so its rows carry
+the extractor's names rather than the schematic's; the `role` column is recovered from the
+nets each finger touches, which is unique per role in this cell and asserted to be
+(`noise_analysis.roles_by_nets`).  Summed back onto roles, the extracted budget puts the
+same role on top as the schematic one — `{px_top}`, at **{px_top_pct:.2f} %** of the
+power against **{px_top_pre_pct:.2f} %** pre-layout — so the actionable split above
+survives the layout.
 
 """)
     d = nz["pre_mim"]
@@ -871,7 +924,25 @@ def _gm_shift_pct() -> float:
         if k in post and v.get("gm")
     )
 
-def sec_lin(la: dict, lin: dict, sp_: dict, ps: dict) -> str:
+def _spx_spread(spx: dict) -> float:
+    """IMD3 spread over the tone spacings, on the extracted DUT (the §6.4 test)."""
+    v = [r["imd3_db"] for r in spx["rows"]]
+    return max(v) - min(v)
+
+
+def _spx_gap(sp_: dict, spx: dict) -> float:
+    """Mean extracted-minus-pre IMD3 over the spacing sweep, in dB."""
+    d = [x["imd3_db"] - r["imd3_db"] for r, x in zip(sp_["rows"], spx["rows"], strict=True)]
+    return sum(d) / len(d)
+
+
+def _spx_gapspread(sp_: dict, spx: dict) -> float:
+    """How much that pre->post IMD3 gap itself varies over the spacings, in dB."""
+    d = [x["imd3_db"] - r["imd3_db"] for r, x in zip(sp_["rows"], spx["rows"], strict=True)]
+    return max(d) - min(d)
+
+
+def sec_lin(la: dict, lin: dict, sp_: dict, spx: dict, ps: dict) -> str:
     a = la["amplitude_law"]
     xc = a["hd3_crossing"]
     pr = jload("hd3_crossing_probe.json")
@@ -904,13 +975,29 @@ def sec_lin(la: dict, lin: dict, sp_: dict, ps: dict) -> str:
                 f"{p['hd2_db']:.3f}", f"{p['out_fund_vpp']:.5f}",
                 f"{q['thd_db']:.3f}", f"{q['hd3_db']:.3f}"]
                for p, q in zip(lin["thd_ladder"]["pre_mim"], lin["thd_ladder"]["post_pex"])])
-    fqt = tbl(["f_in (Hz)", "HD3 measured (dB)", "HD3 model, coherent (dB)",
-               "HD3 model, worst-case (dB)", "model − measured (dB)", "dominant device",
-               "max `a`"],
-              [[f"{r['fin']:.0f}", f"{r['hd3_measured_db']:.3f}", f"{r['hd3_model_db']:.3f}",
+    # The same sweep, measured on the extracted netlist: same drive, same instrument,
+    # same frequencies, so the two measured columns are directly comparable and the
+    # model column is tested against both.
+    hp = {r["fin"]: r for r in jload("hd3_vs_fin_post_pex.json")["rows"]}
+    fqt = tbl(["f_in (Hz)", "HD3 measured, pre (dB)", "HD3 measured, extracted (dB)",
+               "HD3 model, coherent (dB)", "HD3 model, worst-case (dB)",
+               "model − measured (dB)", "dominant device", "max `a`"],
+              [[f"{r['fin']:.0f}", f"{r['hd3_measured_db']:.3f}",
+                f"{hp[r['fin']]['hd3_db']:.3f}" if r["fin"] in hp else "—",
+                f"{r['hd3_model_db']:.3f}",
                 f"{r['hd3_model_worstcase_db']:.3f}", f"{-r['err_db']:+.3f}",
                 ROLE_TEXT[r["dominant"]], f"{det[r['fin']]['a_max']:.4f}"]
                for r in fq["rows"]])
+    # Pre -> extracted gap, split at the point where HD3 leaves the numerical floor.
+    # Below ~35 Hz the third harmonic is 90+ dB down and a dB of disagreement there is
+    # the DFT floor, not the cell, so the two ranges are quoted separately rather than
+    # folded into one worst case that the floor would set.
+    _gap = {r["fin"]: abs(hp[r["fin"]]["hd3_db"] - r["hd3_measured_db"])
+            for r in fq["rows"] if r["fin"] in hp}
+    _FLOOR_FIN = 35.0
+    pxgap = max(v for f, v in _gap.items() if f >= _FLOOR_FIN)
+    pxgap_lo = max(v for f, v in _gap.items() if f < _FLOOR_FIN)
+    pxgap_n = sum(1 for f in _gap if f >= _FLOOR_FIN)
     prof = tbl(["f_in (Hz)", "THD pre-layout (dB)", "THD post-layout (dB)",
                 "HD3 pre (dB)", "HD3 post (dB)", "V_out fund (Vpp)"],
                [[f"{p['fin']:.0f}", f"{p['thd_db']:.3f}", f"{q['thd_db']:.3f}",
@@ -1059,11 +1146,17 @@ was solved from, so it need not be refitted.
 At 43.75 mVpp differential, one decade and a half of f_in.  `a` is the modulation index
 the follower's own gate–source excursion produces; it is *computed*, not fitted.
 
-**This check runs pre-layout only, and that is sufficient.**  The equation's inputs are
-the `gm`, `I_D` and `n` of §1 — and the layout moves every one of those by at most
-{_gm_shift_pct():.1e} % (§1.3), so the *modelled* HD3 is identical to the digits printed
-here for either DUT.  What the layout can move is the *measured* HD3, and that is reported
-independently, on the extracted netlist, in §6.1 and §6.3.
+**Both DUTs are measured; the model is built pre-layout, and that is sufficient.**  The
+equation's inputs are the `gm`, `I_D` and `n` of §1 — and the layout moves every one of
+those by at most {_gm_shift_pct():.1e} % (§1.3), so the *modelled* HD3 is identical to the
+digits printed here for either DUT and only one model column is printed.  The measured
+column is not assumed to carry over, so the same sweep was run again on the extracted
+netlist: over the {pxgap_n} points at and above {_FLOOR_FIN:.0f} Hz the two measured
+columns agree to **{pxgap:.2f} dB**, which is the direct evidence that the parasitics do
+not change this mechanism.  The two points below that disagree by up to
+{pxgap_lo:.1f} dB, and that is the DFT floor rather than the cell: HD3 there is 93–100 dB
+down, where the harmonic bin is a handful of nanovolts and a decibel costs nothing.
+§6.5 takes the extracted cell further out in frequency and further up in drive.
 
 {fqt}
 
@@ -1170,17 +1263,26 @@ that HD3 rises at ~{win_meas:.0f} dB/decade through this band, so the third-orde
 is strongly frequency dependent and the cell is by construction *not* memoryless.  The
 question is which kind of memory, and the spacing sweep answers it:
 
-{tbl(["f₁ / f₂ (Hz)", "spacing (Hz)", "IMD3 (dBc)", "IIP3 (dBV)"],
+{tbl(["f₁ / f₂ (Hz)", "spacing (Hz)", "IMD3 pre (dBc)", "IMD3 extracted (dBc)",
+      "IIP3 pre (dBV)", "IIP3 extracted (dBV)"],
      [[f"{r['f1']:.0f} / {r['f2']:.0f}", f"{r['spacing']:.0f}", f"{r['imd3_db']:.3f}",
-       f"{r['iip3_dbv']:.3f}"] for r in sp_["rows"]])}
+       f"{x['imd3_db']:.3f}", f"{r['iip3_dbv']:.3f}", f"{x['iip3_dbv']:.3f}"]
+      for r, x in zip(sp_["rows"], spx["rows"], strict=True)])}
 
 Over a **{ml['spacing_ratio']:.0f}× change in tone spacing** — which is a 15× change in the
 envelope frequency the cell must follow — IMD3 moves only
-**{ml['imd3_spread_over_spacing_db']:.2f} dB**.  Envelope (baseband) memory would show up
-here as a strong spacing dependence and does not.  The {ml['excess_db']:.2f} dB excess is
+**{ml['imd3_spread_over_spacing_db']:.3f} dB**, and on the raw extraction
+**{_spx_spread(spx):.3f} dB** over the same five spacings.  Envelope (baseband) memory
+would show up here as a strong spacing dependence and does so on neither DUT.  The {ml['excess_db']:.2f} dB excess is
 therefore attributable to the *carrier*-frequency dependence of the third-order response —
 the same mechanism §6.2 measured — and not to envelope memory.  That is the useful engineering
 statement: **HD3 at one frequency does not predict IMD3 for this cell; measure IMD3.**
+
+The extracted cell carries the same verdict at a slightly worse level: its IMD3 sits
+**{_spx_gap(sp_, spx):+.3f} dB** against pre-layout, and that offset is nearly the same at
+every spacing (spread {_spx_gapspread(sp_, spx):.3f} dB).  A constant offset shifts how
+much third-order product the cell makes; it does not change whether that product remembers
+the envelope, which is what the {_spx_spread(spx):.3f} dB of spacing dependence answers.
 
 All spacings are constrained to even values so both tones and all four intermodulation
 products land exactly on DFT bins; an odd spacing puts the tones on half-bins and the
@@ -1303,6 +1405,43 @@ quoted on `post_pex`.
 
 {tbl(["metric"] + [f"`{c}`" for c in cols], rows)}
 
+### 7.1 Which DUT every section is measured on
+
+The split above is a rule, so this table is where it is applied — one row per section,
+saying which netlist produced its numbers and, where the raw extraction was not used,
+exactly what stopped it.  There is only one such reason in the whole pack:
+`n2tf_model.bind_op` folds `gmb` and `cgb` on the `bulk == source` identity, and the
+extracted netlist does not have it.
+
+{tbl(["§", "what it reports", "DUT(s)", "extraction?", "why, if not"],
+     [["1", "the DC operating point", "`pre_mim`, `post_lumped`", "lumped",
+       "the Δgm column compares two 1:1 device lists; the extraction splits fingers"],
+      ["2–4", "H(s), the model check, the pole/zero map",
+       "`pre_ideal`, `pre_mim`, `post_lumped`", "lumped",
+       "symbolic — `bind_op` refuses the raw extraction"],
+      ["5", "the noise budget, generator by generator", "all four", "**yes**",
+       "`post_pex` on the measured lane: per-generator noise and the certified IRN come "
+       "out of the simulator, so only the `Z_T`-normalised columns need the model"],
+      ["6.1, 6.3", "THD/HD3/HD2 ladder, IMD3, IIP3", "`pre_mim`, `post_pex`",
+       "**yes**", "—"],
+      ["6.2", "HD3 versus frequency", "`pre_mim`, `post_pex`", "**yes**",
+       "measured on both; one model column, because the layout moves its inputs by "
+       f"{_gm_shift_pct():.1e} %"],
+      ["6.4", "the memoryless test and the tone-spacing sweep",
+       "`pre_mim`, `post_pex`", "**yes**", "—"],
+      ["6.5", "the band sweep and the worst-frequency ladder", "`post_pex`",
+       "**yes**", "—"],
+      ["7", "the four scorecards", "all four", "**yes**", "—"],
+      ["8", "PVT and mismatch", "`pre_mim`, `post_lumped`, `post_pex`", "**yes**",
+       "the scorecard, offset and noise columns are on the extraction; the pole/Q "
+       "decomposition beside them is on `post_lumped`"],
+      ["9", "PSRR, CMRR, offset", "`pre_mim`, `post_pex`", "**yes**", "—"],
+      ["10.2, 10.3", "IIP3 and THD over the certified axes", "`pre_mim`, `post_pex`",
+       "**yes**", "—"],
+      ["10.1", "the sub-35 Hz residual", "`pre_mim`, `post_lumped`", "lumped",
+       "a pre-registered hypothesis test: it stays on the DUT it was registered on, and "
+       "the post-layout device curves are tabulated beside it, not substituted into it"]])}
+
 Pre → post (`pre_mim` → `post_pex`, both signed post minus pre): `fc`
 **{bs['post_pex']['scorecard']['fc_hz'] - bs['pre_mim']['scorecard']['fc_hz']:+.3f} Hz**
 ({100 * (bs['post_pex']['scorecard']['fc_hz'] / bs['pre_mim']['scorecard']['fc_hz'] - 1):+.2f} %),
@@ -1421,6 +1560,45 @@ def sec_pvt(pv: dict) -> str:
                mmrow("Q_hi", "high-pair `Q`", ".4f"),
                mmrow("irn_uv", "IRN (µV)", ".3f"),
                mmrow("offset_in_uv", "input-referred offset (µV)", ".1f", "+")])
+
+    # --- 8.5, both corner campaigns re-run on the raw extraction --------------------
+    xa = pv["cert-axes:post_pex"]["summary"]
+    xb = pv["cert-box:post_pex"]["summary"]
+    xm = pv["mismatch:post_pex"]["summary"]
+    xh = pv["both:post_pex"]["summary"]
+    cb = pv["cert-box"]["summary"]
+
+    def _pmm(v, fmt=".3f"):
+        return f"{v['min']:{fmt}} … {v['max']:{fmt}}"
+
+    pext = tbl(["quantity", "pre-layout", "extracted", "extracted / pre"],
+               [["`fc` over the certified axes (Hz)", _pmm(ca["fc_hz"]),
+                 _pmm(xa["fc_hz"]),
+                 f"{xa['fc_hz']['span_x'] / ca['fc_hz']['span_x']:.4f}× the span"],
+                ["`fc` over the 45-point box (Hz)", _pmm(cb["fc_hz"]),
+                 _pmm(xb["fc_hz"]),
+                 f"{xb['fc_hz']['span_x'] / cb['fc_hz']['span_x']:.4f}× the span"],
+                [f"`fc` over the {hb['n_corners']}-point harness box (Hz)",
+                 _pmm(hb["fc_hz"]), _pmm(xh["fc_hz"]),
+                 f"{xh['fc_hz']['span_x'] / hb['fc_hz']['span_x']:.4f}× the span"],
+                ["IRN over the certified axes (µV)", _pmm(ca["irn_uv"]),
+                 _pmm(xa["irn_uv"]),
+                 f"{xa['irn_uv']['span_x'] / ca['irn_uv']['span_x']:.4f}× the span"],
+                ["Σ generators vs certified IRN", f"{ca['noise_closure_max_pct']:.1e} %",
+                 f"{xa['noise_closure_max_pct']:.1e} %", "—"],
+                [f"σ(`fc`) over {xm['n_draws']} mismatch draws (Hz)",
+                 f"{mm['fc_hz']['sigma']:.3f}", f"{xm['fc_hz']['sigma']:.3f}",
+                 f"{xm['fc_hz']['sigma'] / mm['fc_hz']['sigma']:.4f}×"],
+                ["σ(IRN) over the same draws (µV)", f"{mm['irn_uv']['sigma']:.4f}",
+                 f"{xm['irn_uv']['sigma']:.4f}",
+                 f"{xm['irn_uv']['sigma'] / mm['irn_uv']['sigma']:.4f}×"],
+                ["σ(input-referred offset) (µV)", f"{mm['offset_in_uv']['sigma']:.2f}",
+                 f"{xm['offset_in_uv']['sigma']:.2f}",
+                 f"{xm['offset_in_uv']['sigma'] / mm['offset_in_uv']['sigma']:.4f}×"],
+                ["\\|offset\\| p99 (µV)", f"{mm['offset_in_abs_uv']['p99']:.2f}",
+                 f"{xm['offset_in_abs_uv']['p99']:.2f}",
+                 f"{xm['offset_in_abs_uv']['p99'] / mm['offset_in_abs_uv']['p99']:.4f}×"]])
+
 
     return f"""## 8. The analytical results over PVT and mismatch
 
@@ -1543,12 +1721,56 @@ two complex pairs at all {pa['n_two_pair']}/{pa['n_corners']} points.  `fc` sits
 layout capacitance the extraction adds — but the SENSITIVITY, which is what this section is
 about, is the same measurement.  The post-layout `fc` is drawn as hollow circles in
 `figures/pvt_axes.png`.
+
+### 8.5 The same campaigns, on the raw extraction
+
+§8.4 answers the transfer question with the lumped stand-in, because that is the DUT the
+pencil solve accepts.  This subsection removes the stand-in: the certified axes, the
+45-point box, the {hb['n_corners']}-point harness box and all {xm['n_draws']} mismatch
+draws re-run on `post_pex` itself — the extracted netlist, spliced in whole.  What survives that move is everything the simulator
+measures directly (the certified scorecard, the per-generator noise budget and its
+closure, and the differential offset); what does not is the pole/`Q` decomposition, for
+the one reason §7.1 gives.  The offset is referred to the input by the **measured** dc
+gain here rather than the modelled one, and `data/pvt.json` records how far those two sit
+apart wherever both exist.
+
+{pext}
+
+**Over the certified sets the corner spans are the pre-layout spans to a part in a
+thousand** ({100 * abs(xa['fc_hz']['span_x'] / ca['fc_hz']['span_x'] - 1):.2f} % on `fc`
+over the axes, {100 * abs(xb['fc_hz']['span_x'] / cb['fc_hz']['span_x'] - 1):.2f} % over
+the box, {100 * abs(xa['irn_uv']['span_x'] / ca['irn_uv']['span_x'] - 1):.2f} % on IRN).
+The harness box moves further —
+{100 * abs(xh['fc_hz']['span_x'] / hb['fc_hz']['span_x'] - 1):.2f} % on `fc` — and that is
+expected rather than contradictory: its extremes ({_pmm(xh['fc_hz'])} Hz) sit far outside
+the certified window, at corners where the followers are already leaving their operating
+point, and a ratio of two large spans is the least stable statistic in this table.  The
+mismatch σ move by a few per cent:
+{100 * (xm['fc_hz']['sigma'] / mm['fc_hz']['sigma'] - 1):+.1f} % on `fc`,
+{100 * (xm['irn_uv']['sigma'] / mm['irn_uv']['sigma'] - 1):+.1f} % on IRN and
+{100 * (xm['offset_in_uv']['sigma'] / mm['offset_in_uv']['sigma'] - 1):+.1f} % on the
+offset.  Those last three are **not** sampling noise — (M1) allows
+±{100 * mm['se_sigma_frac']:.1f} % at {xm['n_draws']} draws and both runs use the same
+seeds — they are the layout, and two of the three move the right way: the extraction adds
+capacitance, which damps the scale scatter.  The tail moves further than the σ
+({100 * (xm['offset_in_abs_uv']['p99'] / mm['offset_in_abs_uv']['p99'] - 1):+.1f} % on the
+|offset| p99), which is what a quantile does when a distribution is not Gaussian.
+
+That is the substantive result, and it is stronger than §8.4's: the *sensitivity* of this
+cell to process, supply, temperature and mismatch is a property of the sizing, and the
+layout — 36 extracted instances and every parasitic R and C the extractor found — changes
+it by single-digit per cent.  `mismatch:post_pex`, `cert-axes:post_pex`,
+`cert-box:post_pex` and `both:post_pex` in
+`data/pvt.json` carry the per-draw and per-corner rows;
+`csv/mc_draws_post_pex.csv` and the `_pex` columns of `csv/pvt_certified_axes.csv` and
+`csv/pvt_cert_box.csv` carry them as CSV.
 """
 
 
-def sec_rej(rj: dict, mm2: dict) -> str:
-    """PSRR, CMRR and offset (doc/paper G12)."""
+def sec_rej(rj: dict, mm2: dict, rx: dict) -> str:
+    """PSRR, CMRR and offset (doc/paper G12).  `rx` is the same bench on `post_pex`."""
     mm, nom = rj["mismatch"], rj["corners"]["tt_27c_1v500"]
+    xmm, xnom = rx["mismatch"], rx["corners"]["tt_27c_1v500"]
     spots = [f"{s:g}" for s in rj["spots_hz"]]
 
     nomt = tbl(["transfer", *[f"{s} Hz" for s in spots]],
@@ -1573,6 +1795,32 @@ def sec_rej(rj: dict, mm2: dict) -> str:
                + [["A_dm at this spot (dB)"]
                   + [f"{nom['a_dm_db'][s]:.2f}" for s in spots]])
     o, oa = mm["offset_in_uv"], mm["offset_in_abs_uv"]
+    xo, xoa = xmm["offset_in_uv"], xmm["offset_in_abs_uv"]
+
+    pext = tbl(["quantity", "pre-layout", "extracted", "extracted − pre"],
+               [["CMRR mean at dc (dB)", f"{mm['cmrr_db']['0.1']['mean']:.2f}",
+                 f"{xmm['cmrr_db']['0.1']['mean']:.2f}",
+                 f"{xmm['cmrr_db']['0.1']['mean'] - mm['cmrr_db']['0.1']['mean']:+.2f}"],
+                ["CMRR p01 at dc (dB)", f"{mm['cmrr_db']['0.1']['p01']:.2f}",
+                 f"{xmm['cmrr_db']['0.1']['p01']:.2f}",
+                 f"{xmm['cmrr_db']['0.1']['p01'] - mm['cmrr_db']['0.1']['p01']:+.2f}"],
+                ["PSRR mean at dc (dB)", f"{mm['psrr_db']['0.1']['mean']:.2f}",
+                 f"{xmm['psrr_db']['0.1']['mean']:.2f}",
+                 f"{xmm['psrr_db']['0.1']['mean'] - mm['psrr_db']['0.1']['mean']:+.2f}"],
+                ["PSRR p01 at dc (dB)", f"{mm['psrr_db']['0.1']['p01']:.2f}",
+                 f"{xmm['psrr_db']['0.1']['p01']:.2f}",
+                 f"{xmm['psrr_db']['0.1']['p01'] - mm['psrr_db']['0.1']['p01']:+.2f}"],
+                ["supply → output CM at dc (dB)",
+                 f"{nom['supply_to_cm_db']['0.1']:.2f}",
+                 f"{xnom['supply_to_cm_db']['0.1']:.2f}",
+                 f"{xnom['supply_to_cm_db']['0.1'] - nom['supply_to_cm_db']['0.1']:+.2f}"],
+                ["CM in → CM out at dc (dB)", f"{nom['cm_to_cm_db']['0.1']:.2f}",
+                 f"{xnom['cm_to_cm_db']['0.1']:.2f}",
+                 f"{xnom['cm_to_cm_db']['0.1'] - nom['cm_to_cm_db']['0.1']:+.2f}"],
+                ["σ(input-referred offset) (µV)", f"{o['sigma']:.2f}",
+                 f"{xo['sigma']:.2f}", f"{xo['sigma'] - o['sigma']:+.2f}"],
+                ["\\|offset\\| p99 (µV)", f"{oa['p99']:.2f}", f"{xoa['p99']:.2f}",
+                 f"{xoa['p99'] - oa['p99']:+.2f}"]])
 
     return f"""## 9. Supply rejection, common-mode rejection, and offset
 
@@ -1662,11 +1910,37 @@ That agreement is what the referral bought.  Compared un-referred, the two σ di
 {100 * abs(mm2['offset_out_uv']['sigma'] / o['sigma'] - 1):.2f} % — which reads like sampling noise and is not: it is exactly the dc-gain
 correction Section 8.3 used to omit.  A residual that small is easy to attribute to the
 benches; dividing by the gain shows it was never theirs.
+
+### 9.4 The same bench on the extracted netlist
+
+Everything above is the pre-layout cell.  The whole bench — the nine certified axes and
+all {xmm['n_draws']} mismatch draws — was re-run on `post_pex`, and nothing here needs a
+model, so the extraction is used directly:
+
+{pext}
+
+The mismatch-limited rejection numbers are the ones that matter, and every one of them
+moves by **less than {max(abs(xmm[k]['0.1'][w] - mm[k]['0.1'][w]) for k in ('cmrr_db', 'psrr_db') for w in ('mean', 'p01')):.2f} dB**.
+That is the expected shape of the answer: CMRR and PSRR on this cell are set by *device*
+mismatch in the two halves, and the extraction adds capacitance to both halves alike, so
+it changes the frequency at which the rejection rolls off long before it changes the dc
+value.  The offset rows move more in relative terms
+({100 * (xo['sigma'] / o['sigma'] - 1):+.1f} % on σ,
+{100 * (xoa['p99'] / oa['p99'] - 1):+.1f} % on the p99) and agree draw-for-draw with
+§8.5's independent extraction of the same quantity, which is the cross-check that says
+the move is the layout and not the bench.  `csv/rejection_nominal_post_pex.csv`,
+`csv/rejection_mismatch_curves_post_pex.csv` and
+`csv/rejection_mismatch_draws_post_pex.csv` carry the sweeps and the draws.
 """
 
 
-def sec_gds(gr: dict, ic: dict, gt: dict, lin: dict, tc: dict) -> str:
-    """The sub-35 Hz residual test, and IIP3 over corners."""
+
+def sec_gds(gr: dict, ic: dict, gt: dict, lin: dict, tc: dict,
+            icx: dict, tcx: dict, gtx: dict) -> str:
+    """The sub-35 Hz residual test, and IIP3/THD over corners.
+
+    `icx`/`tcx` are the same two corner campaigns re-run on the extracted netlist.
+    """
     rows = tbl(["f_in (Hz)", "measured V₃ (µV)", "gate model (µV)", "unexplained (µV)",
                 "`g_ds` prediction (µV)", "ratio"],
                [[f"{r['fin']:.0f}", f"{r['v3_measured_uv']:.4f}",
@@ -1703,6 +1977,42 @@ def sec_gds(gr: dict, ic: dict, gt: dict, lin: dict, tc: dict) -> str:
                + [f"{p['thd_db']:.2f}" for p in v["points"]]
                + [f"{v['hd3_slope_db_per_db']:.2f}"]
                for k, v in tc["corners"].items()])
+    # The post-layout device curvature, device by device: g3 is what the prediction is
+    # built from, so this is the quantity that has to be shown not to move.
+    _gd, _gx = gt["devices"], gtx["devices"]
+    _shared = [i for i in _gd if i in _gx]
+    gtt = tbl(["device", "role", "g₃ pre-layout (A/V³)", "g₃ post-layout (A/V³)",
+               "change (%)", "window spread, post"],
+              [[f"`{i}`", ROLE_TEXT.get(_gd[i]["role"], str(_gd[i]["role"])),
+                f"{_gd[i]['g3']:.4e}", f"{_gx[i]['g3']:.4e}",
+                f"{100 * (_gx[i]['g3'] / _gd[i]['g3'] - 1):+.4f}",
+                f"{_gx[i]['g3_window_spread_x']:.3f}×"] for i in _shared])
+    gtxw = max(abs(100 * (_gx[i]["g3"] / _gd[i]["g3"] - 1)) for i in _shared)
+
+    # The extracted cell's version of the same two campaigns, folded to the quantities
+    # 10.2 and 10.3 publish: the span over the window, and which corner is worst.
+    _xspec = {k: v["thd_db_at_spec"] for k, v in tcx["corners"].items()}
+    _xworst = max(_xspec, key=lambda k: _xspec[k])
+    _xt_lo, _xt_hi = min(_xspec.values()), max(_xspec.values())
+    xt = tbl(["quantity", "pre-layout", "extracted", "extracted − pre"],
+             [[f"THD at the S7 point ({tc['spec_vpp'] * 1e3:g} mVpp, "
+               f"{tc['fin_hz']:.0f} Hz), over the axes (dB)",
+               f"{tc['thd_db_at_spec_span'][0]:.3f} … {tc['thd_db_at_spec_span'][1]:.3f}",
+               f"{_xt_lo:.3f} … {_xt_hi:.3f}",
+               f"{_xt_hi - tc['thd_db_at_spec_span'][1]:+.3f} on the worst corner"],
+              ["worst corner at that point",
+               f"`{max(tc['corners'], key=lambda k: tc['corners'][k]['thd_db_at_spec'])}`",
+               f"`{_xworst}`", "—"],
+              ["IIP3 over the trusted axes (dBVp)",
+               f"{ic['iip3_dbv_span'][0]:+.3f} … {ic['iip3_dbv_span'][1]:+.3f}",
+               f"{icx['iip3_dbv_span'][0]:+.3f} … {icx['iip3_dbv_span'][1]:+.3f}",
+               f"{icx['iip3_dbv_span'][0] - ic['iip3_dbv_span'][0]:+.3f} on the worst"],
+              ["corners whose IMD3 slope is trusted",
+               f"{sum(1 for r in ic['corners'].values() if r.get('trusted'))}"
+               f"/{len(ic['corners'])}",
+               f"{sum(1 for r in icx['corners'].values() if r.get('trusted'))}"
+               f"/{len(icx['corners'])}", "—"]])
+
     # Section 6.3's row at the SAME per-tone amplitude the corner sweep quotes
     # (iip3_corners takes pts[0], the lowest amplitude) -- not the corner sweep's
     # own nominal, which would make the comparison self-referential.
@@ -1781,6 +2091,22 @@ construction is the cross-term, gate and drain swinging together, which in a sou
 they do.  That is where the remaining {100 - rf['coverage_pct']:.0f} % is expected to sit; testing it needs a
 two-dimensional device probe this pack does not have, and it is left open rather than fitted.
 
+**Does the layout change the device curvature this test rests on?**  It does not, and the
+probe was re-run at the post-layout operating point to say so rather than assume it.  The
+probe re-creates one device from its own netlist card, which needs a netlist whose
+instances are the drawn devices, so it runs on `post_lumped` — the same layout's
+parasitics on the schematic device list (§7).  Every device's `g₃`, the coefficient the
+whole prediction is built from:
+
+{gtt}
+
+The largest change on any device is **{gtxw:.4f} %**, and the `in_a` window spread that
+dominates the uncertainty above is
+{gt['devices']['m2']['g3_window_spread_x']:.2f}× pre-layout against
+{gtx['devices']['m2']['g3_window_spread_x']:.2f}× post.  So the pre-registered test is
+reported on the DUT it was registered on, and the numbers that would have carried it over
+are tabulated here instead of being substituted into it.
+
 `figures/gds_residual.png` plots both panels of this argument.
 
 ### 10.2 IIP3 over the certified axes
@@ -1827,6 +2153,29 @@ measures at nominal.  Whether that mechanism also carries this temperature depen
 tested here; the ladder measures it, it does not explain it.
 
 `figures/thd_corners.png` plots the ladder at every corner and the margin at the spec point.
+
+### 10.4 Both corner campaigns on the extracted netlist
+
+§10.2 and §10.3 are the pre-layout cell.  Neither bench needs a small-signal model — both
+are transients scored by DFT — so both were re-run on `post_pex`, all
+{len(icx['corners'])} certified axes each, with the `fc` column taken from that DUT's own
+per-corner extraction rather than borrowed from the pre-layout one.
+
+{xt}
+
+**Both spreads widen slightly and both worst cases stay far inside spec.**  THD at the S7
+point spreads {tc['thd_db_at_spec_span'][1] - tc['thd_db_at_spec_span'][0]:.2f} dB
+pre-layout against {_xt_hi - _xt_lo:.2f} dB extracted, and the corner that lands worst is
+not the same one — `{max(tc['corners'], key=lambda k: tc['corners'][k]['thd_db_at_spec'])}`
+pre-layout, `{_xworst}` extracted — so this is a re-ordering inside a
+1 dB band, not a corner the layout newly exposes.  The extracted worst corner still
+clears the {M_THD:.0f} dB S7 limit by **{abs(_xt_hi) - abs(M_THD):.2f} dB**.  IIP3 moves
+even less: {icx['iip3_dbv_span'][0] - ic['iip3_dbv_span'][0]:+.3f} dB on the worst corner,
+with all {len(icx['corners'])} rows still reporting a trusted IMD3 slope, so every one is
+an intercept rather than an extrapolation.  What moves is the level, not the sensitivity —
+the same statement §8.5 makes for `fc`, IRN and offset, and the reason the certified
+window does not have to be re-argued after layout.
+`csv/iip3_corners_post_pex.csv` and `csv/thd_corners_post_pex.csv` carry every row.
 """
 
 
@@ -1851,9 +2200,14 @@ The derivations these numbers check live in [theory.md](theory.md); the map from
 reviewer's request to the answers is in [README.md](README.md).
 """,
         sec_op(bench, post, la), sec_tf(tf, bs), sec_valid(tf), sec_pz(tf),
-        sec_noise(nz), sec_lin(la, lin, sp_, jload("pex_distortion_sweeps.json")),
+        sec_noise(nz),
+        sec_lin(la, lin, sp_, jload("twotone_spacing_post_pex.json"),
+                jload("pex_distortion_sweeps.json")),
         sec_score(bs),
-        sec_pvt(pv), sec_rej(rj, pv['mismatch']['summary']), sec_gds(gr, ic, gt, lin, tc)])
+        sec_pvt(pv), sec_rej(rj, pv['mismatch']['summary'], jload("psrr_cmrr_post_pex.json")),
+        sec_gds(gr, ic, gt, lin, tc, jload("iip3_corners_post_pex.json"),
+                jload("thd_corners_post_pex.json"),
+                jload("gds_taylor_post_lumped.json"))])
     (PACK / "validation.md").write_text(body)
     print(f"wrote {PACK / 'validation.md'} ({len(body)} chars)")
 

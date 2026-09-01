@@ -32,7 +32,8 @@ os.environ.setdefault("LPF_NGSPICE", os.path.expanduser("~/local/bin/ngspice"))
 
 import numpy as np  # noqa: E402
 
-from extract_bench import CERT_AXES, design_of  # noqa: E402
+from extract_bench import CERT_AXES  # noqa: E402
+from linearity_runs import CAMPAIGN_DUTS, campaign_design, dut_suffix  # noqa: E402
 from lab import config as C, ngspice as ng, raw as R  # noqa: E402
 from lab.deck import ac_cmrr, ac_noise, ac_psrr  # noqa: E402
 from lab.mc import _seeded  # noqa: E402
@@ -126,14 +127,17 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--seeds", type=int, default=32,
                     help="mismatch draws for the differential-path numbers")
+    ap.add_argument("--dut", default="pre_mim", choices=CAMPAIGN_DUTS,
+                    help="which DUT to run the campaign on (default: %(default)s)")
     a = ap.parse_args()
-    d = design_of(CELL)
+    sfx = dut_suffix(a.dut)
+    d = campaign_design(a.dut, CELL)
     OUT.mkdir(parents=True, exist_ok=True)
 
     print("nominal + certified axes (common-mode transfers are the meaningful ones):")
     def one_corner(c):
         return measure(d, corner=c.process, temp=c.temp, vdd=c.vdd,
-                       tag=f"rej_{c.slug}")
+                       tag=f"rej{sfx}_{c.slug}")
     corner_rows = batch(list(CERT_AXES), one_corner)
     corners = {}
     for c, r in zip(CERT_AXES, corner_rows):
@@ -148,7 +152,7 @@ def main() -> None:
           f"(the differential path is mismatch-limited):")
     def one_seed(s):
         return measure(d, corner=C.CORNER_MM_NOM, temp=C.TEMP_NOM, vdd=None,
-                       tag=f"rej_mm_s{s:05d}", seed=s)
+                       tag=f"rej{sfx}_mm_s{s:05d}", seed=s)
     seed_rows = batch(list(range(1, a.seeds + 1)), one_seed)
     draws = [r for r in seed_rows if not isinstance(r, BaseException)]
     nfail = len(seed_rows) - len(draws)
@@ -202,10 +206,11 @@ def main() -> None:
         print(f"  converge {k:16s} sigma drifted {MC.drift_pct(tr):5.2f} % over the last "
               f"4 rungs; (M1) allows {100 * MC.se_frac(len(draws)):.2f} %")
 
-    (OUT / "psrr_cmrr.json").write_text(json.dumps(
-        {"cell": CELL, "spots_hz": list(SPOTS), "corners": corners, "mismatch": mm},
-        indent=1))
-    print(f"\nwrote {(OUT / 'psrr_cmrr.json').relative_to(REPO)}")
+    out = OUT / f"psrr_cmrr{sfx}.json"
+    out.write_text(json.dumps(
+        {"cell": CELL, "dut": a.dut, "spots_hz": list(SPOTS), "corners": corners,
+         "mismatch": mm}, indent=1))
+    print(f"\nwrote {out.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

@@ -37,9 +37,9 @@ and the corner sweeps:
 
 | you asked for | file | x | y |
 |---|---|---|---|
-| **`fc` and `Q` over the certified window** | `pvt_certified_axes.csv` | `corner` (text) | `fc_hz_pre`, `q_lo_pre`, `q_hi_pre`, and the `_post` twins |
-| **the 45-point cross product, and where a pole pair is lost** | `pvt_cert_box.csv` | `corner` (text) | `fc_hz`, `q_hi`, `n_complex_pairs` |
-| **the mismatch distributions** | `mc_draws.csv` | `seed` | `fc_hz`, `q_lo`, `q_hi`, `offset_in_uv` |
+| **`fc` and `Q` over the certified window** | `pvt_certified_axes.csv` | `corner` (text) | `fc_hz_pre`, `q_lo_pre`, `q_hi_pre`, the `_post` twins, and `fc_hz_pex` |
+| **the 45-point cross product, and where a pole pair is lost** | `pvt_cert_box.csv` | `corner` (text) | `fc_hz`, `fc_hz_pex`, `q_hi`, `n_complex_pairs` |
+| **the mismatch distributions** | `mc_draws.csv`, `mc_draws_post_pex.csv` | `seed` | `fc_hz`, `q_lo`, `q_hi`, `offset_in_uv` |
 | **PSRR and CMRR vs frequency** | `rejection_nominal.csv` | `freq_hz` | `psrr_db`, `cmrr_db` |
 | **the transfers those ratios are made of** | `rejection_mismatch_curves.csv` | `freq_hz` | `a_dm_db_mean`, `cm_to_dm_db_mean`, `supply_to_dm_db_mean` |
 | **supply → common-mode and CM → CM** | `rejection_nominal.csv` | `freq_hz` | `supply_to_cm_db`, `cm_to_cm_db` |
@@ -48,13 +48,22 @@ and the corner sweeps:
 | **IIP3 over corners** | `iip3_corners.csv` | `corner` (text) | `iip3_dbv`, `imd3_slope_db_per_decade` |
 | **the THD ladder over corners** | `thd_corners.csv` | `vpp_diff_v` | `thd_db_<corner>`, `hd3_db_<corner>` |
 | **the low-frequency residual, and what explains it** | `gds_residual.csv` | `fin_hz` | `v3_unexplained_uv`, `v3_gds_cubic_uv`, `v3_gds_exact_uv` |
+| **any of the rejection or corner files, on the extracted netlist** | the `_post_pex` sibling of that file | as above | as above |
 | **whether the Monte Carlo has converged** | `mc_convergence.csv` | `n_draws` | `sigma_fc_hz`, `sigma_q_hi`, `sigma_offset_in_uv_extraction`, `sigma_cmrr_db_dc`, … |
+
+**Which DUT is in which file.**  Every campaign that can run on the raw extraction has
+two files: the bare name is the pre-layout cell and `<name>_post_pex.csv` is the same
+campaign on the kpex-extracted netlist.  `pvt_certified_axes.csv` and `pvt_cert_box.csv`
+are the exception — they carry the DUTs as extra *columns* rather than extra files,
+because the corner order is shared and a reader wants them on one axis.  The one quantity
+that has no extracted column anywhere is the pole/`Q` decomposition; `../validation.md`
+§7.1 is the table that says so, per section, with the reason.
 
 The remaining files support those:
 
 * `thd_vs_frequency_43p75mvpp.csv` — the same harmonic-vs-frequency sweep at 43.75 mVpp
   instead of 175 mVpp, where distortion is still cubic in amplitude.  This is the sweep
-  the distortion equation is checked against.
+  the distortion equation is checked against, and it carries both DUTs.
 * `linearity_crossings.csv` — the drive at which distortion reaches a stated limit, and
   the dynamic range that follows.  Three rows: HD3 = −60 dB on both DUTs, and the
   THD = −40 dB compression point.  Each carries the fit it was solved from —
