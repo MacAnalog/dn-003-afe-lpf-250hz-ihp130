@@ -53,8 +53,7 @@
     "noise": {
      "irn_uv_from_generators": 29.198955983681884,
      "by_kind": {
-      "channel thermal": 61.552765891180854,
-      "gate shot": 27.10259690868199,
+      "channel thermal": 88.65536279986281,
       "flicker": 11.344268753967807,
       "bulk shot": 0.00036843947643771857,
       "rgate": 6.692922007865935e-09
@@ -120,8 +119,7 @@
     "noise": {
      "irn_uv_from_generators": 29.578468593549847,
      "by_kind": {
-      "channel thermal": 61.12946020416022,
-      "gate shot": 26.906707051438396,
+      "channel thermal": 88.03616725559863,
       "flicker": 11.963473263645982,
       "bulk shot": 0.00035947417067851346,
       "rgate": 6.584743242151281e-09
@@ -187,8 +185,7 @@
     "noise": {
      "irn_uv_from_generators": 28.8213537304674,
      "by_kind": {
-      "channel thermal": 61.974903689362876,
-      "gate shot": 27.295200767221694,
+      "channel thermal": 89.27010445658459,
       "flicker": 10.729516228334637,
       "bulk shot": 0.00037930828101477007,
       "rgate": 6.7997604807244785e-09
@@ -254,8 +251,7 @@
     "noise": {
      "irn_uv_from_generators": 29.04288488836335,
      "by_kind": {
-      "channel thermal": 61.713305035009604,
-      "gate shot": 27.12797787652219,
+      "channel thermal": 88.84128291153179,
       "flicker": 11.158360714764415,
       "bulk shot": 0.00035636704399740876,
       "rgate": 6.65983590419202e-09
@@ -321,8 +317,7 @@
     "noise": {
      "irn_uv_from_generators": 29.37829160711938,
      "by_kind": {
-      "channel thermal": 61.402554547272985,
-      "gate shot": 27.034847363590693,
+      "channel thermal": 88.43740191086368,
       "flicker": 11.562219777115862,
       "bulk shot": 0.000378305316548318,
       "rgate": 6.703889716346711e-09
@@ -388,8 +383,7 @@
     "noise": {
      "irn_uv_from_generators": 29.203010392214512,
      "by_kind": {
-      "channel thermal": 61.55454688203847,
-      "gate shot": 27.100373807863978,
+      "channel thermal": 88.65492068990244,
       "flicker": 11.344711244269277,
       "bulk shot": 0.0003680591371218549,
       "rgate": 6.691165031191937e-09
@@ -455,8 +449,7 @@
     "noise": {
      "irn_uv_from_generators": 29.197613830279952,
      "by_kind": {
-      "channel thermal": 61.551728648633045,
-      "gate shot": 27.102026456340937,
+      "channel thermal": 88.65375510497397,
       "flicker": 11.345876109108286,
       "bulk shot": 0.0003687792242687295,
       "rgate": 6.69343976191964e-09
@@ -522,8 +515,7 @@
     "noise": {
      "irn_uv_from_generators": 27.680659717836136,
      "by_kind": {
-      "channel thermal": 61.51649717377516,
-      "gate shot": 27.083426635643125,
+      "channel thermal": 88.59992380941831,
       "flicker": 11.399912580528696,
       "bulk shot": 0.00016360329018719018,
       "rgate": 6.762779442938958e-09
@@ -589,8 +581,7 @@
     "noise": {
      "irn_uv_from_generators": 31.70789133888886,
      "by_kind": {
-      "channel thermal": 61.6867508190818,
-      "gate shot": 27.03629914474525,
+      "channel thermal": 88.72304996382705,
       "flicker": 11.272124723930848,
       "bulk shot": 0.004825305741286885,
       "rgate": 6.500833563563851e-09
@@ -698,11 +689,11 @@
      "span_x": 29.493940713331067
     },
     "channel thermal": {
-     "min": 61.12946020416022,
+     "min": 88.03616725559863,
      "min_at": "ss_27c_1v500",
-     "max": 61.974903689362876,
+     "max": 89.27010445658459,
      "max_at": "ff_27c_1v500",
-     "span_x": 1.013830377078074
+     "span_x": 1.0140162530861143
     },
     "flicker": {
      "min": 10.729516228334637,
@@ -710,13 +701,6 @@
      "max": 11.963473263645982,
      "max_at": "ss_27c_1v500",
      "span_x": 1.1150058408088053
-    },
-    "gate shot": {
-     "min": 26.906707051438396,
-     "min_at": "ss_27c_1v500",
-     "max": 27.295200767221694,
-     "max_at": "ff_27c_1v500",
-     "span_x": 1.0144385455656317
     },
     "rgate": {
      "min": 6.500833563563851e-09,
@@ -782,8 +766,7 @@
     "noise": {
      "irn_uv_from_generators": 29.160276962187616,
      "by_kind": {
-      "channel thermal": 62.55485450323093,
-      "gate shot": 25.347011323856695,
+      "channel thermal": 87.90186582708763,
       "flicker": 12.097987653738539,
       "bulk shot": 0.00014651306955504705,
       "rgate": 6.1042794052391926e-09
@@ -847,8 +830,7 @@
     "noise": {
      "irn_uv_from_generators": 27.680659717836136,
      "by_kind": {
-      "channel thermal": 61.51649717377516,
-      "gate shot": 27.083426635643125,
+      "channel thermal": 88.59992380941831,
       "flicker": 11.399912580528696,
       "bulk shot": 0.00016360329018719018,
       "rgate": 6.762779442938958e-09
@@ -914,8 +896,7 @@
     "noise": {
      "irn_uv_from_generators": 27.677180542129978,
      "by_kind": {
-      "channel thermal": 61.51455739267846,
-      "gate shot": 27.082628114787262,
+      "channel thermal": 88.59718550746572,
       "flicker": 11.402650857791677,
       "bulk shot": 0.000163627978656625,
       "rgate": 6.763957981230039e-09
@@ -981,8 +962,7 @@
     "noise": {
      "irn_uv_from_generators": 29.203010392214512,
      "by_kind": {
-      "channel thermal": 61.55454688203847,
-      "gate shot": 27.100373807863978,
+      "channel thermal": 88.65492068990244,
       "flicker": 11.344711244269277,
       "bulk shot": 0.0003680591371218549,
       "rgate": 6.691165031191937e-09
@@ -1048,8 +1028,7 @@
     "noise": {
      "irn_uv_from_generators": 29.198955983681884,
      "by_kind": {
-      "channel thermal": 61.552765891180854,
-      "gate shot": 27.10259690868199,
+      "channel thermal": 88.65536279986281,
       "flicker": 11.344268753967807,
       "bulk shot": 0.00036843947643771857,
       "rgate": 6.692922007865935e-09
@@ -1115,8 +1094,7 @@
     "noise": {
      "irn_uv_from_generators": 29.197613830279952,
      "by_kind": {
-      "channel thermal": 61.551728648633045,
-      "gate shot": 27.102026456340937,
+      "channel thermal": 88.65375510497397,
       "flicker": 11.345876109108286,
       "bulk shot": 0.0003687792242687295,
       "rgate": 6.69343976191964e-09
@@ -1182,8 +1160,7 @@
     "noise": {
      "irn_uv_from_generators": 31.705111254800634,
      "by_kind": {
-      "channel thermal": 61.678964132607206,
-      "gate shot": 27.044317820606686,
+      "channel thermal": 88.7232819532139,
       "flicker": 11.271911075466361,
       "bulk shot": 0.004806964817613912,
       "rgate": 6.502089541940987e-09
@@ -1249,8 +1226,7 @@
     "noise": {
      "irn_uv_from_generators": 31.70789133888886,
      "by_kind": {
-      "channel thermal": 61.6867508190818,
-      "gate shot": 27.03629914474525,
+      "channel thermal": 88.72304996382705,
       "flicker": 11.272124723930848,
       "bulk shot": 0.004825305741286885,
       "rgate": 6.500833563563851e-09
@@ -1316,8 +1292,7 @@
     "noise": {
      "irn_uv_from_generators": 37.26063690385826,
      "by_kind": {
-      "channel thermal": 68.05928258333998,
-      "gate shot": 21.86655912063984,
+      "channel thermal": 89.92584170397983,
       "flicker": 10.070000071794519,
       "bulk shot": 0.004158219518101545,
       "rgate": 4.707553428521786e-09
@@ -1374,9 +1349,8 @@
     "noise": {
      "irn_uv_from_generators": 164.3432894058907,
      "by_kind": {
-      "channel thermal": 68.35758312316668,
+      "channel thermal": 74.68747978273096,
       "flicker": 25.312518005244115,
-      "gate shot": 6.329896659564294,
       "bulk shot": 2.2119964509526234e-06,
       "rgate": 2.8471389342068972e-11
      },
@@ -1435,8 +1409,7 @@
     "noise": {
      "irn_uv_from_generators": 29.428838071135438,
      "by_kind": {
-      "channel thermal": 62.005819176819315,
-      "gate shot": 25.293687454887415,
+      "channel thermal": 87.29950663170672,
       "flicker": 12.70034973732628,
       "bulk shot": 0.00014362491203377646,
       "rgate": 6.054957045315314e-09
@@ -1500,8 +1473,7 @@
     "noise": {
      "irn_uv_from_generators": 28.042804487637984,
      "by_kind": {
-      "channel thermal": 61.09235145375986,
-      "gate shot": 26.889389543189438,
+      "channel thermal": 87.98174099694928,
       "flicker": 12.018100147429243,
       "bulk shot": 0.00015884896872721082,
       "rgate": 6.6527294431014335e-09
@@ -1563,8 +1535,7 @@
     "noise": {
      "irn_uv_from_generators": 32.72869373324614,
      "by_kind": {
-      "channel thermal": 63.13599662538157,
-      "gate shot": 23.66773039934252,
+      "channel thermal": 86.8037270247241,
       "flicker": 13.195977614160801,
       "bulk shot": 0.0002953557218005844,
       "rgate": 5.39327266885629e-09
@@ -1628,8 +1599,7 @@
     "noise": {
      "irn_uv_from_generators": 29.578468593549847,
      "by_kind": {
-      "channel thermal": 61.12946020416022,
-      "gate shot": 26.906707051438396,
+      "channel thermal": 88.03616725559863,
       "flicker": 11.963473263645982,
       "bulk shot": 0.00035947417067851346,
       "rgate": 6.584743242151281e-09
@@ -1695,8 +1665,7 @@
     "noise": {
      "irn_uv_from_generators": 29.577707956522673,
      "by_kind": {
-      "channel thermal": 61.12925893378627,
-      "gate shot": 26.908889668164093,
+      "channel thermal": 88.03814860195037,
       "flicker": 11.961491480388872,
       "bulk shot": 0.0003599110750227861,
       "rgate": 6.585776499809413e-09
@@ -1762,8 +1731,7 @@
     "noise": {
      "irn_uv_from_generators": 32.1026824170405,
      "by_kind": {
-      "channel thermal": 61.253398612571104,
-      "gate shot": 26.874405822534708,
+      "channel thermal": 88.12780443510583,
       "flicker": 11.86761746040015,
       "bulk shot": 0.004578098083794829,
       "rgate": 6.410275407198198e-09
@@ -1829,8 +1797,7 @@
     "noise": {
      "irn_uv_from_generators": 32.10140522405691,
      "by_kind": {
-      "channel thermal": 61.25270270905014,
-      "gate shot": 26.873695819768187,
+      "channel thermal": 88.1263985288183,
       "flicker": 11.868999536798043,
       "bulk shot": 0.004601927972978894,
       "rgate": 6.4106303549085244e-09
@@ -1896,8 +1863,7 @@
     "noise": {
      "irn_uv_from_generators": 32.10683820910914,
      "by_kind": {
-      "channel thermal": 61.267386388704004,
-      "gate shot": 26.859475576808183,
+      "channel thermal": 88.12686196551219,
       "flicker": 11.868510836409008,
       "bulk shot": 0.004627191670523664,
       "rgate": 6.408333099190235e-09
@@ -1963,8 +1929,7 @@
     "noise": {
      "irn_uv_from_generators": 27.319468473181242,
      "by_kind": {
-      "channel thermal": 61.93968754005809,
-      "gate shot": 27.27655791128705,
+      "channel thermal": 89.21624545134512,
       "flicker": 10.783585740213994,
       "bulk shot": 0.00016880156811957357,
       "rgate": 6.8727644558402995e-09
@@ -2030,8 +1995,7 @@
     "noise": {
      "irn_uv_from_generators": 27.317020886992786,
      "by_kind": {
-      "channel thermal": 61.9384361884016,
-      "gate shot": 27.276129703197768,
+      "channel thermal": 89.21456589159936,
       "flicker": 10.78526527727416,
       "bulk shot": 0.00016882425279314873,
       "rgate": 6.873701841238279e-09
@@ -2097,8 +2061,7 @@
     "noise": {
      "irn_uv_from_generators": 27.316660682241398,
      "by_kind": {
-      "channel thermal": 61.93789111725857,
-      "gate shot": 27.275778098762178,
+      "channel thermal": 89.21366921602072,
       "flicker": 10.786161910817828,
       "bulk shot": 0.0001688662873694588,
       "rgate": 6.87405305218105e-09
@@ -2164,8 +2127,7 @@
     "noise": {
      "irn_uv_from_generators": 28.8206950393632,
      "by_kind": {
-      "channel thermal": 61.974729844374316,
-      "gate shot": 27.295174675883732,
+      "channel thermal": 89.26990452025801,
       "flicker": 10.729716466430704,
       "bulk shot": 0.00037900651157164267,
       "rgate": 6.7996944854725635e-09
@@ -2231,8 +2193,7 @@
     "noise": {
      "irn_uv_from_generators": 28.8213537304674,
      "by_kind": {
-      "channel thermal": 61.974903689362876,
-      "gate shot": 27.295200767221694,
+      "channel thermal": 89.27010445658459,
       "flicker": 10.729516228334637,
       "bulk shot": 0.00037930828101477007,
       "rgate": 6.7997604807244785e-09
@@ -2298,8 +2259,7 @@
     "noise": {
      "irn_uv_from_generators": 29.16797752764171,
      "by_kind": {
-      "channel thermal": 63.120648510733794,
-      "gate shot": 26.37800290387985,
+      "channel thermal": 89.49865141461366,
       "flicker": 10.50097763509181,
       "bulk shot": 0.0003709436557941957,
       "rgate": 6.6387408296302564e-09
@@ -2365,8 +2325,7 @@
     "noise": {
      "irn_uv_from_generators": 31.389540674593132,
      "by_kind": {
-      "channel thermal": 62.390885543011024,
-      "gate shot": 26.997536694499995,
+      "channel thermal": 89.38842223751101,
       "flicker": 10.606464574569564,
       "bulk shot": 0.005113181356929794,
       "rgate": 6.562518848431614e-09
@@ -2432,8 +2391,7 @@
     "noise": {
      "irn_uv_from_generators": 35.69058895329842,
      "by_kind": {
-      "channel thermal": 67.94527609959898,
-      "gate shot": 22.492405137775947,
+      "channel thermal": 90.43768123737492,
       "flicker": 9.557843761268542,
       "bulk shot": 0.004474996280401997,
       "rgate": 5.076152578884372e-09
@@ -2495,8 +2453,7 @@
     "noise": {
      "irn_uv_from_generators": 220.5505711125986,
      "by_kind": {
-      "channel thermal": 64.01790008601307,
-      "gate shot": 21.454641665221185,
+      "channel thermal": 85.47254175123426,
       "flicker": 14.52393311067883,
       "bulk shot": 0.003525137953972532,
       "rgate": 1.329534599873253e-10
@@ -2560,8 +2517,7 @@
     "noise": {
      "irn_uv_from_generators": 27.57652435623427,
      "by_kind": {
-      "channel thermal": 61.68894207739951,
-      "gate shot": 27.074953906244872,
+      "channel thermal": 88.76389598364437,
       "flicker": 11.235943034239513,
       "bulk shot": 0.00016097539908995983,
       "rgate": 6.7170210591827635e-09
@@ -2627,8 +2583,7 @@
     "noise": {
      "irn_uv_from_generators": 27.509858401325726,
      "by_kind": {
-      "channel thermal": 61.666270095231575,
-      "gate shot": 27.149889171161266,
+      "channel thermal": 88.81615926639286,
       "flicker": 11.183678895839657,
       "bulk shot": 0.0001618310182123676,
       "rgate": 6.749289261035667e-09
@@ -2694,8 +2649,7 @@
     "noise": {
      "irn_uv_from_generators": 27.50485715519171,
      "by_kind": {
-      "channel thermal": 61.663179488628636,
-      "gate shot": 27.148367454060143,
+      "channel thermal": 88.81154694268879,
       "flicker": 11.188291239563153,
       "bulk shot": 0.00016181099740014527,
       "rgate": 6.750670389786707e-09
@@ -2761,8 +2715,7 @@
     "noise": {
      "irn_uv_from_generators": 29.04462883927157,
      "by_kind": {
-      "channel thermal": 61.71428717709845,
-      "gate shot": 27.12869824550101,
+      "channel thermal": 88.84298542259944,
       "flicker": 11.156658467231164,
       "bulk shot": 0.0003561035101076293,
       "rgate": 6.659301358111959e-09
@@ -2828,8 +2781,7 @@
     "noise": {
      "irn_uv_from_generators": 29.04288488836335,
      "by_kind": {
-      "channel thermal": 61.713305035009604,
-      "gate shot": 27.12797787652219,
+      "channel thermal": 88.84128291153179,
       "flicker": 11.158360714764415,
       "bulk shot": 0.00035636704399740876,
       "rgate": 6.65983590419202e-09
@@ -2895,8 +2847,7 @@
     "noise": {
      "irn_uv_from_generators": 29.043728412554,
      "by_kind": {
-      "channel thermal": 61.7168039425614,
-      "gate shot": 27.123342035960373,
+      "channel thermal": 88.84014597852175,
       "flicker": 11.159497395983847,
       "bulk shot": 0.0003566188350751891,
       "rgate": 6.6593191948944215e-09
@@ -2962,8 +2913,7 @@
     "noise": {
      "irn_uv_from_generators": 32.70554039154848,
      "by_kind": {
-      "channel thermal": 62.99893485023043,
-      "gate shot": 25.106351458574803,
+      "channel thermal": 88.10528630880523,
       "flicker": 11.89107075096179,
       "bulk shot": 0.00364293416758112,
       "rgate": 6.06547538595509e-09
@@ -3029,8 +2979,7 @@
     "noise": {
      "irn_uv_from_generators": 33.0706549973871,
      "by_kind": {
-      "channel thermal": 64.06088169456537,
-      "gate shot": 24.291017110104182,
+      "channel thermal": 88.35189880466957,
       "flicker": 11.644470007603264,
       "bulk shot": 0.003631181794397108,
       "rgate": 5.932827415968397e-09
@@ -3092,8 +3041,7 @@
     "noise": {
      "irn_uv_from_generators": 85.44555277079573,
      "by_kind": {
-      "channel thermal": 69.29966097305876,
-      "gate shot": 19.146841882549303,
+      "channel thermal": 88.44650285560805,
       "flicker": 11.55030027144736,
       "bulk shot": 0.0031968720543968147,
       "rgate": 8.902032855207671e-10
@@ -3153,9 +3101,8 @@
     "noise": {
      "irn_uv_from_generators": 44.70230147118981,
      "by_kind": {
-      "channel thermal": 67.76835266899784,
+      "channel thermal": 83.1985992375612,
       "flicker": 16.801334229968003,
-      "gate shot": 15.430246568563362,
       "bulk shot": 6.652965927127258e-05,
       "rgate": 2.811557411390518e-09
      },
@@ -3218,8 +3165,7 @@
     "noise": {
      "irn_uv_from_generators": 27.90699274645667,
      "by_kind": {
-      "channel thermal": 61.38321608001739,
-      "gate shot": 26.953066083154305,
+      "channel thermal": 88.33628216317166,
       "flicker": 11.663553234529415,
       "bulk shot": 0.0001645955507256267,
       "rgate": 6.748222714284736e-09
@@ -3285,8 +3231,7 @@
     "noise": {
      "irn_uv_from_generators": 27.849895083479463,
      "by_kind": {
-      "channel thermal": 61.36447066868074,
-      "gate shot": 27.01435786084027,
+      "channel thermal": 88.37882852952103,
       "flicker": 11.621006142725312,
       "bulk shot": 0.00016532097843933863,
       "rgate": 6.77525708681962e-09
@@ -3352,8 +3297,7 @@
     "noise": {
      "irn_uv_from_generators": 29.689963586545073,
      "by_kind": {
-      "channel thermal": 61.52097637636101,
-      "gate shot": 26.69771326249637,
+      "channel thermal": 88.21868963885738,
       "flicker": 11.780940084606282,
       "bulk shot": 0.00037026996967998616,
       "rgate": 6.5666877386233895e-09
@@ -3419,8 +3363,7 @@
     "noise": {
      "irn_uv_from_generators": 29.37829160711938,
      "by_kind": {
-      "channel thermal": 61.402554547272985,
-      "gate shot": 27.034847363590693,
+      "channel thermal": 88.43740191086368,
       "flicker": 11.562219777115862,
       "bulk shot": 0.000378305316548318,
       "rgate": 6.703889716346711e-09
@@ -3486,8 +3429,7 @@
     "noise": {
      "irn_uv_from_generators": 29.375698430296794,
      "by_kind": {
-      "channel thermal": 61.401008773297136,
-      "gate shot": 27.034088830640226,
+      "channel thermal": 88.43509760393735,
       "flicker": 11.564523720711463,
       "bulk shot": 0.00037866864647018416,
       "rgate": 6.704743292003171e-09
@@ -3553,8 +3495,7 @@
     "noise": {
      "irn_uv_from_generators": 31.831714069314856,
      "by_kind": {
-      "channel thermal": 61.503703453308546,
-      "gate shot": 27.080753220066903,
+      "channel thermal": 88.58445667337543,
       "flicker": 11.409844972348285,
       "bulk shot": 0.0056983477156734436,
       "rgate": 6.560550128798171e-09
@@ -3620,8 +3561,7 @@
     "noise": {
      "irn_uv_from_generators": 31.830677904927747,
      "by_kind": {
-      "channel thermal": 61.503013068216895,
-      "gate shot": 27.0803489079514,
+      "channel thermal": 88.5833619761683,
       "flicker": 11.410918927865646,
       "bulk shot": 0.005719089405090573,
       "rgate": 6.560930729813105e-09
@@ -3687,8 +3627,7 @@
     "noise": {
      "irn_uv_from_generators": 32.23988265808073,
      "by_kind": {
-      "channel thermal": 62.69832190256715,
-      "gate shot": 26.132477854215043,
+      "channel thermal": 88.83079975678218,
       "flicker": 11.163559821812,
       "bulk shot": 0.005640415010502848,
       "rgate": 6.395348624426359e-09
@@ -3835,11 +3774,11 @@
      "span_x": 2585.4876044794632
     },
     "channel thermal": {
-     "min": 61.09235145375986,
-     "min_at": "ss_0c_1v650",
-     "max": 69.29966097305876,
-     "max_at": "sf_70c_1v650",
-     "span_x": 1.1343426685009976
+     "min": 74.68747978273096,
+     "min_at": "ss_0c_1v400",
+     "max": 90.43768123737492,
+     "max_at": "ff_70c_1v500",
+     "span_x": 1.2108814154723384
     },
     "flicker": {
      "min": 9.557843761268542,
@@ -3847,13 +3786,6 @@
      "max": 25.312518005244115,
      "max_at": "ss_0c_1v400",
      "span_x": 2.6483502594820165
-    },
-    "gate shot": {
-     "min": 6.329896659564294,
-     "min_at": "ss_0c_1v400",
-     "max": 27.295200767221694,
-     "max_at": "ff_27c_1v500",
-     "span_x": 4.312108433236334
     },
     "rgate": {
      "min": 2.8471389342068972e-11,
@@ -3923,8 +3855,7 @@
     "noise": {
      "irn_uv_from_generators": 29.198955983681884,
      "by_kind": {
-      "channel thermal": 61.552765891180854,
-      "gate shot": 27.10259690868199,
+      "channel thermal": 88.65536279986281,
       "flicker": 11.344268753967807,
       "bulk shot": 0.00036843947643771857,
       "rgate": 6.692922007865935e-09
@@ -3981,8 +3912,7 @@
     "noise": {
      "irn_uv_from_generators": 609.2389606288357,
      "by_kind": {
-      "channel thermal": 97.76574969412734,
-      "gate shot": 2.1336646303919444,
+      "channel thermal": 99.89941432451928,
       "flicker": 0.10058131704075395,
       "bulk shot": 4.358439777054313e-06,
       "rgate": 2.2581125124685677e-13
@@ -4046,8 +3976,7 @@
     "noise": {
      "irn_uv_from_generators": 25.858263149446657,
      "by_kind": {
-      "channel thermal": 61.10827088967301,
-      "gate shot": 26.726253466093706,
+      "channel thermal": 87.83452435576673,
       "flicker": 12.165429674814142,
       "bulk shot": 4.5962750666580306e-05,
       "rgate": 6.668512524088824e-09
@@ -4113,8 +4042,7 @@
     "noise": {
      "irn_uv_from_generators": 38.509942223882774,
      "by_kind": {
-      "channel thermal": 63.544778072300375,
-      "gate shot": 23.087524428345294,
+      "channel thermal": 86.63230250064566,
       "flicker": 13.140982182242087,
       "bulk shot": 0.22671531133631995,
       "rgate": 5.775890195122514e-09
@@ -4176,8 +4104,7 @@
     "noise": {
      "irn_uv_from_generators": 237.31258195923468,
      "by_kind": {
-      "channel thermal": 64.84707861159289,
-      "gate shot": 20.936295398110868,
+      "channel thermal": 85.78337400970376,
       "flicker": 13.94742420375706,
       "bulk shot": 0.26920178638662273,
       "rgate": 1.5254159899111517e-10
@@ -4237,9 +4164,8 @@
     "noise": {
      "irn_uv_from_generators": 155.89303764211468,
      "by_kind": {
-      "channel thermal": 80.70251203091993,
+      "channel thermal": 87.44900787129225,
       "flicker": 12.550990996755242,
-      "gate shot": 6.746495840372302,
       "bulk shot": 1.1316127058391292e-06,
       "rgate": 3.3980235475566636e-10
      },
@@ -4302,8 +4228,7 @@
     "noise": {
      "irn_uv_from_generators": 25.067495404520002,
      "by_kind": {
-      "channel thermal": 61.92433004450861,
-      "gate shot": 27.260187720961774,
+      "channel thermal": 89.18451776547042,
       "flicker": 10.815432164510604,
       "bulk shot": 5.006306096695503e-05,
       "rgate": 6.9580378027919445e-09
@@ -4365,8 +4290,7 @@
     "noise": {
      "irn_uv_from_generators": 186.9337781403751,
      "by_kind": {
-      "channel thermal": 66.7831646179393,
-      "gate shot": 20.764757999788927,
+      "channel thermal": 87.54792261772822,
       "flicker": 12.193025792547052,
       "bulk shot": 0.25905158948381146,
       "rgate": 2.409294981383124e-10
@@ -4426,8 +4350,7 @@
     "noise": {
      "irn_uv_from_generators": 2197.7515803170186,
      "by_kind": {
-      "channel thermal": 60.10845814257684,
-      "gate shot": 23.567054894244986,
+      "channel thermal": 83.67551303682183,
       "flicker": 16.000384516493707,
       "bulk shot": 0.3241024466827317,
       "rgate": 1.747989992562056e-12
@@ -4482,9 +4405,8 @@
     "noise": {
      "irn_uv_from_generators": 185.96632560434122,
      "by_kind": {
-      "channel thermal": 68.35604728900775,
+      "channel thermal": 74.41268791580787,
       "flicker": 25.587311683317992,
-      "gate shot": 6.056640626800101,
       "bulk shot": 4.008687364592976e-07,
       "rgate": 5.4161867619789436e-12
      },
@@ -4547,8 +4469,7 @@
     "noise": {
      "irn_uv_from_generators": 25.22128223279734,
      "by_kind": {
-      "channel thermal": 61.64035499156539,
-      "gate shot": 27.129591380693803,
+      "channel thermal": 88.76994637225916,
       "flicker": 11.23000611284952,
       "bulk shot": 4.750806720905889e-05,
       "rgate": 6.824111670382422e-09
@@ -4610,8 +4531,7 @@
     "noise": {
      "irn_uv_from_generators": 100.2086910697424,
      "by_kind": {
-      "channel thermal": 74.01478006190055,
-      "gate shot": 16.60186788224595,
+      "channel thermal": 90.61664794414652,
       "flicker": 9.170397386148407,
       "bulk shot": 0.21295466760586762,
       "rgate": 2.0992114484307117e-09
@@ -4671,8 +4591,7 @@
     "noise": {
      "irn_uv_from_generators": 2091.394573130068,
      "by_kind": {
-      "channel thermal": 62.592376944457286,
-      "gate shot": 23.99684622874345,
+      "channel thermal": 86.58922317320075,
       "flicker": 13.088882165910672,
       "bulk shot": 0.3218946608837749,
       "rgate": 4.860965918264664e-12
@@ -4727,8 +4646,7 @@
     "noise": {
      "irn_uv_from_generators": 306.2791121029986,
      "by_kind": {
-      "channel thermal": 94.19284220369879,
-      "gate shot": 4.331140857367513,
+      "channel thermal": 98.52398306106632,
       "flicker": 1.476013047612532,
       "bulk shot": 3.891320251784478e-06,
       "rgate": 9.16925178513432e-13
@@ -4792,8 +4710,7 @@
     "noise": {
      "irn_uv_from_generators": 25.56067089768528,
      "by_kind": {
-      "channel thermal": 61.34967002676952,
-      "gate shot": 26.9979579191246,
+      "channel thermal": 88.34762794589409,
       "flicker": 11.652323264762881,
       "bulk shot": 4.8782486627092885e-05,
       "rgate": 6.85639509924947e-09
@@ -4859,8 +4776,7 @@
     "noise": {
      "irn_uv_from_generators": 36.48613867916788,
      "by_kind": {
-      "channel thermal": 63.36791664031376,
-      "gate shot": 25.140040271779903,
+      "channel thermal": 88.50795691209363,
       "flicker": 11.161424236733696,
       "bulk shot": 0.3306188453104038,
       "rgate": 5.86229606595398e-09
@@ -4922,8 +4838,7 @@
     "noise": {
      "irn_uv_from_generators": 439.0949840326881,
      "by_kind": {
-      "channel thermal": 61.64069291157352,
-      "gate shot": 21.996289303464167,
+      "channel thermal": 83.63698221503768,
       "flicker": 16.07840283586821,
       "bulk shot": 0.2846149490536197,
       "rgate": 4.0478704525104897e-11
@@ -4987,8 +4902,7 @@
     "noise": {
      "irn_uv_from_generators": 29.535242908402946,
      "by_kind": {
-      "channel thermal": 61.69289541693165,
-      "gate shot": 26.7375013038116,
+      "channel thermal": 88.43039672074327,
       "flicker": 11.56924340852103,
       "bulk shot": 0.00035986419215044654,
       "rgate": 6.543536437536931e-09
@@ -5050,9 +4964,8 @@
     "noise": {
      "irn_uv_from_generators": 62.799142989996895,
      "by_kind": {
-      "channel thermal": 73.52831030117659,
+      "channel thermal": 85.35966162127183,
       "flicker": 14.640228109290348,
-      "gate shot": 11.831351320095246,
       "bulk shot": 0.00011026761573552034,
       "rgate": 1.8221005100629341e-09
      },
@@ -5115,8 +5028,7 @@
     "noise": {
      "irn_uv_from_generators": 28.82178929312243,
      "by_kind": {
-      "channel thermal": 61.97527537507219,
-      "gate shot": 27.295424850706194,
+      "channel thermal": 89.2707002257784,
       "flicker": 10.728920907892556,
       "bulk shot": 0.0003788595297115684,
       "rgate": 6.79931013744315e-09
@@ -5182,8 +5094,7 @@
     "noise": {
      "irn_uv_from_generators": 29.04999211028737,
      "by_kind": {
-      "channel thermal": 61.7168522157896,
-      "gate shot": 27.126515881268375,
+      "channel thermal": 88.84336809705798,
       "flicker": 11.156275973790029,
       "bulk shot": 0.00035592249457911263,
       "rgate": 6.657408958542156e-09
@@ -5245,8 +5156,7 @@
     "noise": {
      "irn_uv_from_generators": 32.71878683386243,
      "by_kind": {
-      "channel thermal": 63.54596681811557,
-      "gate shot": 23.62359533799853,
+      "channel thermal": 87.16956215611413,
       "flicker": 12.8301309907507,
       "bulk shot": 0.000306847700106361,
       "rgate": 5.435111235873128e-09
@@ -5310,8 +5220,7 @@
     "noise": {
      "irn_uv_from_generators": 29.578468593549847,
      "by_kind": {
-      "channel thermal": 61.12946020416022,
-      "gate shot": 26.906707051438396,
+      "channel thermal": 88.03616725559863,
       "flicker": 11.963473263645982,
       "bulk shot": 0.00035947417067851346,
       "rgate": 6.584743242151281e-09
@@ -5377,8 +5286,7 @@
     "noise": {
      "irn_uv_from_generators": 28.8213537304674,
      "by_kind": {
-      "channel thermal": 61.974903689362876,
-      "gate shot": 27.295200767221694,
+      "channel thermal": 89.27010445658459,
       "flicker": 10.729516228334637,
       "bulk shot": 0.00037930828101477007,
       "rgate": 6.7997604807244785e-09
@@ -5444,8 +5352,7 @@
     "noise": {
      "irn_uv_from_generators": 29.04288488836335,
      "by_kind": {
-      "channel thermal": 61.713305035009604,
-      "gate shot": 27.12797787652219,
+      "channel thermal": 88.84128291153179,
       "flicker": 11.158360714764415,
       "bulk shot": 0.00035636704399740876,
       "rgate": 6.65983590419202e-09
@@ -5511,8 +5418,7 @@
     "noise": {
      "irn_uv_from_generators": 29.37829160711938,
      "by_kind": {
-      "channel thermal": 61.402554547272985,
-      "gate shot": 27.034847363590693,
+      "channel thermal": 88.43740191086368,
       "flicker": 11.562219777115862,
       "bulk shot": 0.000378305316548318,
       "rgate": 6.703889716346711e-09
@@ -5578,8 +5484,7 @@
     "noise": {
      "irn_uv_from_generators": 29.197613830279952,
      "by_kind": {
-      "channel thermal": 61.551728648633045,
-      "gate shot": 27.102026456340937,
+      "channel thermal": 88.65375510497397,
       "flicker": 11.345876109108286,
       "bulk shot": 0.0003687792242687295,
       "rgate": 6.69343976191964e-09
@@ -5641,8 +5546,7 @@
     "noise": {
      "irn_uv_from_generators": 28.60988955293986,
      "by_kind": {
-      "channel thermal": 63.90792570936854,
-      "gate shot": 23.333980299124313,
+      "channel thermal": 87.24190600849286,
       "flicker": 12.758056213245004,
       "bulk shot": 3.777283137465789e-05,
       "rgate": 5.4307844375769275e-09
@@ -5702,8 +5606,7 @@
     "noise": {
      "irn_uv_from_generators": 213.52617256235962,
      "by_kind": {
-      "channel thermal": 65.80327861588637,
-      "gate shot": 20.892560342214026,
+      "channel thermal": 86.69583895810042,
       "flicker": 13.038824739967698,
       "bulk shot": 0.2653363017439185,
       "rgate": 1.8795954017191296e-10
@@ -5832,11 +5735,11 @@
      "span_x": 824755.8745304483
     },
     "channel thermal": {
-     "min": 60.10845814257684,
-     "min_at": "ff_125c_1v650",
-     "max": 97.76574969412734,
+     "min": 74.41268791580787,
+     "min_at": "sf_m40c_1v350",
+     "max": 99.89941432451928,
      "max_at": "ss_m40c_1v350",
-     "span_x": 1.6264890618592756
+     "span_x": 1.3425051173739035
     },
     "flicker": {
      "min": 0.10058131704075395,
@@ -5844,13 +5747,6 @@
      "max": 25.587311683317992,
      "max_at": "sf_m40c_1v350",
      "span_x": 254.3942795355366
-    },
-    "gate shot": {
-     "min": 2.1336646303919444,
-     "min_at": "ss_m40c_1v350",
-     "max": 27.295424850706194,
-     "max_at": "ff_27c_1v350",
-     "span_x": 12.79274374328085
     },
     "rgate": {
      "min": 2.2581125124685677e-13,
@@ -48903,8 +48799,7 @@
     "noise": {
      "irn_uv_from_generators": 29.195867109749152,
      "by_kind": {
-      "channel thermal": 61.55221337967506,
-      "gate shot": 27.102415865547094,
+      "channel thermal": 88.65462924522215,
       "flicker": 11.345002219584591,
       "bulk shot": 0.0003685284776604333,
       "rgate": 6.7155974137949716e-09
@@ -48970,8 +48865,7 @@
     "noise": {
      "irn_uv_from_generators": 29.575319844499106,
      "by_kind": {
-      "channel thermal": 61.12886453251498,
-      "gate shot": 26.906506672970615,
+      "channel thermal": 88.03537120548557,
       "flicker": 11.964269227246493,
       "bulk shot": 0.00035956066066089153,
       "rgate": 6.607239414448491e-09
@@ -49037,8 +48931,7 @@
     "noise": {
      "irn_uv_from_generators": 28.81688718814919,
      "by_kind": {
-      "channel thermal": 61.973614875529044,
-      "gate shot": 27.294671750881463,
+      "channel thermal": 89.2682866264105,
       "flicker": 10.731334015141085,
       "bulk shot": 0.00037935162553311385,
       "rgate": 6.8228587124209215e-09
@@ -49104,8 +48997,7 @@
     "noise": {
      "irn_uv_from_generators": 29.04129210113371,
      "by_kind": {
-      "channel thermal": 61.71351463382255,
-      "gate shot": 27.128133462574958,
+      "channel thermal": 88.84164809639753,
       "flicker": 11.157995398518306,
       "bulk shot": 0.0003564984019738692,
       "rgate": 6.682212289165641e-09
@@ -49171,8 +49063,7 @@
     "noise": {
      "irn_uv_from_generators": 29.375097241045122,
      "by_kind": {
-      "channel thermal": 61.4020221063315,
-      "gate shot": 27.03469045400003,
+      "channel thermal": 88.43671256033153,
       "flicker": 11.562909035030644,
       "bulk shot": 0.0003783979113095482,
       "rgate": 6.726527987542676e-09
@@ -49238,8 +49129,7 @@
     "noise": {
      "irn_uv_from_generators": 29.19992159383714,
      "by_kind": {
-      "channel thermal": 61.55399289758086,
-      "gate shot": 27.10019404748138,
+      "channel thermal": 88.65418694506224,
       "flicker": 11.345444900487111,
       "bulk shot": 0.00036814773682605155,
       "rgate": 6.713835627689057e-09
@@ -49305,8 +49195,7 @@
     "noise": {
      "irn_uv_from_generators": 29.194524366044902,
      "by_kind": {
-      "channel thermal": 61.55117630949058,
-      "gate shot": 27.101845823070274,
+      "channel thermal": 88.65302213256084,
       "flicker": 11.34660899166182,
       "bulk shot": 0.00036886906123103757,
       "rgate": 6.716116974201014e-09
@@ -49372,8 +49261,7 @@
     "noise": {
      "irn_uv_from_generators": 27.675072415400997,
      "by_kind": {
-      "channel thermal": 61.51440247163583,
-      "gate shot": 27.08249430048096,
+      "channel thermal": 88.59689677211678,
       "flicker": 11.402939616677749,
       "bulk shot": 0.00016360441930117695,
       "rgate": 6.78617150843279e-09
@@ -49439,8 +49327,7 @@
     "noise": {
      "irn_uv_from_generators": 31.70453121480315,
      "by_kind": {
-      "channel thermal": 61.68615784196667,
-      "gate shot": 27.03613248404006,
+      "channel thermal": 88.72229032600674,
       "flicker": 11.272883523068636,
       "bulk shot": 0.004826144401532646,
       "rgate": 6.5231400380512155e-09
@@ -49548,11 +49435,11 @@
      "span_x": 29.498863307893096
     },
     "channel thermal": {
-     "min": 61.12886453251498,
+     "min": 88.03537120548557,
      "min_at": "ss_27c_1v500",
-     "max": 61.973614875529044,
+     "max": 89.2682866264105,
      "max_at": "ff_27c_1v500",
-     "span_x": 1.0138191728158918
+     "span_x": 1.0140047733546458
     },
     "flicker": {
      "min": 10.731334015141085,
@@ -49560,13 +49447,6 @@
      "max": 11.964269227246493,
      "max_at": "ss_27c_1v500",
      "span_x": 1.1148911412472886
-    },
-    "gate shot": {
-     "min": 26.906506672970615,
-     "min_at": "ss_27c_1v500",
-     "max": 27.294671750881463,
-     "max_at": "ff_27c_1v500",
-     "span_x": 1.0144264390256497
     },
     "rgate": {
      "min": 6.5231400380512155e-09,

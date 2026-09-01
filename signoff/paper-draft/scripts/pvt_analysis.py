@@ -42,8 +42,12 @@ from tf_analysis import CORE_MIM, DRIVE, OUT, pz_map  # noqa: E402
 
 IRN_BAND = (0.5, 200.0)
 #: The generator kinds ngspice emits, grouped as `validation.md` Section 5 groups them.
+#: `igig` belongs with `idid`, not on its own: the model splits the channel thermal noise
+#: by its correlation with the induced gate noise and reports the two halves separately.
+#: It is NOT gate leakage -- the model's gate-leakage generators are `igs` and `igd`, and
+#: both are identically zero on these thick-oxide devices (`gate_leakage_probe.py`).
 KINDS = {"idid": "channel thermal", "ididedge": "channel thermal",
-         "flicker": "flicker", "igig": "gate shot", "ibd": "bulk shot"}
+         "igig": "channel thermal", "flicker": "flicker", "ibd": "bulk shot"}
 
 
 def budget(rec: dict) -> dict:

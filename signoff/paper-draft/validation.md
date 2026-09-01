@@ -409,16 +409,38 @@ generator kind:
 
 | generator | what it is | pre-layout (µV / % power) | post-layout (µV / % power) |
 |---|---|---|---|
-| `idid` | channel (weak-inversion shot) noise | 22.9082 / 61.55 % | 22.9057 / 61.55 % |
-| `igig` | gate-leakage shot noise | 15.2010 / 27.10 % | 15.1994 / 27.10 % |
+| `idid` + `igig` | **channel thermal noise** — one mechanism, which the model reports as two generators | 27.4929 / 88.66 % | 27.4898 / 88.65 % |
+| `idid` alone | the uncorrelated part of that split | 22.9082 / 61.55 % | 22.9057 / 61.55 % |
+| `igig` alone | the correlated part of that split — **not** gate leakage | 15.2010 / 27.10 % | 15.1994 / 27.10 % |
 | `flicker` | 1/f gate noise | 9.8346 / 11.34 % | 9.8339 / 11.35 % |
 | `ibd` | bulk-drain junction | 0.0560 / 0.00 % | 0.0560 / 0.00 % |
 | `rgate` | gate resistance | 0.0002 / 0.00 % | 0.0002 / 0.00 % |
 
-**The gate-leakage generator is a quarter of the noise power.**  In any normal bias regime
-`igig` is discarded; at 0.66–2.6 nA per branch, with 10–60 MΩ of transimpedance in front of
-it, it is second only to the channel.  A hand-written noise model that omits it is 1.4 dB
-optimistic on IRN before it does anything else (10·log₁₀(1/(1−0.271))).
+**`igig` is not gate leakage, in spite of the name.**  PSP103 splits the channel thermal
+noise by its correlation `c` with the induced gate noise: `idid` carries the uncorrelated
+fraction `(1 − c²)·S_id`, and the remaining `c²·S_id` is injected drain-to-source through
+an internal noise node, where it is reported under the name `igig`
+(`PSP103_module.include`: `I(NOII) <+ white_noise(nt/mig, "igig")` feeding
+`I(DI,SI) <+ migid·I(NOII)`, with `migid = c·sqid/sqig`).  The gate-side half of that same
+construct is coupled through a `d/dt` and contributes nothing in this band.  Put back
+together the channel carries **27.4929 µV, 88.66 % of
+the noise power** — and it equals the full weak-inversion shot noise `2qI_D`, which §5.3
+measures.  The correlation itself comes out at
+`c` = 0.53–0.55.
+
+The model's *actual* gate-leakage generators are `igs` and `igd`, and **both are
+identically zero here**.  The thick-oxide devices this cell is built from carry no gate
+current at all: every gate-current pre-factor in the PDK card is set to zero
+(`iginvlw = igovw = igovdw = 0`, at `t_ox` = 7.43 nm n-channel and 6.95 nm p-channel), and
+a single device biased at this cell's operating point draws a gate current of exactly zero
+while passing 6.4 nA of drain current (`scripts/gate_leakage_probe.py`).  There is no
+gate-leakage noise in this design to account for.
+
+A hand-written noise model that takes `idid` for the channel and stops there is 1.4 dB
+optimistic on IRN before it does anything else (10·log₁₀(1/(1−0.271))).  One that writes
+`S_id = 2qI_D` — the whole channel, as
+[theory.md §3.2](theory.md#32-what-the-generators-are-in-this-bias-regime) derives it —
+needs no second term.
 
 Then by device role — the answer to "which device should I make bigger":
 
@@ -450,39 +472,57 @@ injected current therefore makes
 in B — which is also why the design spends its capacitance there.  The replica branch and
 the testbench bias diode sit on the differential axis and contribute nothing measurable.
 
-And by role × generator:
+And by device × mechanism — the same budget with nothing folded away:
 
-#### pre-layout (`pre_mim`) — total 29.1990 µV
+| device | role | W/L (µm) | area (µm²) | I_D (nA) | gm (nS) | \|Z_T\| dc | channel thermal (µV) | flicker (1/f) (µV) | bulk–drain shot (µV) | gate resistance (µV) | total (µV) | % power |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `m5` | biquad-A input follower (`gm_ia`) | 16/10 | 160 | 0.663 | 16.6 | 60.1 MΩ | 12.6204 | 3.2508 | 0.0140 | 0.0000 | **13.0324** | 19.92 |
+| `m2` | biquad-A input follower (`gm_ia`) | 16/10 | 160 | 0.663 | 16.6 | 60.1 MΩ | 12.6204 | 3.2508 | 0.0140 | 0.0000 | **13.0324** | 19.92 |
+| `m10` | biquad-A internal bias sink | 24/25 | 600 | 0.663 | 18.6 | 60.1 MΩ | 12.6587 | 2.4000 | 0.0369 | 0.0001 | **12.8842** | 19.47 |
+| `m9` | biquad-A internal bias sink | 24/25 | 600 | 0.663 | 18.6 | 60.1 MΩ | 12.6587 | 2.4000 | 0.0369 | 0.0001 | **12.8842** | 19.47 |
+| `m1` | biquad-B input follower (`gm_ib`) | 4/15 | 60 | 2.646 | 62.0 | 16.1 MΩ | 5.5132 | 5.2628 | 0.0023 | 0.0000 | **7.6218** | 6.81 |
+| `m0` | biquad-B input follower (`gm_ib`) | 4/15 | 60 | 2.646 | 62.0 | 16.1 MΩ | 5.5132 | 5.2628 | 0.0023 | 0.0000 | **7.6218** | 6.81 |
+| `m15` | biquad-B shunt-feedback device (`gm_fb`) | 12/31 | 372 | 2.646 | 63.5 | 7.76 MΩ | 3.9030 | 1.1084 | 0.0022 | 0.0000 | **4.0573** | 1.93 |
+| `m14` | biquad-B shunt-feedback device (`gm_fb`) | 12/31 | 372 | 2.646 | 63.5 | 7.76 MΩ | 3.9030 | 1.1084 | 0.0022 | 0.0000 | **4.0573** | 1.93 |
+| `mstn` | current-reuse bridge (`gm_br`) | 5/33 | 165 | 2.646 | 58.8 | 8.37 MΩ | 3.1754 | 1.6093 | 0.0013 | 0.0000 | **3.5600** | 1.49 |
+| `mst` | current-reuse bridge (`gm_br`) | 5/33 | 165 | 2.646 | 58.8 | 8.37 MΩ | 3.1754 | 1.6093 | 0.0013 | 0.0000 | **3.5600** | 1.49 |
+| `m8` | biquad-A shunt-feedback device (`gm_fa`) | 1.5/45 | 68 | 1.984 | 44.7 | 14.3 kΩ | 1.6433 | 0.7184 | 0.0009 | 0.0001 | **1.7935** | 0.38 |
+| `m4` | biquad-A shunt-feedback device (`gm_fa`) | 1.5/45 | 68 | 1.984 | 44.7 | 14.3 kΩ | 1.6433 | 0.7184 | 0.0009 | 0.0001 | **1.7935** | 0.38 |
+| `mbn` | testbench bias-mirror diode | — | — | 0.662 | 18.6 | 38.4 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `r3` | replica branch, sink | 24/25 | 2400 | 2.649 | 74.4 | 9.59 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `r2` | replica branch, bridge copy | 5/33 | 165 | 2.649 | 58.8 | 4.98 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `r1` | replica branch, `gm_fb` copy | 12/31 | 372 | 2.649 | 63.6 | 4.61 Ω | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `mbp` | testbench bias device | — | — | — | — | — | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| `mbpd` | testbench bias device | — | — | — | — | — | 0.0000 | 0.0000 | 0.0000 | 0.0000 | **0.0000** | 0.00 |
+| **total** |  |  |  |  |  |  | **27.4929** | **9.8346** | **0.0560** | **0.0002** | **29.1990** | 100.00 |
 
-| role | generator | IRN contribution (µV) | % of power |
-|---|---|---|---|
-| biquad-A internal bias sink | `idid` | 14.8996 | 26.04 |
-| biquad-A input follower (`gm_ia`) | `idid` | 14.8549 | 25.88 |
-| biquad-A internal bias sink | `igig` | 9.9240 | 11.55 |
-| biquad-A input follower (`gm_ia`) | `igig` | 9.8935 | 11.48 |
-| biquad-B input follower (`gm_ib`) | `flicker` | 7.4427 | 6.50 |
-| biquad-B input follower (`gm_ib`) | `idid` | 6.5304 | 5.00 |
-| biquad-B shunt-feedback device (`gm_fb`) | `idid` | 4.6154 | 2.50 |
-| biquad-A input follower (`gm_ia`) | `flicker` | 4.5974 | 2.48 |
-| biquad-B input follower (`gm_ib`) | `igig` | 4.2597 | 2.13 |
-| current-reuse bridge (`gm_br`) | `idid` | 3.7770 | 1.67 |
-| *(all other role × generator terms)* | — | 6.3764 | 4.77 |
+Read it along a row for *which device*, down a column for *which mechanism*.  The column
+totals are the generator table above with `idid` and `igig` already summed; the rows pair
+up into the role table.  Nothing is truncated — these
+18 devices × 4 mechanisms are the entire IRN.
 
-#### post-layout (`post_lumped`) — total 29.1959 µV
+**Every signal device appears twice**, as the two halves of a differential pair
+(`m2`/`m5`, `m9`/`m10`, `m0`/`m1`, `m14`/`m15`, `mst`/`mstn`, `m4`/`m8`).  A pair sees the
+same `|Z_T|` by symmetry, and the two halves agree here to
+4.81 pV — a check on the extraction rather than a result.
 
-| role | generator | IRN contribution (µV) | % of power |
-|---|---|---|---|
-| biquad-A internal bias sink | `idid` | 14.8999 | 26.04 |
-| biquad-A input follower (`gm_ia`) | `idid` | 14.8552 | 25.89 |
-| biquad-A internal bias sink | `igig` | 9.9242 | 11.55 |
-| biquad-A input follower (`gm_ia`) | `igig` | 9.8937 | 11.48 |
-| biquad-B input follower (`gm_ib`) | `flicker` | 7.4410 | 6.50 |
-| biquad-B input follower (`gm_ib`) | `idid` | 6.5199 | 4.99 |
-| biquad-B shunt-feedback device (`gm_fb`) | `idid` | 4.6141 | 2.50 |
-| biquad-A input follower (`gm_ia`) | `flicker` | 4.5974 | 2.48 |
-| biquad-B input follower (`gm_ib`) | `igig` | 4.2529 | 2.12 |
-| current-reuse bridge (`gm_br`) | `idid` | 3.7727 | 1.67 |
-| *(all other role × generator terms)* | — | 6.3810 | 4.78 |
+**The two mechanisms rank the devices differently, and the geometry columns say why.**
+Channel noise is `2qI_D` propagated by `Z_T`, so it peaks on the biquad-A pair: `m2`/`m5`
+carry the *least* current in the cell and still lead, because their node sees
+60 MΩ.  Flicker does not scale with current at all —
+it scales with gate area — so it peaks instead on the pair containing `m0`, the
+smallest-area devices in the core at 60 µm² against
+600 µm² on the biquad-A internal bias sink.  That is the actionable
+split: the channel term is bought back with capacitance at biquad A, the flicker term with
+area on the biquad-B follower, and neither fix helps the other.
+
+The post-layout cell reproduces the table to
+10.1 nV on any single entry (`m4`, channel thermal).  Its one qualitative difference is that
+the replica branch and the bias mirror are no longer exactly on the differential axis, so
+they pick up 3.54 nV between them — 1.5e-06 % of the power, still
+nothing.  `csv/noise_by_device_and_type.csv` carries the untruncated form for all three
+DUTs, one row per device per *named* generator, each with its identified port.
+
 ### 5.3 Are the generators what they claim to be?
 
 Two per-generator sanity checks, applied to the 12 devices
@@ -500,30 +540,41 @@ carried at its measured value.)
 
 | check | expected | observed over the signal devices |
 |---|---|---|
-| channel noise against full shot noise, `S_i / 2qI_D` | ≤ 1, approaching 1 deep in saturation | 0.628 – 0.719 |
-| the same, written against `gm`: `S_i / 4kT·gm` | = (n/2)·(previous column) | 0.495 – 0.580 |
+| channel noise against full shot noise, `S_i / 2qI_D` | = 1 in weak inversion | 0.868 – 1.038 |
+| the same, written against `gm`: `S_i / 4kT·gm` | = (n/2)·(previous column) | 0.715 – 0.820 |
 | flicker slope, `d log S_i / d log f` | ≈ −1 (1/f) | -1.152 – -0.999 |
 | power-law fit residual over 1–200 Hz | small | ≤ 0.035 dB |
 
 The first row is the physical statement: the channel generator is
-**0.63–0.72× full
-shot noise `2qI_D`**.  That is a weak-inversion channel generator; the strong-inversion
-form `4kTγ·gm` with γ = 2/3 is a different law with a different bias dependence, and the
-data picks the shot-noise one.  The second row is the same measurement rewritten against `gm`, and it is a *consistency* check
+**0.87–1.04× full
+shot noise `2qI_D`** — that is, it *is* the full shot noise.  The strong-inversion form
+`4kTγ·gm` with γ = 2/3 is a different law with a different bias dependence, and the data
+picks the shot-noise one.  Both halves of the split are in this row: `idid` on its own reads
+only 0.63–0.72×,
+and the missing fraction is `igig` (§5.2), not any suppression of the shot noise.
+The second row is the same measurement rewritten against `gm`, and it is a *consistency* check
 rather than a new one: the two columns must differ by exactly `n/2`, and their measured
 ratio is
-1.249 = 2/n
-with n = 1.601,
-which matches the §1 slope factors.  The flicker slope being slightly steeper than −1 is
-the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting artifact.
+1.250 = 2/n
+with n = 1.599,
+which matches the §1 slope factors.  (That ratio is unchanged by the grouping, as it must
+be: it divides one normalisation by the other and `S_i` cancels.)  The flicker slope being
+slightly steeper than −1 is the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting
+artifact.
 
 **The port of every generator is identified from the data, not assumed**
 (`scripts/noise_analysis.py::identify_port`): for each generator the candidate device
 ports are ranked by how well `S_out/|Z_T,port|²` comes out frequency-flat (or `1/f`, for
-flicker), and the winner is taken.  Every channel-noise generator selects drain–source and
-every gate generator selects gate–source, which is what the physics predicts.  Doing it
-this way makes the port assignment a measured result rather than an assumption, and that
-is what justifies re-using the same `Z_T` for the distortion currents in §6.
+flicker), and the winner is taken.  Every channel-noise generator selects drain–source,
+which is what the physics predicts — and that includes `igig`, on 10
+of the 12 signal devices by
+1.3–8.4 dB over the best gate port.
+The other 2 have their gate at an ac ground, where the gate port
+and the drain port are the same node pair and the two candidates tie exactly.  **That
+ranking is how the mislabelling in §5.2 was caught**: a generator named for the gate that
+measures at the drain is not a gate generator.  Doing it this way makes the port assignment
+a measured result rather than an assumption, and that is what justifies re-using the same
+`Z_T` for the distortion currents in §6.
 
 `figures/noise_budget.png` plots `S_out(f)`, the sum of generators, and the top
 contributors' individual curves on one axis.

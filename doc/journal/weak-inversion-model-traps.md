@@ -21,14 +21,25 @@ killing `cgd` changes nothing at all (it is **3.1 aF** — no channel, no Miller
 path).
 
 **2. Channel noise is shot noise, not `4kTγ·gm`.** The measured generator sits at
-**0.63–0.72 × 2qI_D** across the signal devices. Written against `gm` the same
-data reads 0.50–0.58 × `4kT·gm`, and the two columns differ by exactly `n/2` as
-they must — a consistency check, not a second measurement.
+**0.87–1.04 × 2qI_D** across the signal devices — that is, at full shot noise.
+Written against `gm` the same data reads 0.72–0.82 × `4kT·gm`, and the two
+columns differ by exactly `n/2` as they must — a consistency check, not a second
+measurement. *(Corrected 2026-08-31: this read 0.63–0.72 × until the channel was
+put back together out of the two generators the model splits it into — see
+[a-generator-name-is-not-its-physics](a-generator-name-is-not-its-physics.md).
+The apparent shortfall was never shot-noise suppression.)*
 
-**3. Gate leakage is 27 % of the noise POWER.** `igig` is the generator everyone
-discards; at these currents, with 16–60 MΩ of transimpedance in front of it, it
-is second only to the channel (`idid` 62 %, `igig` 27 %, flicker 11 %). A noise
-model that omits it is **1.4 dB optimistic on IRN** before it does anything else.
+**3. The channel arrives as TWO generators, and one of them is misleadingly
+named.** The model reports `(1 − c²)·S_id` as `idid` and injects the remaining
+`c²·S_id` drain-to-source under the name `igig`, with `c` = 0.55 here. Both are
+the same generator at the same port; only their sum is `2qI_D`. Together they
+are **89 % of the IRN power** against 11 % for flicker, and a model that takes
+`idid` for the whole channel is **1.4 dB optimistic on IRN**. *(Corrected
+2026-08-31: this entry previously read `igig` as gate-leakage shot noise. There
+is no gate leakage in this cell — the gate current is exactly zero and the
+model's actual gate-leakage generators `igs`/`igd` are identically zero on these
+thick-oxide devices. See
+[a-generator-name-is-not-its-physics](a-generator-name-is-not-its-physics.md).)*
 
 **4. Distortion currents from the two halves add IN PHASE.** Under differential
 drive the N-half device's gate excursion is opposite to its P-half twin's *and*

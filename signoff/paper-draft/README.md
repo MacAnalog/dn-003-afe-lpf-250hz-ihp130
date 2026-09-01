@@ -114,7 +114,7 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 | `figures/half_circuit.png` | the DM half-circuit the algebra describes, each branch labelled with its equation symbol, the `κ` loop in red | `scripts/figures.py::fig_half_circuit` |
 | `figures/pz_plane.png` | the pole/zero plane, both conjugate members, pre- vs post-layout, cancellations hollow | `scripts/figures.py::fig_pz` |
 | `figures/bode_model_vs_sim.png` | \|H\| and phase, model over simulation, plus the residual | `scripts/figures.py::fig_bode` |
-| `figures/noise_budget.png` | `S_out(f)`, the sum of generators, and the top contributors | `scripts/figures.py::fig_noise` |
+| `figures/noise_budget.png` | `S_out(f)`, the sum of generators, and the top contributors — one colour per mechanism, so `idid` and `igig` share one | `scripts/figures.py::fig_noise` |
 | `figures/distortion.png` | HD3 vs amplitude and vs frequency, measured against the equation | `scripts/figures.py::fig_thd` |
 | `figures/iip3.png` | the two-tone ladder and the IIP3 extrapolation | `scripts/figures.py::fig_iip3` |
 | `figures/pvt_axes.png` | `fc` and both `Q` over the nine certified points, pre- and post-layout; and the 45-point box with the lost pairs marked | `scripts/figures.py::fig_pvt` |
@@ -137,6 +137,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 |---|---|---|---|
 | AC response, magnitude and phase | `csv/ac_response.csv` | `f_hz` | `mag_db_*`, `phase_deg_*` |
 | Input-referred noise vs frequency | `csv/input_referred_noise.csv` | `f_hz` | `inoise_v_per_rthz_*` |
+| the noise budget: which device, which mechanism | `csv/noise_by_device_and_type.csv` | `device` (text) | `irn_uv_rms`, `pct_of_power` |
 | Group delay | `csv/group_delay.csv` | `f_hz` | `group_delay_ms_*` |
 | THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
@@ -154,7 +155,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all nineteen, plus five points to note before
+[`csv/README.md`](csv/README.md) covers all twenty, plus five points to note before
 plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
 two halves are exported beside them, why the phase and group-delay columns are blank above
 3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not
@@ -242,6 +243,7 @@ step 6 writes.
 | `iip3_corners.py` | IIP3 over the certified axes, two amplitudes per corner (§10.2) |
 | `thd_corners.py` | the THD amplitude ladder over the certified axes (§10.3) |
 | `mc_stats.py` | how much a σ estimated from N draws is allowed to move, and the running traces that show whether it did |
+| `gate_leakage_probe.py` | one device, one load: the gate current is exactly zero, the model's gate-leakage generators `igs`/`igd` are exactly zero, and `idid` + `igig` is the full shot noise `2qI_D` (§5.2) |
 
 ---
 

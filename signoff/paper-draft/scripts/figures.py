@@ -265,16 +265,25 @@ def fig_noise(nz):
     tot = sum(by_role.values())
     items = sorted(by_role.items(), key=lambda kv: -kv[1])[:9]
     y = np.arange(len(items))
+    # `idid` and `igig` share a colour because they are the two halves of ONE channel
+    # generator (validation.md 5.2); giving them separate colours drew them as two
+    # mechanisms, which is how the "gate leakage" mislabelling stayed invisible.
+    def _colour(k: str) -> str:
+        if "idid" in k or "igig" in k:
+            return S.CYCLE[0]["color"]
+        return S.CYCLE[1]["color"] if "flicker" in k else S.CYCLE[2]["color"]
+
     ax[1].barh(y, [100 * v / tot for _k, v in items],
-               color=[S.CYCLE[0]["color"] if "idid" in k else
-                      S.CYCLE[1]["color"] if "igig" in k else
-                      S.CYCLE[2]["color"] for k, _v in items])
+               color=[_colour(k) for k, _v in items])
     ax[1].set_yticks(y)
     ax[1].set_yticklabels([k for k, _v in items], fontsize=6.4)
     ax[1].invert_yaxis()
     ax[1].set_xlabel("share of input-referred noise POWER (%)")
     ax[1].set_title("(b) where the noise comes from")
     ax[1].grid(axis="y", alpha=0)
+    S.note(ax[1], "one colour = one mechanism:\n"
+                  "  idid + igig = channel thermal\n"
+                  "  flicker separate", loc="lower right")
     S.save(fig, "noise_budget")
     plt.close(fig)
 

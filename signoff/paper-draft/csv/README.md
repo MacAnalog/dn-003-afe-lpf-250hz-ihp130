@@ -21,6 +21,7 @@ There are no comment lines, no units row and no blank first line, so the default
 | **AC response — Bode magnitude** | `ac_response.csv` | `f_hz` | `mag_db_*` |
 | **AC response — Bode phase** | `ac_response.csv` | `f_hz` | `phase_deg_*` |
 | **Input-referred noise vs frequency** | `input_referred_noise.csv` | `f_hz` | `inoise_v_per_rthz_*` |
+| **Where the noise comes from — device by device** | `noise_by_device_and_type.csv` | `device` (text) | `irn_uv_rms`, `pct_of_power` |
 | **Group delay** | `group_delay.csv` | `f_hz` | `group_delay_ms_*` |
 | **THD / HD3 vs amplitude** | `thd_vs_amplitude.csv` | `vpp_diff_v` or `ampl_v` | `thd_db_*`, `hd3_db_*` |
 | **HD2 vs amplitude** | `thd_vs_amplitude.csv` | `vpp_diff_v` or `ampl_v` | `hd2_db_*` |
@@ -56,6 +57,16 @@ The remaining files support those:
   and `imd3_line_dbvp_*` (slope 3) against `x_dbvp_*`; they meet at the published intercept.
 * `ac_response_model.csv` — the closed-form model next to the simulation, the data behind
   `figures/bode_model_vs_sim.png`.  Columns come in `_sim_` / `_model_` pairs.
+* `noise_by_device_and_type.csv` — the noise budget of
+  [`../validation.md` §5.2](../validation.md#52-where-the-noise-comes-from) with nothing
+  folded away: one row per DUT per device per *named* generator, 79 generators on 18
+  devices, for `pre_ideal`, `pre_mim` and `post_lumped`.  `mechanism` is the physical
+  grouping — note that `idid` and `igig` are two halves of ONE channel thermal generator
+  and both carry `mechanism = channel_thermal`; `igig` is **not** gate leakage, and this
+  cell has none.  `pct_of_power` sums to 100 within each DUT.  `port` is the noise port
+  the data identified for that generator, and `z_dc_ohm` is that port's transimpedance to
+  the differential output, which is what turns a device current into output noise.
+  `post_pex` has no per-generator decomposition and is absent, exactly as in §5.2.
 * `rejection_mismatch_draws.csv` — each mismatch draw's CMRR and PSRR at the four spot
   frequencies the tables quote, next to its offset.  Use it for a histogram; use
   `rejection_mismatch_curves.csv` for the band against frequency.
@@ -74,7 +85,9 @@ Every name ends in the DUT it was measured on:
 | `_post_pex` | **post-layout DUT of record** — the extracted layout |
 | `_post_lumped` | post-layout parasitics as explicit capacitor cards (proven equivalent to `_post_pex`; it is what the symbolic model is evaluated on) |
 
-`ac_response.csv`, `input_referred_noise.csv` and `group_delay.csv` carry all four.  The
+`ac_response.csv`, `input_referred_noise.csv` and `group_delay.csv` carry all four.
+`noise_by_device_and_type.csv` names the DUT in a `dut` column instead of a suffix,
+because every one of its rows is a separate measurement rather than a separate curve.  The
 distortion and two-tone files carry `_pre_mim` and `_post_pex` only — the two DUTs the
 transient benches ran on — except `thd_vs_frequency_43p75mvpp.csv`, which is `_pre_mim`
 alone.
@@ -85,9 +98,10 @@ Phase is in degrees and **negative means lag**, as in the pack's figures.
 
 ## Five things worth knowing before you plot
 
-**The corner files have a text first column.**  `pvt_certified_axes.csv`,
+**Some files have text columns.**  `pvt_certified_axes.csv`,
 `pvt_cert_box.csv` and `iip3_corners.csv` start with `corner`, `process` — corner names,
-not numbers.  Veusz imports those as text datasets, which is what you want: use them as
+not numbers.  `noise_by_device_and_type.csv` is more so: it is a categorical table rather
+than a curve, with six text columns, meant to be sorted or pivoted rather than plotted.  Veusz imports those as text datasets, which is what you want: use them as
 point labels, and plot against the row index or against `temp_c` / `vdd_v`, which are
 numeric.  `pvt_cert_box.csv` also carries blank `q_lo` / `q_hi` cells at the seven points
 that have lost a complex pole pair — the gap is the finding, so those rows are kept rather
