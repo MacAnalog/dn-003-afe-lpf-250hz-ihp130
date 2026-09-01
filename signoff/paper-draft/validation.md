@@ -834,6 +834,99 @@ constraint was found).
 
 `figures/distortion.png` and `figures/iip3.png` plot §6.1–6.3.
 
+### 6.5 The extracted cell over the whole band, and at its worst frequency
+
+Everything in this subsection is measured on **`post_pex` alone** — the full post-layout
+parasitic extraction, `layout/H12-pdk-cap/asbuilt/core_pex.sp`, spliced into the bench
+whole: 36 device instances and every parasitic R
+and C the extractor produced, nothing lumped and nothing substituted.  So these numbers
+need no equivalence argument of any kind.  The sweeps were asked for directly: THD
+against frequency from 20 to 300 Hz, then an amplitude sweep at whichever frequency comes
+out worst, with HD2 and HD3 reported at every point
+(`scripts/pex_distortion_sweeps.py`).  §7 is the DUT table; the reason the *rest* of the
+pack quotes some results on a lumped stand-in is stated there, and it never applies here.
+
+**The drive is 50 mVpp differential.**  The request said "50 Vpp", which
+cannot be meant literally on a 1.5 V rail — the cell hard-compresses by 0.35 Vpp
+(§6.1) — so it is read as **50 mVpp**, which is the same number with the unit
+corrected and sits inside the cubic region, between the pack's two existing profile drives
+of 43.75 and 175 mVpp.  Re-running at any other drive is one command.
+
+| f_in (Hz) | THD (dB) | HD3 (dB) | HD2 (dB) | V_out fund (mVpp) | 3·f_in (Hz) |
+|---|---|---|---|---|---|
+| 20 | -90.718 | -92.082 | -116.631 | 49.956 | 60 |
+| 35 | -80.302 | -80.353 | -112.024 | 49.960 | 105 |
+| 50 | -73.350 | -73.359 | -106.782 | 49.958 | 150 |
+| 65 | -62.674 | -62.677 | -98.038 | 49.941 | 195 |
+| 80 | -53.712 | -53.713 | -101.973 | 49.905 | 240 |
+| 100 | -47.688 | -47.690 | -90.459 | 49.806 | 300 |
+| 125 | -43.546 | -43.548 | -89.625 | 49.494 | 375 |
+| 150 | -40.092 | -40.095 | -88.630 | 48.504 | 450 |
+| 175 | -37.230 | -37.236 | -87.014 | 45.538 | 525 |
+| 200 | -35.784 | -35.791 | -86.893 | 39.603 | 600 |
+| 250 | -36.864 | -36.869 | -84.892 | 25.980 | 750 |
+| 300 | -40.050 | -40.053 | -86.179 | 16.125 | 900 |
+
+**Worst THD is -35.78 dB at 200 Hz**, and the profile is not
+monotonic: it degrades by 54.9 dB from
+20 Hz to 200 Hz, then *improves* again by
+4.3 dB out to 300 Hz.  Both halves have
+the same cause and it is not a change in the cell.  Distortion rises with frequency
+because a nano-amp-biased follower is slew limited — the same mechanism §6.2 measures as
+the `ω²` law — and it falls again past the corner because the *fundamental itself* is in
+the rolloff: the output fundamental drops from 50.0 mVpp at
+20 Hz to 16.1 mVpp at 300 Hz,
+so the cell's internal nodes see progressively less signal to distort.  The `3·f_in`
+column is there for the same reason: above ~83 Hz the third harmonic is already past
+`f_c`, so what the DFT sees at the output is the harmonic the cell generated **minus the
+filter's own attenuation of it**.  These numbers are therefore *distortion at the output*
+— what a downstream stage actually receives, which is the useful engineering quantity —
+and not a measurement of the cell's nonlinearity in isolation.
+
+**None of it is a pass/fail.**  The S7 spec point is 175 mVpp at 50 Hz, where the same
+DUT measures -49.73 dB (§6.1).  A THD profile
+above 50 Hz is informative by the bench's own definition (`lab.thd`), because a filter
+whose corner is 250 Hz is not required to be linear at 200 Hz on a nano-amp bias.
+
+#### The amplitude sweep at 200 Hz
+
+| V_in (mVpp diff) | THD (dB) | HD3 (dB) | HD2 (dB) | V_out fund (mVpp) |
+|---|---|---|---|---|
+| 43.75 | -38.058 | -38.062 | -87.832 | 36.026 |
+| 50 | -35.784 | -35.791 | -86.893 | 39.603 |
+| 87.5 | -27.693 | -27.731 | -80.459 | 50.028 |
+| 175 | -21.427 | -21.527 | -73.768 | 50.739 |
+| 350 | -17.170 | -17.307 | -68.227 | 45.899 |
+| 525 | -15.443 | -15.610 | -65.312 | 43.724 |
+| 700 | -14.972 | -15.189 | -64.116 | 45.150 |
+
+**The bottom of this ladder is still cubic; the rest of it is slew limited.**  HD3 climbs
+**39.2 dB/decade** of drive over the lowest rung — the `A²` law's
+40 dB/decade, so even at the worst frequency the cell is still behaving cubically at
+43.75–50 mVpp —
+and then leaves it: 33, 21, 14, 10, 3 dB/decade on the rungs
+above, so by 525 mVpp the third harmonic has almost
+stopped responding to drive at all.  The output says the same thing more directly: above
+**87.5 mVpp** the fundamental stops following
+the input, staying between 43.7 and 50.7 mVpp
+while the drive rises a further **8×**.  That is a slew-rate ceiling — the
+peak an output can trace is `SR/ω`, independent of how hard it is driven — and it is why
+this ladder must not be read as an `A²`-law failure above its first rung: the law is not
+in force there.  The `A²` fit, the −40 dB THD crossing and the HD3 = −60 dB crossing all
+stay where §6.1 puts them, at the 50 Hz spec frequency, on the uncompressed rows.
+
+**HD2 stays at the floor throughout** — worst -64.1 dB over all
+19 points, and its *tightest* margin below HD3
+anywhere in either sweep is **24.5 dB** (at 20 Hz,
+50 mVpp).  That is the balanced-differential cancellation
+holding on the *extracted* netlist, parasitic mismatch included, and it is the reason the
+pack quotes HD3 rather than HD2 everywhere: on this cell an HD2 that climbs would be
+evidence of an asymmetry, not of a distortion mechanism.
+
+`csv/thd_vs_frequency_pex_50mvpp.csv` and
+`csv/thd_vs_amplitude_pex_200hz.csv` carry every point,
+including the full 2nd-to-10th harmonic set.
+
 ## 7. The four DUTs, side by side
 
 Every table above is measured on one of four netlists.  They are all the *same cell*; they

@@ -871,7 +871,7 @@ def _gm_shift_pct() -> float:
         if k in post and v.get("gm")
     )
 
-def sec_lin(la: dict, lin: dict, sp_: dict) -> str:
+def sec_lin(la: dict, lin: dict, sp_: dict, ps: dict) -> str:
     a = la["amplitude_law"]
     xc = a["hd3_crossing"]
     pr = jload("hd3_crossing_probe.json")
@@ -916,6 +916,49 @@ def sec_lin(la: dict, lin: dict, sp_: dict) -> str:
                [[f"{p['fin']:.0f}", f"{p['thd_db']:.3f}", f"{q['thd_db']:.3f}",
                  f"{p['hd3_db']:.3f}", f"{q['hd3_db']:.3f}", f"{p['out_fund_vpp']:.5f}"]
                 for p, q in zip(lin["thd_profile"]["pre_mim"], lin["thd_profile"]["post_pex"])])
+
+    # --- 6.5, the extracted cell over the whole band -------------------------------
+    pxv = ps["profile_vpp_diff"]
+    pxw = ps["worst_fin_hz"]
+    pxprof = tbl(["f_in (Hz)", "THD (dB)", "HD3 (dB)", "HD2 (dB)", "V_out fund (mVpp)",
+                  "3·f_in (Hz)"],
+                 [[f"{r['fin']:.0f}", f"{r['thd_db']:.3f}", f"{r['hd3_db']:.3f}",
+                   f"{r['hd2_db']:.3f}", f"{r['out_fund_vpp'] * 1e3:.3f}",
+                   f"{3 * r['fin']:.0f}"] for r in ps["profile"]])
+    pxlad = tbl(["V_in (mVpp diff)", "THD (dB)", "HD3 (dB)", "HD2 (dB)",
+                 "V_out fund (mVpp)"],
+                [[f"{r['vpp_diff'] * 1e3:.5g}", f"{r['thd_db']:.3f}", f"{r['hd3_db']:.3f}",
+                  f"{r['hd2_db']:.3f}", f"{r['out_fund_vpp'] * 1e3:.3f}"]
+                 for r in ps["ladder"]])
+    px20 = ps["profile"][0]
+    pxwr = max(ps["profile"], key=lambda r: r["thd_db"])
+    pxend = ps["profile"][-1]
+    # The two lowest rungs of the ladder at the worst frequency: HD3 in dBc rises
+    # 40 dB/decade of drive while the cubic law holds, so the measured rise says
+    # whether it still does there.
+    def _pxslope(i):
+        a_, b_ = ps["ladder"][i], ps["ladder"][i + 1]
+        return ((b_["hd3_db"] - a_["hd3_db"])
+                / math.log10(b_["vpp_diff"] / a_["vpp_diff"]))
+
+    pxslopes = [_pxslope(i) for i in range(len(ps["ladder"]) - 1)]
+    # Where the ladder is still on the A^2 law and where it has left it: the first rung
+    # whose slope falls more than 5 dB/decade short of 40 is the break, quoted rather
+    # than eyeballed.
+    pxbreak = next((i for i, v in enumerate(pxslopes) if v < 35.0), len(pxslopes))
+    # Where the OUTPUT stops growing: the earliest rung from which no later rung exceeds
+    # it by more than 10 %.  Measured off the data rather than read off the table, so the
+    # sentence below cannot drift from it.
+    _out = [r["out_fund_vpp"] for r in ps["ladder"]]
+    pxflat = next(k for k in range(len(_out))
+                  if all(v <= 1.10 * _out[k] for v in _out[k:]))
+    pxclamp = _out[pxflat:]
+    pxdrive_x = ps["ladder"][-1]["vpp_diff"] / ps["ladder"][pxflat]["vpp_diff"]
+    # The tightest HD2/HD3 separation anywhere in either sweep, so the HD2 claim is a
+    # worst case rather than a typical one.
+    pxsep, pxsep_at = min(((r["hd3_db"] - r["hd2_db"], r)
+                           for r in ps["profile"] + ps["ladder"]), key=lambda t: t[0])
+    pxhd2 = max(r["hd2_db"] for r in ps["profile"] + ps["ladder"])
     return f"""## 6. Linearity — HD3, THD, IMD3, IIP3
 
 [theory.md §4](theory.md#4-the-distortion-equation) derives the distortion equation from
@@ -1145,6 +1188,78 @@ resulting IMD3 is scalloping, not distortion (observed once at −0.79 dBc, whic
 constraint was found).
 
 `figures/distortion.png` and `figures/iip3.png` plot §6.1–6.3.
+
+### 6.5 The extracted cell over the whole band, and at its worst frequency
+
+Everything in this subsection is measured on **`post_pex` alone** — the full post-layout
+parasitic extraction, `layout/H12-pdk-cap/asbuilt/core_pex.sp`, spliced into the bench
+whole: {len(jload("bench_post_pex.json")["op"])} device instances and every parasitic R
+and C the extractor produced, nothing lumped and nothing substituted.  So these numbers
+need no equivalence argument of any kind.  The sweeps were asked for directly: THD
+against frequency from 20 to 300 Hz, then an amplitude sweep at whichever frequency comes
+out worst, with HD2 and HD3 reported at every point
+(`scripts/pex_distortion_sweeps.py`).  §7 is the DUT table; the reason the *rest* of the
+pack quotes some results on a lumped stand-in is stated there, and it never applies here.
+
+**The drive is {pxv * 1e3:.0f} mVpp differential.**  The request said "50 Vpp", which
+cannot be meant literally on a {1.5:.1f} V rail — the cell hard-compresses by 0.35 Vpp
+(§6.1) — so it is read as **{pxv * 1e3:.0f} mVpp**, which is the same number with the unit
+corrected and sits inside the cubic region, between the pack's two existing profile drives
+of 43.75 and 175 mVpp.  Re-running at any other drive is one command.
+
+{pxprof}
+
+**Worst THD is {pxwr['thd_db']:.2f} dB at {pxwr['fin']:.0f} Hz**, and the profile is not
+monotonic: it degrades by {pxwr['thd_db'] - px20['thd_db']:.1f} dB from
+{px20['fin']:.0f} Hz to {pxwr['fin']:.0f} Hz, then *improves* again by
+{pxwr['thd_db'] - pxend['thd_db']:.1f} dB out to {pxend['fin']:.0f} Hz.  Both halves have
+the same cause and it is not a change in the cell.  Distortion rises with frequency
+because a nano-amp-biased follower is slew limited — the same mechanism §6.2 measures as
+the `ω²` law — and it falls again past the corner because the *fundamental itself* is in
+the rolloff: the output fundamental drops from {px20['out_fund_vpp'] * 1e3:.1f} mVpp at
+{px20['fin']:.0f} Hz to {pxend['out_fund_vpp'] * 1e3:.1f} mVpp at {pxend['fin']:.0f} Hz,
+so the cell's internal nodes see progressively less signal to distort.  The `3·f_in`
+column is there for the same reason: above ~83 Hz the third harmonic is already past
+`f_c`, so what the DFT sees at the output is the harmonic the cell generated **minus the
+filter's own attenuation of it**.  These numbers are therefore *distortion at the output*
+— what a downstream stage actually receives, which is the useful engineering quantity —
+and not a measurement of the cell's nonlinearity in isolation.
+
+**None of it is a pass/fail.**  The S7 spec point is 175 mVpp at 50 Hz, where the same
+DUT measures {lin['thd_ladder']['post_pex'][2]['thd_db']:.2f} dB (§6.1).  A THD profile
+above 50 Hz is informative by the bench's own definition (`lab.thd`), because a filter
+whose corner is 250 Hz is not required to be linear at 200 Hz on a nano-amp bias.
+
+#### The amplitude sweep at {pxw:.0f} Hz
+
+{pxlad}
+
+**The bottom of this ladder is still cubic; the rest of it is slew limited.**  HD3 climbs
+**{pxslopes[0]:.1f} dB/decade** of drive over the lowest rung — the `A²` law's
+40 dB/decade, so even at the worst frequency the cell is still behaving cubically at
+{ps['ladder'][0]['vpp_diff'] * 1e3:.4g}–{ps['ladder'][1]['vpp_diff'] * 1e3:.4g} mVpp —
+and then leaves it: {', '.join(f'{v:.0f}' for v in pxslopes[1:])} dB/decade on the rungs
+above, so by {ps['ladder'][-2]['vpp_diff'] * 1e3:.0f} mVpp the third harmonic has almost
+stopped responding to drive at all.  The output says the same thing more directly: above
+**{ps['ladder'][pxflat]['vpp_diff'] * 1e3:.4g} mVpp** the fundamental stops following
+the input, staying between {min(pxclamp) * 1e3:.1f} and {max(pxclamp) * 1e3:.1f} mVpp
+while the drive rises a further **{pxdrive_x:.0f}×**.  That is a slew-rate ceiling — the
+peak an output can trace is `SR/ω`, independent of how hard it is driven — and it is why
+this ladder must not be read as an `A²`-law failure above its first rung: the law is not
+in force there.  The `A²` fit, the −40 dB THD crossing and the HD3 = −60 dB crossing all
+stay where §6.1 puts them, at the 50 Hz spec frequency, on the uncompressed rows.
+
+**HD2 stays at the floor throughout** — worst {pxhd2:.1f} dB over all
+{len(ps['profile']) + len(ps['ladder'])} points, and its *tightest* margin below HD3
+anywhere in either sweep is **{pxsep:.1f} dB** (at {pxsep_at['fin']:.0f} Hz,
+{pxsep_at['vpp_diff'] * 1e3:.4g} mVpp).  That is the balanced-differential cancellation
+holding on the *extracted* netlist, parasitic mismatch included, and it is the reason the
+pack quotes HD3 rather than HD2 everywhere: on this cell an HD2 that climbs would be
+evidence of an asymmetry, not of a distortion mechanism.
+
+`csv/thd_vs_frequency_pex_{f"{pxv * 1e3:g}".replace(".", "p")}mvpp.csv` and
+`csv/thd_vs_amplitude_pex_{f"{pxw:g}".replace(".", "p")}hz.csv` carry every point,
+including the full 2nd-to-10th harmonic set.
 """
 
 
@@ -1736,7 +1851,8 @@ The derivations these numbers check live in [theory.md](theory.md); the map from
 reviewer's request to the answers is in [README.md](README.md).
 """,
         sec_op(bench, post, la), sec_tf(tf, bs), sec_valid(tf), sec_pz(tf),
-        sec_noise(nz), sec_lin(la, lin, sp_), sec_score(bs),
+        sec_noise(nz), sec_lin(la, lin, sp_, jload("pex_distortion_sweeps.json")),
+        sec_score(bs),
         sec_pvt(pv), sec_rej(rj, pv['mismatch']['summary']), sec_gds(gr, ic, gt, lin, tc)])
     (PACK / "validation.md").write_text(body)
     print(f"wrote {PACK / 'validation.md'} ({len(body)} chars)")

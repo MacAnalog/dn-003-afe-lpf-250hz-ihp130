@@ -236,6 +236,33 @@ def harmonics(lin: dict, hd3f: dict) -> list[Path]:
     return out
 
 
+def pex_sweeps(ps: dict) -> list[Path]:
+    """The extracted cell's distortion over the band, and at the frequency that is worst.
+
+    Two files, both `post_pex` only and both carrying THD, HD3 and HD2 at every point
+    together with the output fundamental, because above the corner the fundamental is
+    itself in the rolloff and a harmonic referred to a shrinking fundamental has to be
+    read with the fundamental in view.  `scripts/pex_distortion_sweeps.py` states the
+    drive convention and why the worst point is where it is.
+    """
+    mv = f"{ps['profile_vpp_diff'] * 1e3:g}".replace(".", "p")
+    prof = {"post_pex": ps["profile"]}
+    a = write_csv(f"thd_vs_frequency_pex_{mv}mvpp.csv",
+                  [("fin_hz", [r["fin"] for r in ps["profile"]])]
+                  + _harmonic_cols(prof, "fin"))
+    hz = f"{ps['worst_fin_hz']:g}".replace(".", "p")
+    lad = {"post_pex": ps["ladder"]}
+    b = write_csv(f"thd_vs_amplitude_pex_{hz}hz.csv",
+                  [("vpp_diff_v", [r["vpp_diff"] for r in ps["ladder"]])]
+                  + _harmonic_cols(lad, "vpp_diff"))
+    worst = max(ps["profile"], key=lambda r: r["thd_db"])
+    assert worst["fin"] == ps["worst_fin_hz"], "worst frequency differs from the profile"
+    print(f"  pex sweeps: {len(ps['profile'])} frequencies at "
+          f"{ps['profile_vpp_diff'] * 1e3:g} mVpp, worst THD {worst['thd_db']:.3f} dB at "
+          f"{worst['fin']:g} Hz; {len(ps['ladder'])} amplitudes there")
+    return [a, b]
+
+
 def linearity_crossings(ana: dict) -> Path:
     """The distortion-limited drive, with the fit it was solved from -- so nobody refits.
 
@@ -602,6 +629,7 @@ def main() -> None:
     written.append(noise_by_device(load("noise.json")))
     written.append(ac_model(tf))
     written += harmonics(lin, hd3f)
+    written += pex_sweeps(load("pex_distortion_sweeps.json"))
     written += iip3(lin, ana)
     written.append(linearity_crossings(ana))
     written += pvt(load("pvt.json"))

@@ -336,6 +336,57 @@ def fig_thd(la):
     plt.close(fig)
 
 
+# ------------------------------- F4b: the extracted cell over the band and the drive --
+def fig_pex_distortion(ps):
+    """validation.md 6.5 -- post_pex only, THD/HD3/HD2 vs frequency then vs amplitude.
+
+    Both panels carry the output fundamental on a twin axis, because above the corner the
+    fundamental is itself in the rolloff: the THD curve turning back down at 250-300 Hz
+    and the HD3 slope flattening at the worst frequency are both that, not a change in
+    the cell, and a reader has to be able to see it without going to the table.
+    """
+    prof, lad = ps["profile"], ps["ladder"]
+    worst = max(prof, key=lambda r: r["thd_db"])
+    fig, ax = plt.subplots(1, 2, figsize=(S.WIDE, 2.9))
+
+    f = np.array([r["fin"] for r in prof])
+    ax[0].semilogx(f, [r["thd_db"] for r in prof], **S.CYCLE[0], label="THD (h2..h10)")
+    ax[0].semilogx(f, [r["hd3_db"] for r in prof], **S.CYCLE[1], label="HD3")
+    ax[0].semilogx(f, [r["hd2_db"] for r in prof], **{**S.CYCLE[2], "ls": "-."}, label="HD2")
+    ax[0].axvline(worst["fin"], color=S.BAD, lw=0.9, ls="--")
+    ax[0].set_xlabel("input frequency (Hz)")
+    ax[0].set_ylabel("dBc")
+    ax[0].set_title(f"(a) extracted cell, {ps['profile_vpp_diff'] * 1e3:.0f} mVpp")
+    ax[0].legend(loc="upper left")
+    t0 = ax[0].twinx()
+    t0.semilogx(f, [r["out_fund_vpp"] * 1e3 for r in prof], color=S.GREY, ls=":", lw=1.1)
+    t0.set_ylabel("output fundamental (mVpp)", color=S.GREY)
+    S.note(ax[0], f"worst THD {worst['thd_db']:.1f} dB\nat {worst['fin']:.0f} Hz\n"
+                  f"beyond it the fundamental\nitself is in the rolloff",
+           loc="lower right")
+
+    v = np.array([r["vpp_diff"] for r in lad]) * 1e3
+    ax[1].semilogx(v, [r["thd_db"] for r in lad], **S.CYCLE[0], label="THD (h2..h10)")
+    ax[1].semilogx(v, [r["hd3_db"] for r in lad], **S.CYCLE[1], label="HD3")
+    ax[1].semilogx(v, [r["hd2_db"] for r in lad], **{**S.CYCLE[2], "ls": "-."}, label="HD2")
+    ref = lad[0]
+    ax[1].semilogx(v, ref["hd3_db"] + 40 * np.log10(v / (ref["vpp_diff"] * 1e3)),
+                   color=S.GREY, ls=":", lw=1.1, label=r"$A^2$ law (40 dB/decade)")
+    ax[1].set_xlabel("differential input (mVpp)")
+    ax[1].set_ylabel("dBc")
+    ax[1].set_title(f"(b) at the worst frequency, {worst['fin']:.0f} Hz")
+    ax[1].legend(loc="upper left")
+    t1 = ax[1].twinx()
+    t1.semilogx(v, [r["out_fund_vpp"] * 1e3 for r in lad], color=S.GREY, ls=":", lw=1.1)
+    t1.set_ylabel("output fundamental (mVpp)", color=S.GREY)
+    clamp = max(r["out_fund_vpp"] for r in lad) * 1e3
+    S.note(ax[1], f"output clamps at {clamp:.0f} mVpp:\nslew limited, so the\n"
+                  r"$A^2$ law is not in force",
+           loc="lower right")
+    S.save(fig, "pex_distortion")
+    plt.close(fig)
+
+
 # ------------------------------------------------------------------ F5: IMD3 / IIP3 --
 def fig_iip3(la):
     ii = la["iip3"]["pre_mim"]
@@ -777,6 +828,7 @@ def main() -> None:
     fig_bode(tf)
     fig_noise(nz)
     fig_thd(la)
+    fig_pex_distortion(load("pex_distortion_sweeps.json"))
     fig_iip3(la)
     pv = load("pvt.json")
     fig_pvt(pv)

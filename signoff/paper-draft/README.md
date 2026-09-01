@@ -123,6 +123,7 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 | `figures/gds_residual.png` | what §6.2 leaves unexplained, and the two `g_ds` predictions against it | `scripts/figures.py::fig_residual` |
 | `figures/iip3_corners.png` | IIP3 and the measured IMD3 slope at every certified corner | `scripts/figures.py::fig_iip3_corners` |
 | `figures/thd_corners.png` | the THD amplitude ladder at every certified corner, and the margin at the spec point | `scripts/figures.py::fig_thd_corners` |
+| `figures/pex_distortion.png` | the extracted cell across 20–300 Hz, and the amplitude ladder at its worst frequency | `scripts/figures.py::fig_pex_distortion` |
 | `figures/mc_convergence.png` | running σ against draw count for both Monte Carlo populations, inside the band a σ estimated from N draws is allowed to wander in | `scripts/figures.py::fig_mc_convergence` |
 
 ---
@@ -142,6 +143,8 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 | THD / HD3 / HD2 vs amplitude | `csv/thd_vs_amplitude.csv` | `vpp_diff_v` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
 | the distortion-limited drive and the dynamic range it sets | `csv/linearity_crossings.csv` | `target_db` | `vpp_diff_v`, `dr_db` |
 | THD / HD3 / HD2 vs frequency | `csv/thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*`, `hd2_db_*` |
+| the extracted cell across 20–300 Hz (§6.5) | `csv/thd_vs_frequency_pex_50mvpp.csv` | `fin_hz` | `thd_db_post_pex`, `hd3_db_post_pex`, `hd2_db_post_pex` |
+| the amplitude ladder at its worst frequency (§6.5) | `csv/thd_vs_amplitude_pex_200hz.csv` | `vpp_diff_v` | `thd_db_post_pex`, `hd3_db_post_pex`, `hd2_db_post_pex` |
 | IIP3, output dBVp vs input dBVp | `csv/iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
 | `fc` and `Q` over the certified axes, pre- and post-layout | `csv/pvt_certified_axes.csv` | `corner` | `fc_hz_*`, `q_lo_*`, `q_hi_*` |
 | the same over the 45-point box | `csv/pvt_cert_box.csv` | `corner` | `fc_hz`, `q_hi`, `n_complex_pairs` |
@@ -156,7 +159,7 @@ end with the DUT (`_pre_mim`, `_post_pex`, …).
 Four more files support those: the modelled Bode curves that overlay the simulated
 ones, the harmonic-vs-frequency sweep repeated at the small-signal drive, the 1:1 / 3:1
 IIP3 extrapolation lines, and the per-draw rejection samples.
-[`csv/README.md`](csv/README.md) covers all twenty-one, plus five points to note before
+[`csv/README.md`](csv/README.md) covers all twenty-three, plus five points to note before
 plotting: why the corner files carry a text column, that CMRR and PSRR are ratios whose
 two halves are exported beside them, why the phase and group-delay columns are blank above
 3 kHz, which two-tone points the published IIP3 is fitted on, and why a worst case is not
@@ -188,6 +191,9 @@ Then, from the repo root:
 .venv/bin/python signoff/paper-draft/scripts/linearity_runs.py
 .venv/bin/python signoff/paper-draft/scripts/twotone_spacing.py
 .venv/bin/python signoff/paper-draft/scripts/hd3_vs_fin.py
+#    ...and the reviewer sweeps of §6.5: 20-300 Hz on the extracted netlist, then an
+#    amplitude ladder at the frequency that comes out worst  (~5 min)
+.venv/bin/python signoff/paper-draft/scripts/pex_distortion_sweeps.py
 # 3. symbolic lane -- transfer function, poles/zeros, noise, distortion   (~8 min)
 PF=../../spicexplorer-platform/.venv/bin/python
 $PF signoff/paper-draft/scripts/tf_analysis.py
@@ -236,6 +242,7 @@ step 6 writes.
 | `tf_analysis.py` | the symbolic `H(s)`, the factorisation proof, the pole/zero locations, the capacitance ablation, the validation and the sim-only fit |
 | `noise_analysis.py` | per-generator port identification, the noise equation, the closure and the transimpedance cross-check |
 | `linearity_runs.py`, `twotone_spacing.py`, `hd3_vs_fin.py` | the transient benches |
+| `pex_distortion_sweeps.py` | §6.5: THD/HD2/HD3 across 20–300 Hz on the extracted netlist, then the amplitude ladder at the worst frequency |
 | `linearity_analysis.py` | the HD3 model, the amplitude/frequency laws, the memoryless test, IIP3 |
 | `report.py` | renders `validation.md` |
 | `figures.py` | renders `figures/` |
@@ -254,7 +261,8 @@ step 6 writes.
 ## 6. What is committed, and what is regenerated
 
 Committed: the scripts, the figures, the CSVs, `validation.md`, `theory.md`, and the small
-analysis JSON (`tf.json`, `noise.json`, `linearity*.json`, `twotone_spacing.json`, `hd3_vs_fin.json`,
+analysis JSON (`tf.json`, `noise.json`, `linearity*.json`, `pex_distortion_sweeps.json`,
+`twotone_spacing.json`, `hd3_vs_fin.json`,
 `post_lumped_core.sp`, and for §8–§10 `pvt.json`, `psrr_cmrr.json`, `gds_taylor.json`,
 `gds_residual.json`, `iip3_corners.json`, `thd_corners.json`, `pvt_index_*.json`, `mc_index_*.json`).  **Not committed**: `data/bench_*.json` — the raw op + ac + noise
 vectors, 2.7 MB for the four nominal DUTs and ~90 MB more for the 156 per-corner and
