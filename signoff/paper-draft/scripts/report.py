@@ -69,10 +69,65 @@ def _roles_by_share(d: dict) -> list:
     return [k for k, _ in sorted(agg.items(), key=lambda kv: -kv[1])]
 
 
-def _gen_cell(d: dict, gen: str) -> str:
+def _gen_cell(d: dict, gen) -> str:
+    """Integrated IRN and share of the noise POWER, for one generator or for a
+    GROUP of them.  The group form exists because the model splits the channel
+    thermal noise across two named generators (`idid` + `igig`, section 5.2) and
+    the physical quantity is their sum."""
+    gens = (gen,) if isinstance(gen, str) else tuple(gen)
     tot = sum(r["irn_uv_rms"] ** 2 for r in d["rows"])
-    p = sum(r["irn_uv_rms"] ** 2 for r in d["rows"] if r["gen"] == gen)
+    p = sum(r["irn_uv_rms"] ** 2 for r in d["rows"] if r["gen"] in gens)
     return f"{p ** 0.5:.4f} / {100 * p / tot:.2f} %"
+
+
+def _sig_rows(d: dict) -> list:
+    """Generators whose differential transimpedance is non-degenerate.  1 kOhm is four
+    orders below the smallest signal-path `Z_T` and four above the largest axis one, so
+    the split is unambiguous rather than tuned."""
+    return [r for r in d["rows"] if r.get("modelled") and r["z_dc_gohm"] >= 1e-6]
+
+
+def _channel_by_device(d: dict) -> dict:
+    """Per device, the channel thermal noise as ONE generator: `idid` + `igig`.
+
+    The model reports the channel in two pieces split by its correlation with the induced
+    gate noise (section 5.2).  Both normalisations below divide by the same per-device
+    constant -- `2qI_D` or `4kT*gm` -- so the two pieces simply add."""
+    by: dict = {}
+    for r in _sig_rows(d):
+        if r["gen"] in ("idid", "igig"):
+            by.setdefault(r["inst"], []).append(r)
+    out = {}
+    for inst, rs in by.items():
+        si = sum(r["si_at_10hz_a2_hz"] for r in rs)
+        igig = sum(r["si_at_10hz_a2_hz"] for r in rs if r["gen"] == "igig")
+        out[inst] = {"si_over_2qid": sum(r["si_over_2qid"] for r in rs),
+                     "si_over_4ktgm": sum(r["si_over_4ktgm"] for r in rs),
+                     "c_igid": (igig / si) ** 0.5}
+    return out
+
+
+def _igig_port_evidence(d: dict) -> tuple[float, float, int, int]:
+    """How decisively `igig` picks a DRAIN port over any gate port: (lo, hi, n, n_tied).
+
+    This is the measurement that catches the name.  It is decisive only where the two
+    candidates are electrically distinct: on a device whose gate sits at an ac ground the
+    gate port IS the drain port as far as `Z_T` is concerned, the margin collapses to
+    zero, and the test neither can nor needs to separate them."""
+    m = []
+    for r in _sig_rows(d):
+        if r["gen"] != "igig":
+            continue
+        gate = min(c["dev_db"] for c in r["port_ranking"] if "g" in c["port"])
+        m.append(gate - r["fit_dev_db"])
+    dec = [x for x in m if x >= 0.01]
+    return min(dec), max(dec), len(dec), len(m) - len(dec)
+
+
+def _c_igid(d: dict) -> tuple[float, float]:
+    """The measured channel/induced-gate correlation, min and max over signal devices."""
+    cs = [v["c_igid"] for v in _channel_by_device(d).values()]
+    return min(cs), max(cs)
 
 
 def tbl(head: list[str], rows: list[list[str]]) -> str:
@@ -499,17 +554,42 @@ Integrated 0.5–200 Hz, input-referred.  Percentages are of total IRN **power**
 generator kind:
 
 {tbl(["generator", "what it is"] + [f"{lab} (µV / % power)" for _, lab in CASES],
-     [[f"`{g}`", txt] + [_gen_cell(nz[k], g) for k, _ in CASES]
-      for g, txt in (("idid", "channel (weak-inversion shot) noise"),
-                     ("igig", "gate-leakage shot noise"),
-                     ("flicker", "1/f gate noise"),
-                     ("ibd", "bulk-drain junction"),
-                     ("rgate", "gate resistance"))])}
+     [[name, txt] + [_gen_cell(nz[k], g) for k, _ in CASES]
+      for g, name, txt in ((("idid", "igig"), "`idid` + `igig`",
+                            "**channel thermal noise** — one mechanism, which the model "
+                            "reports as two generators"),
+                           ("idid", "`idid` alone", "the uncorrelated part of that split"),
+                           ("igig", "`igig` alone",
+                            "the correlated part of that split — **not** gate leakage"),
+                           ("flicker", "`flicker`", "1/f gate noise"),
+                           ("ibd", "`ibd`", "bulk-drain junction"),
+                           ("rgate", "`rgate`", "gate resistance"))])}
 
-**The gate-leakage generator is a quarter of the noise power.**  In any normal bias regime
-`igig` is discarded; at 0.66–2.6 nA per branch, with 10–60 MΩ of transimpedance in front of
-it, it is second only to the channel.  A hand-written noise model that omits it is 1.4 dB
-optimistic on IRN before it does anything else (10·log₁₀(1/(1−0.271))).
+**`igig` is not gate leakage, in spite of the name.**  PSP103 splits the channel thermal
+noise by its correlation `c` with the induced gate noise: `idid` carries the uncorrelated
+fraction `(1 − c²)·S_id`, and the remaining `c²·S_id` is injected drain-to-source through
+an internal noise node, where it is reported under the name `igig`
+(`PSP103_module.include`: `I(NOII) <+ white_noise(nt/mig, "igig")` feeding
+`I(DI,SI) <+ migid·I(NOII)`, with `migid = c·sqid/sqig`).  The gate-side half of that same
+construct is coupled through a `d/dt` and contributes nothing in this band.  Put back
+together the channel carries **{_gen_cell(nz['pre_mim'], ('idid', 'igig')).replace(' / ', ' µV, ')} of
+the noise power** — and it equals the full weak-inversion shot noise `2qI_D`, which §5.3
+measures.  The correlation itself comes out at
+`c` = {_c_igid(nz['pre_mim'])[0]:.2f}–{_c_igid(nz['pre_mim'])[1]:.2f}.
+
+The model's *actual* gate-leakage generators are `igs` and `igd`, and **both are
+identically zero here**.  The thick-oxide devices this cell is built from carry no gate
+current at all: every gate-current pre-factor in the PDK card is set to zero
+(`iginvlw = igovw = igovdw = 0`, at `t_ox` = 7.43 nm n-channel and 6.95 nm p-channel), and
+a single device biased at this cell's operating point draws a gate current of exactly zero
+while passing 6.4 nA of drain current (`scripts/gate_leakage_probe.py`).  There is no
+gate-leakage noise in this design to account for.
+
+A hand-written noise model that takes `idid` for the channel and stops there is 1.4 dB
+optimistic on IRN before it does anything else (10·log₁₀(1/(1−0.271))).  One that writes
+`S_id = 2qI_D` — the whole channel, as
+[theory.md §3.2](theory.md#32-what-the-generators-are-in-this-bias-regime) derives it —
+needs no second term.
 
 Then by device role — the answer to "which device should I make bigger":
 
@@ -562,6 +642,7 @@ And by role × generator:
     tot = sum(r["irn_uv_rms"] ** 2 for r in d["rows"])
     unmod_p = sum(r["irn_uv_rms"] ** 2 for r in d["rows"] if not r.get("modelled"))
     axis_p = sum(r["irn_uv_rms"] ** 2 for r in axis)
+    chan = list(_channel_by_device(d).values())   # `idid` + `igig` per device, sec 5.2
     idid = [r for r in sig if r["gen"] == "idid"]
     fl = [r for r in sig if r["gen"] == "flicker"]
     return "\n".join(out) + f"""### 5.3 Are the generators what they claim to be?
@@ -581,34 +662,45 @@ carried at its measured value.)
 
 {tbl(["check", "expected", "observed over the signal devices"],
      [["channel noise against full shot noise, `S_i / 2qI_D`",
-       "≤ 1, approaching 1 deep in saturation",
-       f"{min(r['si_over_2qid'] for r in idid):.3f} – {max(r['si_over_2qid'] for r in idid):.3f}"],
+       "= 1 in weak inversion",
+       f"{min(r['si_over_2qid'] for r in chan):.3f} – {max(r['si_over_2qid'] for r in chan):.3f}"],
       ["the same, written against `gm`: `S_i / 4kT·gm`", "= (n/2)·(previous column)",
-       f"{min(r['si_over_4ktgm'] for r in idid):.3f} – {max(r['si_over_4ktgm'] for r in idid):.3f}"],
+       f"{min(r['si_over_4ktgm'] for r in chan):.3f} – {max(r['si_over_4ktgm'] for r in chan):.3f}"],
       ["flicker slope, `d log S_i / d log f`", "≈ −1 (1/f)",
        f"{min(r['fit_slope'] for r in fl):.3f} – {max(r['fit_slope'] for r in fl):.3f}"],
       ["power-law fit residual over 1–200 Hz", "small",
        f"≤ {max(abs(r['fit_dev_db']) for r in sig):.3f} dB"]])}
 
 The first row is the physical statement: the channel generator is
-**{min(r['si_over_2qid'] for r in idid):.2f}–{max(r['si_over_2qid'] for r in idid):.2f}× full
-shot noise `2qI_D`**.  That is a weak-inversion channel generator; the strong-inversion
-form `4kTγ·gm` with γ = 2/3 is a different law with a different bias dependence, and the
-data picks the shot-noise one.  The second row is the same measurement rewritten against `gm`, and it is a *consistency* check
+**{min(r['si_over_2qid'] for r in chan):.2f}–{max(r['si_over_2qid'] for r in chan):.2f}× full
+shot noise `2qI_D`** — that is, it *is* the full shot noise.  The strong-inversion form
+`4kTγ·gm` with γ = 2/3 is a different law with a different bias dependence, and the data
+picks the shot-noise one.  Both halves of the split are in this row: `idid` on its own reads
+only {min(r['si_over_2qid'] for r in idid):.2f}–{max(r['si_over_2qid'] for r in idid):.2f}×,
+and the missing fraction is `igig` (§5.2), not any suppression of the shot noise.
+The second row is the same measurement rewritten against `gm`, and it is a *consistency* check
 rather than a new one: the two columns must differ by exactly `n/2`, and their measured
 ratio is
-{sum(r['si_over_2qid'] for r in idid) / sum(r['si_over_4ktgm'] for r in idid):.3f} = 2/n
-with n = {2 * sum(r['si_over_4ktgm'] for r in idid) / sum(r['si_over_2qid'] for r in idid):.3f},
-which matches the §1 slope factors.  The flicker slope being slightly steeper than −1 is
-the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting artifact.
+{sum(r['si_over_2qid'] for r in chan) / sum(r['si_over_4ktgm'] for r in chan):.3f} = 2/n
+with n = {2 * sum(r['si_over_4ktgm'] for r in chan) / sum(r['si_over_2qid'] for r in chan):.3f},
+which matches the §1 slope factors.  (That ratio is unchanged by the grouping, as it must
+be: it divides one normalisation by the other and `S_i` cancels.)  The flicker slope being
+slightly steeper than −1 is the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting
+artifact.
 
 **The port of every generator is identified from the data, not assumed**
 (`scripts/noise_analysis.py::identify_port`): for each generator the candidate device
 ports are ranked by how well `S_out/|Z_T,port|²` comes out frequency-flat (or `1/f`, for
-flicker), and the winner is taken.  Every channel-noise generator selects drain–source and
-every gate generator selects gate–source, which is what the physics predicts.  Doing it
-this way makes the port assignment a measured result rather than an assumption, and that
-is what justifies re-using the same `Z_T` for the distortion currents in §6.
+flicker), and the winner is taken.  Every channel-noise generator selects drain–source,
+which is what the physics predicts — and that includes `igig`, on {_igig_port_evidence(d)[2]}
+of the {len(_channel_by_device(d))} signal devices by
+{_igig_port_evidence(d)[0]:.1f}–{_igig_port_evidence(d)[1]:.1f} dB over the best gate port.
+The other {_igig_port_evidence(d)[3]} have their gate at an ac ground, where the gate port
+and the drain port are the same node pair and the two candidates tie exactly.  **That
+ranking is how the mislabelling in §5.2 was caught**: a generator named for the gate that
+measures at the drain is not a gate generator.  Doing it this way makes the port assignment
+a measured result rather than an assumption, and that is what justifies re-using the same
+`Z_T` for the distortion currents in §6.
 
 `figures/noise_budget.png` plots `S_out(f)`, the sum of generators, and the top
 contributors' individual curves on one axis.

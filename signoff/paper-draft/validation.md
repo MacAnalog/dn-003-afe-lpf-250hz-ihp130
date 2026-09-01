@@ -409,16 +409,38 @@ generator kind:
 
 | generator | what it is | pre-layout (µV / % power) | post-layout (µV / % power) |
 |---|---|---|---|
-| `idid` | channel (weak-inversion shot) noise | 22.9082 / 61.55 % | 22.9057 / 61.55 % |
-| `igig` | gate-leakage shot noise | 15.2010 / 27.10 % | 15.1994 / 27.10 % |
+| `idid` + `igig` | **channel thermal noise** — one mechanism, which the model reports as two generators | 27.4929 / 88.66 % | 27.4898 / 88.65 % |
+| `idid` alone | the uncorrelated part of that split | 22.9082 / 61.55 % | 22.9057 / 61.55 % |
+| `igig` alone | the correlated part of that split — **not** gate leakage | 15.2010 / 27.10 % | 15.1994 / 27.10 % |
 | `flicker` | 1/f gate noise | 9.8346 / 11.34 % | 9.8339 / 11.35 % |
 | `ibd` | bulk-drain junction | 0.0560 / 0.00 % | 0.0560 / 0.00 % |
 | `rgate` | gate resistance | 0.0002 / 0.00 % | 0.0002 / 0.00 % |
 
-**The gate-leakage generator is a quarter of the noise power.**  In any normal bias regime
-`igig` is discarded; at 0.66–2.6 nA per branch, with 10–60 MΩ of transimpedance in front of
-it, it is second only to the channel.  A hand-written noise model that omits it is 1.4 dB
-optimistic on IRN before it does anything else (10·log₁₀(1/(1−0.271))).
+**`igig` is not gate leakage, in spite of the name.**  PSP103 splits the channel thermal
+noise by its correlation `c` with the induced gate noise: `idid` carries the uncorrelated
+fraction `(1 − c²)·S_id`, and the remaining `c²·S_id` is injected drain-to-source through
+an internal noise node, where it is reported under the name `igig`
+(`PSP103_module.include`: `I(NOII) <+ white_noise(nt/mig, "igig")` feeding
+`I(DI,SI) <+ migid·I(NOII)`, with `migid = c·sqid/sqig`).  The gate-side half of that same
+construct is coupled through a `d/dt` and contributes nothing in this band.  Put back
+together the channel carries **27.4929 µV, 88.66 % of
+the noise power** — and it equals the full weak-inversion shot noise `2qI_D`, which §5.3
+measures.  The correlation itself comes out at
+`c` = 0.53–0.55.
+
+The model's *actual* gate-leakage generators are `igs` and `igd`, and **both are
+identically zero here**.  The thick-oxide devices this cell is built from carry no gate
+current at all: every gate-current pre-factor in the PDK card is set to zero
+(`iginvlw = igovw = igovdw = 0`, at `t_ox` = 7.43 nm n-channel and 6.95 nm p-channel), and
+a single device biased at this cell's operating point draws a gate current of exactly zero
+while passing 6.4 nA of drain current (`scripts/gate_leakage_probe.py`).  There is no
+gate-leakage noise in this design to account for.
+
+A hand-written noise model that takes `idid` for the channel and stops there is 1.4 dB
+optimistic on IRN before it does anything else (10·log₁₀(1/(1−0.271))).  One that writes
+`S_id = 2qI_D` — the whole channel, as
+[theory.md §3.2](theory.md#32-what-the-generators-are-in-this-bias-regime) derives it —
+needs no second term.
 
 Then by device role — the answer to "which device should I make bigger":
 
@@ -500,30 +522,41 @@ carried at its measured value.)
 
 | check | expected | observed over the signal devices |
 |---|---|---|
-| channel noise against full shot noise, `S_i / 2qI_D` | ≤ 1, approaching 1 deep in saturation | 0.628 – 0.719 |
-| the same, written against `gm`: `S_i / 4kT·gm` | = (n/2)·(previous column) | 0.495 – 0.580 |
+| channel noise against full shot noise, `S_i / 2qI_D` | = 1 in weak inversion | 0.868 – 1.038 |
+| the same, written against `gm`: `S_i / 4kT·gm` | = (n/2)·(previous column) | 0.715 – 0.820 |
 | flicker slope, `d log S_i / d log f` | ≈ −1 (1/f) | -1.152 – -0.999 |
 | power-law fit residual over 1–200 Hz | small | ≤ 0.035 dB |
 
 The first row is the physical statement: the channel generator is
-**0.63–0.72× full
-shot noise `2qI_D`**.  That is a weak-inversion channel generator; the strong-inversion
-form `4kTγ·gm` with γ = 2/3 is a different law with a different bias dependence, and the
-data picks the shot-noise one.  The second row is the same measurement rewritten against `gm`, and it is a *consistency* check
+**0.87–1.04× full
+shot noise `2qI_D`** — that is, it *is* the full shot noise.  The strong-inversion form
+`4kTγ·gm` with γ = 2/3 is a different law with a different bias dependence, and the data
+picks the shot-noise one.  Both halves of the split are in this row: `idid` on its own reads
+only 0.63–0.72×,
+and the missing fraction is `igig` (§5.2), not any suppression of the shot noise.
+The second row is the same measurement rewritten against `gm`, and it is a *consistency* check
 rather than a new one: the two columns must differ by exactly `n/2`, and their measured
 ratio is
-1.249 = 2/n
-with n = 1.601,
-which matches the §1 slope factors.  The flicker slope being slightly steeper than −1 is
-the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting artifact.
+1.250 = 2/n
+with n = 1.599,
+which matches the §1 slope factors.  (That ratio is unchanged by the grouping, as it must
+be: it divides one normalisation by the other and `S_i` cancels.)  The flicker slope being
+slightly steeper than −1 is the PSP flicker model's own `f^-(1+δ)` behaviour, not a fitting
+artifact.
 
 **The port of every generator is identified from the data, not assumed**
 (`scripts/noise_analysis.py::identify_port`): for each generator the candidate device
 ports are ranked by how well `S_out/|Z_T,port|²` comes out frequency-flat (or `1/f`, for
-flicker), and the winner is taken.  Every channel-noise generator selects drain–source and
-every gate generator selects gate–source, which is what the physics predicts.  Doing it
-this way makes the port assignment a measured result rather than an assumption, and that
-is what justifies re-using the same `Z_T` for the distortion currents in §6.
+flicker), and the winner is taken.  Every channel-noise generator selects drain–source,
+which is what the physics predicts — and that includes `igig`, on 10
+of the 12 signal devices by
+1.3–8.4 dB over the best gate port.
+The other 2 have their gate at an ac ground, where the gate port
+and the drain port are the same node pair and the two candidates tie exactly.  **That
+ranking is how the mislabelling in §5.2 was caught**: a generator named for the gate that
+measures at the drain is not a gate generator.  Doing it this way makes the port assignment
+a measured result rather than an assumption, and that is what justifies re-using the same
+`Z_T` for the distortion currents in §6.
 
 `figures/noise_budget.png` plots `S_out(f)`, the sum of generators, and the top
 contributors' individual curves on one axis.

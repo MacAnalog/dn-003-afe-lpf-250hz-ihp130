@@ -345,22 +345,36 @@ independent barrier-crossing events, so the channel generator is **shot noise**:
 
 not the strong-inversion `4kT·γ·gm` with γ = ⅔.  The two forms differ in both magnitude and
 bias dependence, and [validation.md §5.3](validation.md#53-are-the-generators-what-they-claim-to-be)
-shows the data selecting the shot-noise form (`S_i/2qI_D` = 0.63–0.72, and the `gm`-referred
+shows the data selecting the shot-noise form (`S_i/2qI_D` = 0.87–1.04, and the `gm`-referred
 column differing from it by exactly `n/2` as it must).  Flicker noise adds
-`S_flicker ∝ 1/f^(1+δ)` at the gate, and the gate-current generator `igig` adds the shot
-noise of the gate leakage.  `igig` is usually neglected; at this bias it carries **27 % of
-the total IRN power**, against 62 % for the channel and 11 % for flicker.  A hand model
-that drops it reports IRN 1.4 dB below the simulated value.
+`S_flicker ∝ 1/f^(1+δ)` at the gate.
+
+**Reading `S_id` off the simulator takes two generators, not one.**  The compact model does
+not report the channel as a single number: it splits it by the correlation `c` between the
+channel noise and the induced gate noise, reporting `(1 − c²)·S_id` under the name `idid`
+and injecting the remaining `c²·S_id` drain-to-source through an internal noise node, where
+it is reported as `igig`.  Both are the same physical generator at the same port, and only
+their sum is `2qI_D`; `idid` on its own is about 0.7 of it, with `c` = 0.53–0.55 measured
+here.  Together they are **89 % of the total IRN power**, against 11 % for flicker.  A hand
+model that takes `idid` for the channel and stops there reports IRN 1.4 dB below the
+simulated value; one that writes `S_id = 2qI_D` needs no second term.
+
+**There is no gate-leakage noise in this cell.**  The name `igig` invites the opposite
+reading, and an earlier revision of this pack took it — the model's gate-leakage generators
+are `igs` and `igd`, and on these thick-oxide devices both are identically zero, because
+the PDK card sets every gate-current pre-factor to zero and a probe device draws no gate
+current at all at this bias (`scripts/gate_leakage_probe.py`).
 
 ### 3.3 Which port each generator belongs to — established, not assumed
 
 `(N1)` is only meaningful if each `S_i,k` is paired with the right `Z_T,k`.  Rather than
 assume the pairing, it is **selected from the data**: for each generator, every candidate
 device port is tried, and the one whose implied `S_i = S_out/|Z_T,port|²` best matches the
-expected spectral shape (frequency-flat for channel and gate-leakage noise, `1/f` for
-flicker) is taken, with the full ranking and the margin over the second-ranked port
-recorded (`scripts/noise_analysis.py::identify_port`).  Every channel generator selects
-drain–source and every gate generator selects gate–source.
+expected spectral shape (frequency-flat for a white generator, `1/f` for flicker) is taken,
+with the full ranking and the margin over the second-ranked port recorded
+(`scripts/noise_analysis.py::identify_port`).  Both channel generators select drain–source,
+`igig` included — which is the measurement that identified it as a channel generator in the
+first place.
 
 The same result is used in §4: the distortion current is injected at the same port, so
 **the same `Z_T,k` propagates it**, and the distortion equation has no free parameters.

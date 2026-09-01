@@ -114,7 +114,7 @@ followers' gate–source capacitance.  Post-layout the poles move to (248.18 Hz,
 | `figures/half_circuit.png` | the DM half-circuit the algebra describes, each branch labelled with its equation symbol, the `κ` loop in red | `scripts/figures.py::fig_half_circuit` |
 | `figures/pz_plane.png` | the pole/zero plane, both conjugate members, pre- vs post-layout, cancellations hollow | `scripts/figures.py::fig_pz` |
 | `figures/bode_model_vs_sim.png` | \|H\| and phase, model over simulation, plus the residual | `scripts/figures.py::fig_bode` |
-| `figures/noise_budget.png` | `S_out(f)`, the sum of generators, and the top contributors | `scripts/figures.py::fig_noise` |
+| `figures/noise_budget.png` | `S_out(f)`, the sum of generators, and the top contributors — one colour per mechanism, so `idid` and `igig` share one | `scripts/figures.py::fig_noise` |
 | `figures/distortion.png` | HD3 vs amplitude and vs frequency, measured against the equation | `scripts/figures.py::fig_thd` |
 | `figures/iip3.png` | the two-tone ladder and the IIP3 extrapolation | `scripts/figures.py::fig_iip3` |
 | `figures/pvt_axes.png` | `fc` and both `Q` over the nine certified points, pre- and post-layout; and the 45-point box with the lost pairs marked | `scripts/figures.py::fig_pvt` |
@@ -242,6 +242,7 @@ step 6 writes.
 | `iip3_corners.py` | IIP3 over the certified axes, two amplitudes per corner (§10.2) |
 | `thd_corners.py` | the THD amplitude ladder over the certified axes (§10.3) |
 | `mc_stats.py` | how much a σ estimated from N draws is allowed to move, and the running traces that show whether it did |
+| `gate_leakage_probe.py` | one device, one load: the gate current is exactly zero, the model's gate-leakage generators `igs`/`igd` are exactly zero, and `idid` + `igig` is the full shot noise `2qI_D` (§5.2) |
 
 ---
 
