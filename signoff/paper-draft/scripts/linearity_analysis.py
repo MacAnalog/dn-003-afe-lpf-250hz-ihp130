@@ -162,6 +162,9 @@ def hd3_model(fins, ampl_diff) -> dict:
                         for k, v in dev.items()}}
 
 
+#: Poles in the filter, for the figure of merit.  Fourth-order, two biquads (S1).
+N_POLES = 4
+
 #: Distortion criterion for the top of the dynamic range.  -60 dB HD3 at f_in = 50 Hz,
 #: differential drive.  Stated here because a dynamic range is only comparable against
 #: another design measured to the SAME criterion -- 1 % THD (-40 dB) is the other common
@@ -224,8 +227,10 @@ def main() -> None:
         # Dynamic range: this drive as an rms differential voltage, over the certified
         # input-referred noise of the SAME DUT.  `vpp_diff` is peak-to-peak differential,
         # so its rms is vpp/(2*sqrt(2)); the noise is already rms over 0.5-200 Hz.
-        irn = json.loads((PACK / f"data/bench_{label}.json").read_text())["scorecard"]["irn_uv"]
+        sc = json.loads((PACK / f"data/bench_{label}.json").read_text())["scorecard"]
+        irn = sc["irn_uv"]
         vrms = vpp / (2 * 2 ** 0.5)
+        dr_lin = vrms / (irn * 1e-6)
         out["amplitude_law"]["hd3_crossing"]["per_dut"][label] = {
             "vpp_diff": vpp, "v_rms": vrms,
             "slope_db_per_decade": sl, "slope_residual_db": dv,
@@ -233,7 +238,13 @@ def main() -> None:
             "bracketed": bvpp is not None,
             "bracket_vpp_diff": bvpp, "bracket_slope_db_per_decade": bsl,
             "method_spread_pct": None if bvpp is None else float(100 * (vpp / bvpp - 1)),
-            "irn_uv": irn, "dr_db": float(20 * np.log10(vrms / (irn * 1e-6))),
+            "irn_uv": irn, "dr_db": float(20 * np.log10(dr_lin)),
+            # Figure of merit, the form used for continuous-time filters:
+            # FoM = P / (N * fc * DR), J.  Small is good.  It is only comparable against
+            # a design whose DR was taken at the SAME distortion criterion.
+            "p_core_nw": sc["p_core_nw"], "fc_hz": sc["fc_hz"], "n_poles": N_POLES,
+            "fom_fj": float(sc["p_core_nw"] * 1e-9
+                            / (N_POLES * sc["fc_hz"] * dr_lin) * 1e15),
         }
 
     # ---- prediction 2: HD3 versus frequency, model vs measurement -----------------
@@ -322,7 +333,8 @@ def main() -> None:
               f"{c['vpp_diff'] * 1e3:6.2f} mVpp diff = {c['v_rms'] * 1e3:5.2f} mVrms"
               + (f" (bracket interp {c['bracket_vpp_diff'] * 1e3:.2f}, "
                  f"{c['method_spread_pct']:+.1f} %)" if c["bracketed"] else " [EXTRAPOLATED]")
-              + f"  ->  DR {c['dr_db']:.2f} dB over {c['irn_uv']:.3f} uVrms")
+              + f"  ->  DR {c['dr_db']:.2f} dB over {c['irn_uv']:.3f} uVrms, "
+              f"FoM {c['fom_fj']:.2f} fJ")
     fr = out["frequency_law"]
     print(f"HD3 vs frequency : measured slope {fr['measured_slope_db_per_decade']:.1f} "
           f"dB/decade; model error max {fr['max_err_db']:.2f} dB "

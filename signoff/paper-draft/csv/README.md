@@ -63,7 +63,10 @@ The remaining files support those:
   that cell is blank.  `dr_db` is `20·log10(vrms_v / irn_uv_rms)` against the same DUT's
   certified 0.5–200 Hz noise.  **A dynamic range is only comparable against another design
   measured to the same criterion** — this one is HD3 = −60 dB at f_in = 50 Hz, differential
-  peak-to-peak converted to rms as `V_pp/(2√2)`.
+  peak-to-peak converted to rms as `V_pp/(2√2)`.  `fom_fj` is `P/(N·f_c·DR)` in fJ and
+  inherits that criterion.  `measured_hd3_db` is the crossing **re-simulated at exactly
+  the solved drive** (`scripts/hd3_crossing_probe.py`), so `measured_err_db` says how far
+  the solved number is from a measured one rather than leaving you to trust the fit.
 * `iip3_extrapolation.csv` — the two extrapolation lines, so you need not fit anything.
   Two rows: the low-amplitude end, then the intercept.  Plot `fund_line_dbvp_*` (slope 1)
   and `imd3_line_dbvp_*` (slope 3) against `x_dbvp_*`; they meet at the published intercept.

@@ -248,6 +248,9 @@ def linearity_crossings(ana: dict) -> Path:
     """
     a = ana["amplitude_law"]
     xc = a["hd3_crossing"]
+    # The crossing was re-simulated at exactly the solved drive; carry what it measured
+    # so the column is a confirmation and not just a restatement of the fit.
+    probe = {r["dut"]: r for r in load("hd3_crossing_probe.json")["rows"]}
     rows = []
     for d, c in xc["per_dut"].items():
         assert abs(c["anchor_vpp_diff"] * 10 ** ((xc["target_db"] - c["anchor_hd3_db"])
@@ -259,7 +262,10 @@ def linearity_crossings(ana: dict) -> Path:
                      "slope_db_per_decade": c["slope_db_per_decade"],
                      "anchor_vpp_diff_v": c["anchor_vpp_diff"],
                      "anchor_db": c["anchor_hd3_db"],
-                     "irn_uv_rms": c["irn_uv"], "dr_db": c["dr_db"]})
+                     "irn_uv_rms": c["irn_uv"], "dr_db": c["dr_db"],
+                     "fom_fj": c["fom_fj"],
+                     "measured_hd3_db": probe[d]["measured_hd3_db"],
+                     "measured_err_db": probe[d]["err_db"]})
     # `points` carries only the HD3 column, so the THD anchor comes from the full ladder.
     va = a["points"][-1]["vpp_diff"]
     ta = next(r["thd_db"] for r in a["all_points"] if r["vpp_diff"] == va)
@@ -271,7 +277,8 @@ def linearity_crossings(ana: dict) -> Path:
                  "vrms_v": a["thd_minus40_vpp"] / (2 * 2 ** 0.5),
                  "bracket_vpp_diff_v": None, "slope_db_per_decade": sl,
                  "anchor_vpp_diff_v": va, "anchor_db": ta,
-                 "irn_uv_rms": None, "dr_db": None})
+                 "irn_uv_rms": None, "dr_db": None, "fom_fj": None,
+                 "measured_hd3_db": None, "measured_err_db": None})
     # The pre-layout noise this DR is built on is the same number section 5 certifies.
     nz = load("noise.json")["pre_mim"]["irn_uv_certified"]
     got = xc["per_dut"]["pre_mim"]["irn_uv"]
@@ -280,9 +287,12 @@ def linearity_crossings(ana: dict) -> Path:
     for r in rows:
         print(f"    {r['dut']:9s} {r['metric']:4s} {r['target_db']:+.0f} dB -> "
               f"{r['vpp_diff_v'] * 1e3:6.2f} mVpp"
-              + (f"   DR {r['dr_db']:.2f} dB" if r["dr_db"] else ""))
+              + (f"   measured {r['measured_hd3_db']:.3f} dB there"
+                 f"   DR {r['dr_db']:.2f} dB   FoM {r['fom_fj']:.2f} fJ"
+                 if r["dr_db"] else ""))
     keys = ("dut", "metric", "target_db", "vpp_diff_v", "vrms_v", "bracket_vpp_diff_v",
-            "slope_db_per_decade", "anchor_vpp_diff_v", "anchor_db", "irn_uv_rms", "dr_db")
+            "measured_hd3_db", "measured_err_db", "slope_db_per_decade",
+            "anchor_vpp_diff_v", "anchor_db", "irn_uv_rms", "dr_db", "fom_fj")
     return write_csv("linearity_crossings.csv", [(k, [r[k] for r in rows]) for k in keys])
 
 

@@ -193,6 +193,8 @@ PF=../../spicexplorer-platform/.venv/bin/python
 $PF signoff/paper-draft/scripts/tf_analysis.py
 $PF signoff/paper-draft/scripts/noise_analysis.py
 $PF signoff/paper-draft/scripts/linearity_analysis.py
+#    ...then confirm the §6.1 crossing by simulating at it (needs ngspice, ~30 s)
+.venv/bin/python signoff/paper-draft/scripts/hd3_crossing_probe.py
 # 4. the pack
 #    report.py is stdlib-only but needs Python >= 3.12 (it uses backslash escapes inside
 #    f-string expressions), so it runs in the REPO venv, not the platform's 3.11 one.
@@ -244,6 +246,7 @@ step 6 writes.
 | `iip3_corners.py` | IIP3 over the certified axes, two amplitudes per corner (§10.2) |
 | `thd_corners.py` | the THD amplitude ladder over the certified axes (§10.3) |
 | `mc_stats.py` | how much a σ estimated from N draws is allowed to move, and the running traces that show whether it did |
+| `hd3_crossing_probe.py` | re-simulates the §6.1 dynamic-range crossing at exactly the drive the `A²` law solved for, so the number is confirmed rather than interpolated |
 | `gate_leakage_probe.py` | one device, one load: the gate current is exactly zero, the model's gate-leakage generators `igs`/`igd` are exactly zero, and `idid` + `igig` is the full shot noise `2qI_D` (§5.2) |
 
 ---

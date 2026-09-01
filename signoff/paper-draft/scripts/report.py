@@ -229,6 +229,17 @@ def _sgn(x: float, fmt: str = ".0f") -> str:
     return format(x, fmt).replace("-", "\u2212")
 
 
+def _xrefine(xc: dict, pr: dict) -> float:
+    """How much higher, in %, the MEASURED crossing sits than the solved one.
+
+    One Newton step along the locally measured slope: the probe drove the solved
+    amplitude and read `err_db` too low, so the target is `err_db` further up a curve
+    whose local steepness is the bracket interpolation's own slope."""
+    worst = max(pr["rows"], key=lambda r: abs(r["err_db"]))
+    sl = xc["per_dut"][worst["dut"]]["bracket_slope_db_per_decade"]
+    return 100 * (10 ** (-worst["err_db"] / sl) - 1)
+
+
 def _xspread(xc: dict) -> float:
     """Worst disagreement, in %, between the fitted-law crossing and the bracket interpolation."""
     return max(abs(c["method_spread_pct"]) for c in xc["per_dut"].values() if c["bracketed"])
@@ -863,6 +874,7 @@ def _gm_shift_pct() -> float:
 def sec_lin(la: dict, lin: dict, sp_: dict) -> str:
     a = la["amplitude_law"]
     xc = a["hd3_crossing"]
+    pr = jload("hd3_crossing_probe.json")
     fq = la["frequency_law"]
     ml = la["memoryless_test"]
     det = {r["fin"]: r for r in fq["model_detail"]["rows"]}
@@ -952,16 +964,34 @@ it is **bracketed by two measured amplitudes**, so the fitted law can be checked
 plain log-linear interpolation between them rather than trusted on its own:
 
 {tbl(["DUT", f"V_in at HD3 = {_sgn(xc['target_db'])} dB (mVpp diff)", "same, mVrms",
-      "bracket interpolation (mVpp)", "IRN 0.5–200 Hz (µVrms)", "DR (dB)"],
+      "bracket interpolation (mVpp)", "IRN 0.5–200 Hz (µVrms)", "DR (dB)", "FoM (fJ)"],
      [[f"`{lab}`", f"**{c['vpp_diff'] * 1e3:.2f}**", f"{c['v_rms'] * 1e3:.2f}",
        f"{c['bracket_vpp_diff'] * 1e3:.2f} ({_sgn(c['method_spread_pct'], '+.1f')} %)"
        if c["bracketed"] else "— (extrapolated)",
-       f"{c['irn_uv']:.3f}", f"**{c['dr_db']:.2f}**"]
+       f"{c['irn_uv']:.3f}", f"**{c['dr_db']:.2f}**", f"**{c['fom_fj']:.2f}**"]
       for lab, c in xc["per_dut"].items()])}
 
 The two methods agree to {_xspread(xc):.1f} % in amplitude — under 0.25 dB of dynamic
 range — so the number does not depend on which one is used.  The post-layout row is the
 DUT of record.
+
+**Confirmed by simulation, not left as an interpolation.**  The solved drive was fed back
+into the pack's own THD instrument — the same coherent strobed transient and DFT that
+produced the ladder, driven open loop at exactly the solved amplitude with nothing re-tuned
+to make it pass (`scripts/hd3_crossing_probe.py`):
+
+{tbl(["DUT", "drive (mVpp diff)", "HD3 measured there (dB)", "error vs the target (dB)"],
+     [[f"`{r['dut']}`", f"{r['vpp_diff'] * 1e3:.2f}", f"**{_sgn(r['measured_hd3_db'], '.3f')}**",
+       _sgn(r["err_db"], "+.3f")] for r in pr["rows"]])}
+
+Both land within **{pr['worst_err_db']:.2f} dB** of the target, against a
+{pr['tol_db']:.1f} dB tolerance and a ladder whose own fit residual is
+{a['max_residual_db']:.3f} dB.  The error has a sign worth stating: it is
+**negative on both DUTs**, so the cell is *quieter* in distortion at the solved drive than
+the law predicts, the true {_sgn(xc['target_db'])} dB point sits about
+{_xrefine(xc, pr):.0f} % higher in amplitude, and the published dynamic range is therefore
+a slight **under**-estimate — roughly {20 * math.log10(1 + _xrefine(xc, pr) / 100):.2f} dB
+of it.  Conservative in the direction a claim should be conservative.
 
 **The conventions, stated because a dynamic range is only comparable against another
 design measured the same way.**  The distortion criterion is HD3, not THD, at
@@ -969,7 +999,15 @@ f_in = 50 Hz; the amplitude is **differential** peak-to-peak, converted to rms a
 `V_pp/(2√2)`; the noise is the certified input-referred value integrated over 0.5–200 Hz
 (§5), on the same DUT.  The other common convention in this class of filter is 1 % THD
 (−40 dB), which lands roughly 3× higher and would raise `DR` by about 9 dB — so a quoted
-`DR` without its criterion is not a comparable number.
+`DR` without its criterion is not a comparable number.  The figure of merit is the usual
+continuous-time-filter form, `FoM = P / (N · f_c · DR)` with `DR` linear — here
+{xc['per_dut']['post_pex']['p_core_nw']:.3f} nW over
+{xc['per_dut']['post_pex']['n_poles']} poles at
+{xc['per_dut']['post_pex']['fc_hz']:.2f} Hz, post-layout — and it inherits the same
+criterion: `FoM` goes as `1/DR`, so at the 1 % THD convention — a
+{a['thd_minus40_vpp'] / xc['per_dut']['post_pex']['vpp_diff']:.1f}× higher drive — the same
+cell would report about a third of it.  That is a statement about the convention, not
+about the filter.
 `csv/linearity_crossings.csv` carries the crossing with the slope and the anchor point it
 was solved from, so it need not be refitted.
 
