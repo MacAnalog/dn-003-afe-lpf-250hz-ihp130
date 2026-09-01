@@ -29,6 +29,8 @@ There are no comment lines, no units row and no blank first line, so the default
 | **THD / HD3 vs frequency** | `thd_vs_frequency_175mvpp.csv` | `fin_hz` | `thd_db_*`, `hd3_db_*` |
 | **HD2 vs frequency** | `thd_vs_frequency_175mvpp.csv` | `fin_hz` | `hd2_db_*` |
 | **IIP3 — output dBVp vs input dBVp** | `iip3_twotone.csv` | `pin_dbvp_*` | `pout_fund_dbvp_*`, `pout_imd3_dbvp_*` |
+| **THD / HD3 / HD2 across 20–300 Hz on the EXTRACTED cell** | `thd_vs_frequency_pex_50mvpp.csv` | `fin_hz` | `thd_db_post_pex`, `hd3_db_post_pex`, `hd2_db_post_pex` |
+| **the amplitude ladder at the worst of those frequencies** | `thd_vs_amplitude_pex_200hz.csv` | `vpp_diff_v` | `thd_db_post_pex`, `hd3_db_post_pex`, `hd2_db_post_pex` |
 
 The files behind [`../validation.md`](../validation.md) §8–§10 — PVT, mismatch, rejection
 and the corner sweeps:
