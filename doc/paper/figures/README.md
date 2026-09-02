@@ -1,13 +1,17 @@
 # Figures — what each one is, where it came from, how to regenerate it
 
-Every generated figure ships as **PNG + PDF** at 200 dpi. Every generating script
-is in `doc/paper/scripts/` and reads only committed artifacts (or re-runs the
-cell's own frozen benches). Curve/sample data that a script produced is kept in
-`data/` so a figure and a table can never drift apart.
+Every generated figure ships as **PNG + PDF** — the eight plots at 200 dpi, and
+the layout render at 600 dpi, because it is a raster of real geometry rather
+than a drawing. Every generating script is in `doc/paper/scripts/` and reads
+only committed artifacts (or re-runs the cell's own frozen benches).
+Curve/sample data that a script produced is kept in `data/` so a figure and a
+table can never drift apart.
 
-**House style** — `scripts/_style.py`, applied by every figure script:
-IEEE column widths (3.5 in single, **7.2 in** double — all eight of these have
-three or more panels, so all are double-column), 8 pt body / 9 pt panel titles,
+**House style** — `scripts/_style.py`, applied by every *plotting* script
+(`fig_layout_record.py` draws no axes and does not use it):
+IEEE column widths (3.5 in single, **7.2 in** double — all eight *plots* have
+three or more panels, so all are double-column; the layout render is not a plot
+and is sized under "Regenerating everything"), 8 pt body / 9 pt panel titles,
 `constrained_layout=True` so a figure title can never land on a panel title,
 colour paired with dash pattern *and* marker so the curves survive a grayscale
 print, and numbers carried in **legend entries or one boxed note** rather than in
@@ -26,6 +30,7 @@ Two interpreters are in play:
 |---|---|---|
 | scripts that simulate | `<repo>/.venv/bin/python`, **cwd `experiments/023-replica-bias`**, `PDK_ROOT=~/local/pdks LPF_NGSPICE=~/local/bin/ngspice` | `lab.*` resolves decks and models relative to the experiment dir |
 | scripts that only re-read artifacts | `<repo>/.venv/bin/python` from the repo root — except `fig_iterations.py`, which needs PyYAML and runs on the system `python3` | — |
+| the layout render | `<repo>/.venv/bin/python` from the repo root, **`PDK_ROOT` set** | it reads the PDK's KLayout layer-properties file, so the colours are the PDK's and not a local invention |
 
 ---
 
@@ -40,6 +45,7 @@ Two interpreters are in play:
 | `thd.png/.pdf` | `scripts/fig_thd.py` | Distortion evidence: (a) total harmonic distortion and 3rd harmonic at nine corners against the −40 dB limit, (b) the 30-draw mismatch Monte Carlo, (c) the sweep over input frequency at held drive. | `experiments/023-replica-bias/H12-pdk-cap.prelayout.json` | no |
 | `pvt_postlayout.png/.pdf` | `scripts/fig_pvt_postlayout.py` | The same three corner sets (9 / 22 / 45) re-run on the **extracted round-4 cell** and paired point for point against the schematic: (a) one corner axis at a time, (b)/(c) the 45-point grid before and after layout, (d) the coverage scoreboard. Zero of the 45 corners changes verdict. | `signoff/post-pvt/H12-pdk-cap/design.json` + `layout/H12-pdk-cap/asbuilt/core_pex.sp`; `lab.corners` | **yes** — 2 × 76 corner points, **12 s total**. `--replot` redraws from `data/postlayout_pvt.json` |
 | `area_campaign.png/.pdf` | `scripts/fig_area_campaign.py` | The two 300-trial area campaigns over the generator's knobs: (a) area vs the binding capacitance budget on `net2` for every trial that reached extraction, coloured by outcome; (b) where the 600 trials went; (c) convergence traces; (d) the cost of the dummy-row decision. | `layout/H12-pdk-cap/opt/results/{campaign_A_trials.jsonl, campaign_B_trials.jsonl, summary.json}` | no |
+| `layout_record.png/.pdf` + `layout_record_inverted.png/.pdf` | `scripts/fig_layout_record.py` | The layout of record — round 4 (`it14`) — in the PDK's own layer colours, framed on the cell bounding box plus a 2 % border: **432.02 × 527.97 µm, 228 093.6 µm²**, 2719 × 3295 px. Shipped twice: as rendered (light traces on a dark ground) and colour-inverted (a white ground, for a printed page). The viewer's grid and its automatic device/capacitor labels are **off** — they overlap and clip at the frame edge, and pin names read better in a caption than at 4 pt. | `layout/H12-pdk-cap/iterations/it14/layout.gds` (sha `1607b803d9…`) + the PDK layer properties under `$PDK_ROOT` | no |
 | `iteration_trail.png/.pdf` | `scripts/fig_iterations.py` | The 14-round designer trail: (a) area per round with the byte-identical rebuilds ringed, (b) phase max against its 330° floor, (c) cutoff inside its 245–255 Hz box, (d) extracted-capacitance count and design-rule violations — including **the one round that failed, snapshotted anyway**. | `layout/H12-pdk-cap/iterations/iterations.yaml` | no |
 
 ### Why the phase comes back to 0° — and why it is not an artifact
@@ -87,7 +93,7 @@ source path is the citation.
 | `schematic_lpf_core.png` | `signoff/post-pvt/H12-pdk-cap/lpf_core_H12pc.png` | the cell schematic of record — ISCAS Fig. 2 candidate |
 | `schematic_tb_acnoise.png` | `signoff/post-pvt/H12-pdk-cap/lpf_tb_H12pc.png` | the op + ac + noise testbench (every bench element drawn, only directives as text) |
 | `schematic_tb_thd.png` | `signoff/post-pvt/H12-pdk-cap/lpf_tb_H12pc_thd.png` | the coherent-strobed-transient S7 bench |
-| `layout_lpf_core.png` | `layout/H12-pdk-cap/lpf_core_layout.png` | the PDK-coloured layout of record (it14) — ISCAS Fig. 3 candidate |
+| `layout_lpf_core.png` | `layout/H12-pdk-cap/lpf_core_layout.png` | the layout of record (it14) exactly as the viewer captures it — grid and automatic labels included, 1600 × 1200. For paper use the generated `layout_record.*` supersedes it; keep this one for the cases where those labels are the point |
 | `layout_it01.png` | `layout/H12-pdk-cap/iterations/it01/layout.png` | round-1 layout, for the before/after pair |
 | `layout_it14.png` | `layout/H12-pdk-cap/iterations/it14/layout.png` | round-4 layout (byte-identical to `layout_lpf_core.png`) |
 | `review_annotated.png` | `layout/H12-pdk-cap/REVIEW.png` | all 25 review findings drawn, numbered and severity-coloured, over the PDK render — the single best "what a schema'd review buys" figure. Its numbering is the reviewer's own; if it is used in a paper, the caption must gloss the ids |
@@ -121,10 +127,12 @@ Copied here, the ones a paper would use:
 
 ## Regenerating everything
 
-All eight generated figures are 7.2 in wide at 200 dpi:
+The eight plots are 7.2 in wide at 200 dpi:
 `group_delay` 1440×1920 px · `prepost_bode` 1440×1380 px · `mc_hist` 1440×980 · `pvt_window` 1440×1080 ·
 `thd` 1440×980 · `pvt_postlayout` 1440×1240 · `area_campaign` 1440×1400 ·
 `iteration_trail` 1440×1320.
+The layout render is its own size — 2719 × 3295 px at 600 dpi, a 4.53 × 5.49 in
+page, which is ~780 dpi placed at single-column width.
 
 ```bash
 cd <repo>
@@ -134,6 +142,7 @@ cd <repo>
 .venv/bin/python doc/paper/scripts/fig_thd.py
 .venv/bin/python doc/paper/scripts/fig_area_campaign.py
 python3            doc/paper/scripts/fig_iterations.py     # needs PyYAML
+PDK_ROOT=~/local/pdks .venv/bin/python doc/paper/scripts/fig_layout_record.py
 
 # figures that simulate (native ngspice lane)
 cd experiments/023-replica-bias
