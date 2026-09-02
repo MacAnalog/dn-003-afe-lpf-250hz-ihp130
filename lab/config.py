@@ -11,7 +11,10 @@ import os
 import shutil
 from pathlib import Path
 
+from spicexplorer_harness import load as _load
+
 REPO = Path(__file__).resolve().parents[1]
+H = _load(REPO)          # harness.yaml: spec, ledger, frozen dirs, env-var names
 
 # ---------------------------------------------------------------- decks -----
 # The reference deck (the IHP-native expert baseline testbench), vendored into

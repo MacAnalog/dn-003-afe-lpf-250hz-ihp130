@@ -33,3 +33,4 @@ signoff/paper-draft/data/bench_post_lumped.json
 # signoff/paper-draft/scripts/extract_bench.py --pvt both
 signoff/paper-draft/data/bench_pvt_*.json
 signoff/paper-draft/data/bench_mc_*.json
+.venv/

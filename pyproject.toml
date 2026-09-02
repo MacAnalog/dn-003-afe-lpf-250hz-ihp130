@@ -10,7 +10,13 @@ dependencies = [
     # the paper pack renders the layout of record from its GDS
     # (doc/paper/scripts/fig_layout_record.py); KLayout is the PDK's own viewer
     "klayout>=0.29",
+    "spicexplorer-harness",
 ]
+
+[tool.uv.sources]
+# The generic harness (ledger, lints, context pack, spec) comes from the platform checkout that
+# sits beside this repo in spicexplorer-workspace; edit the path if the repo lives elsewhere.
+spicexplorer-harness = { path = "../../spicexplorer-platform/packages/spicexplorer-harness", editable = true }
 
 [tool.uv]
 package = false

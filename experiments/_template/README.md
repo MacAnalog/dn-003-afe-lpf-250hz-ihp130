@@ -69,7 +69,7 @@ from the sign-off method in `doc/benches.md`, at fin = 50 Hz and 175 mVpp
 differential (`THD_AMPL = 87.5 mV` on the differential source).
 
 **Run evidence:** ledger tags used here — `<tag>`, `<tag>`, … (query with
-`python scripts/runs.py --exp NNN`). Every number above must be re-derivable
+`make runs ARGS="--exp NNN"`). Every number above must be re-derivable
 from one of them.
 
 ## Verdict

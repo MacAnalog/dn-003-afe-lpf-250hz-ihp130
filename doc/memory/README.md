@@ -61,14 +61,14 @@ unchanged.
 
 | tier | what it is here | written by | retrieval |
 |---|---|---|---|
-| **working** | typed variables for the current task; each prompt serializes a subset | assembled fresh by retrieval; updated by every sim verdict | `python scripts/context_pack.py <keywords>` (`make pack K="..."`) → spec frame, constraints, matching papers, lessons, episodes |
-| **episodic** | raw experience, append-only: `runs/ledger.ndjson` (every `evaluate()` / THD / corner / Monte-Carlo run — metrics, deck hash, corner, temp, lane, host, wall time, violations, `goal_met`, `LPF_EXP`) + the experiment dirs | **mechanical, automatic** — `lab/ledger.py:log_run`. A gated procedure, not free-form prose | `scripts/runs.py` (`make runs`), or the context pack's episodes section |
+| **working** | typed variables for the current task; each prompt serializes a subset | assembled fresh by retrieval; updated by every sim verdict | `make pack K="<keywords>"` (`spicexplorer-harness pack`) → spec frame, constraints, matching papers, lessons, episodes |
+| **episodic** | raw experience, append-only: `runs/ledger.ndjson` (every `evaluate()` / THD / corner / Monte-Carlo run — metrics, deck hash, corner, temp, lane, host, wall time, violations, `goal_met`, `LPF_EXP`) + the experiment dirs | **mechanical, automatic** — `lab/ledger.py:log_run` (the platform ledger plus this repo's row fields). A gated procedure, not free-form prose | `make runs ARGS="..."`, or the context pack's episodes section |
 | **semantic** | distilled knowledge, provenance-linked: `doc/journal.md` + `doc/journal/` (lessons), `doc/design-reference.md` (constraints), `doc/pdk-notes.md` (measured device data), `pdf/INDEX.md` (paper knowledge), experiment READMEs (verdicts) | **distillation at close-out** (or immediately on a surprising failure) | the context pack's lessons/constraints/papers slots; direct read of the curated docs |
 | **procedural** | the code that implements actions and decisions; **human-initialized**: `lab/`, `scripts/`, `xschem/`, `Makefile`, the lints, the agent definitions in `.claude/agents/`, and `CLAUDE.md` | **trap→gate promotion, human-reviewed only** | the harness-commands section of `CLAUDE.md` |
 
 **Working-memory retrieval policy** (load-bearing, and stated twice on purpose —
-here and in the `scripts/context_pack.py` docstring): run the pack **at task
-start, and re-run it keyed on every new symptom** (`--symptom "…"`).
+here and in `CLAUDE.md`): run the pack **at task start, and re-run it keyed
+on every new symptom** (`make pack S="…"`).
 
 > Retrieval is an ACTION with a policy, not a one-shot preamble.
 
@@ -80,12 +80,9 @@ hand-edit the ledger — a hand-edited flight recorder is not evidence. A later
 contradicting row **revokes** an earlier sign-off; nothing is deleted to make
 that happen.
 
-*Known gap, standing:* `lab/ledger.py:log_run` writes its row without an
-exception guard, so an unwritable `runs/` would fail the measurement it is only
-supposed to observe. Wrapping it (`except Exception: pass` —
-"observability must not break the run it observes") is a **procedural** write
-and therefore belongs in `doc/proposed-lab-fixes.md` for owner review, not in an
-agent's edit.
+*Closed 2026-09-02:* the ledger append now lives in the platform package, which guards the
+write (`OSError` → stderr) so an unwritable `runs/` can no longer fail the measurement it
+observes.
 
 ---
 
@@ -204,7 +201,7 @@ has not been evaluated, whatever the reasoning around it looked like.
   `WORK = /tmp/lpf_work-{repo.name}-{sha1(repo path)[:6]}` (`lab/config.py`), and
   `runs/ledger.ndjson` is repo-relative, so the ledger is per-worktree too.
 * `LPF_EXP` stamps every ledger row (`lab/ledger.py`), queryable with
-  `scripts/runs.py --exp NNN`.
+  `make runs ARGS="--exp NNN"`.
 * **Shared docs stay conflict-free by staging:** lessons live in the
   experiment's own README first and **graduate** to `doc/journal.md` /
   `doc/experiment-log.md` / `pdf/INDEX.md` at close-out. That is the anti-clobber

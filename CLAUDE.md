@@ -36,24 +36,31 @@ IRN without giving anything else back.
 
 ## Harness commands
 
-- `uv sync` — create `.venv` (each git worktree needs its own).
-- `python scripts/context_pack.py <keywords>` — assemble **working memory** for
-  a task (spec frame, constraints, matching papers/lessons/episodes). Run at
-  task start; **re-run with `--symptom "..."`** on any new failure signature
-  before diagnosing from scratch.
+The generic half — ledger, lints, context pack, spec-as-data — is the platform's
+`spicexplorer-harness` package, configured by **`harness.yaml`** (spec rows,
+frozen dirs, denylist, ledger columns, env-var names); `lab/` and `scripts/`
+hold only what is specific to this design.
+
+- `uv sync` — create `.venv` (each git worktree needs its own; the harness is
+  a path dependency on the sibling platform checkout, see `pyproject.toml`).
+- `make pack K="<keywords>"` — assemble **working memory** for a task (spec
+  frame, constraints, matching papers/lessons/episodes). Run at task start;
+  **re-run with `S="<symptom>"`** on any new failure signature before
+  diagnosing from scratch.
 - `make doctor` (`python -m lab.ngspice`) — is the simulator lane alive? Prints
   lane (docker|native), PDK, and the plots a one-transistor `op` produced. A
   stock ngspice cannot run this PDK at all: IHP MOS devices are PSP 103.6
   Verilog-A models loaded as **OSDI** objects, and a build without them reports
   `Unknown model type psp103va`.
-- `make lint` — repo invariants (reference-deck hash, experiment structure,
-  paper index, journal typing, spec↔code sync, PDK pin, no proprietary-node
-  references). **Failure messages carry their own remediation.** Run after any
-  doc or structure edit.
+- `make lint` — repo invariants (reference-deck `SHA256SUMS`, deck rebuild,
+  experiment structure, paper index, journal typing, `harness.yaml`↔spec-doc
+  sync, no proprietary-node references). **Failure messages carry their own
+  remediation.** Run after any doc or structure edit. `make freeze` re-writes
+  the manifest after a deliberate re-certification.
 - `make check` — lint + the reference deck still reproduces the certified
   scorecard within tolerance. This is what re-certifies the yardstick.
 - `make baseline` — run the reference deck, print the scorecard.
-- `make runs` / `python scripts/runs.py --fails | --best irn_uv | --exp NNN` —
+- `make runs ARGS="--fails | --best irn_uv | --exp NNN | --kind thd | --where topology=b"` —
   query the run ledger (`runs/ledger.ndjson`; every `lab.metrics.evaluate()`
   call is auto-recorded with metrics, deck hash, wall time, violations).
 - `make thd` — THD profile at 175 mVpp across passband fins (slow).
@@ -145,7 +152,7 @@ cd external/lpf-wt/001-<technique> && uv sync && export LPF_EXP=001
 **Isolated automatically per checkout** — `lab.config` namespaces the work dir
 by repo name + path hash (`WORK = /tmp/lpf_work-{repo.name}-{sha1(path)[:6]}`),
 so two worktrees can never land runs in the same directory or read each other's
-rawfiles. `LPF_EXP` stamps every ledger row (`scripts/runs.py --exp NNN`).
+rawfiles. `LPF_EXP` stamps every ledger row (`make runs ARGS="--exp NNN"`).
 
 **What IS shared, and therefore needs discipline:**
 

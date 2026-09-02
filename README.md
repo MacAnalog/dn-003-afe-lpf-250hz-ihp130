@@ -165,7 +165,8 @@ already carries 2.5 nA at Vgs = 0). The measured evidence is in
 | `pdf/` | the papers + `INDEX.md` (cite by handle) |
 | `pdk/` | regenerated device-characterisation LUTs (git-ignored) |
 | `runs/` | `ledger.ndjson` — local observability, git-ignored; keeper numbers graduate into experiment READMEs |
-| `scripts/` | `lint.py`, `baseline.py`, `runs.py`, `context_pack.py`, `draw_xschem.py` / `draw_lpf_core_022.py` (schematic drawers), `check_netlist.py` (connectivity gate) — the Makefile's implementation |
+| `harness.yaml` | the design described to the platform's `spicexplorer-harness` (spec rows, frozen dirs, denylist, ledger columns); `make lint / pack / runs / freeze` are that package |
+| `scripts/` | `lint.py` (repo-specific checks on top of the harness), `baseline.py`, `draw_xschem.py` / `draw_lpf_core_022.py` (schematic drawers), `check_netlist.py` (connectivity gate) — the Makefile's implementation |
 
 No PDK bytes are vendored: model cards are referenced by bare library name and
 resolved by the simulator's `sourcepath`, and the PDK's git SHA is pinned in
@@ -179,7 +180,8 @@ make doctor        # is the simulator lane alive? prints lane, PDK, op-plot name
 make baseline      # run the reference deck, print the scorecard
 make check         # lint + the reference deck still reproduces its certified numbers
 make lint          # repo invariants only (fast, no simulation)
-make runs          # query the run ledger
+make runs          # query the run ledger (ARGS="--fails")
+make pack K="noise irn"   # working-memory context pack
 
 uv run python signoff/pre-pvt/verify.py --regen   # re-derive the whole sign-off
 ```

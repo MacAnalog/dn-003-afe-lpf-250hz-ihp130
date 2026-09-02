@@ -19,6 +19,7 @@ date are grouped by subject.
 
 | date | entry | type | status | hook |
 |---|---|---|---|---|
+| 2026-09-02 | [The harness is now a platform package](journal/harness-is-a-platform-package.md) | procedural | live | `harness.yaml` drives ledger/pack/lints/spec; `lab/ledger.py`, `lab/parallel.py` are shims; `SHA256SUMS` replaces `REFERENCE_SHA` |
 | 2026-08-31 | [A generator's name is not its physics](journal/a-generator-name-is-not-its-physics.md) | semantic | live | `igig` is the correlated half of the CHANNEL noise, not gate leakage — gate current is exactly 0 on thick oxide; channel = **89 %** of IRN power and `S_i/2qI_D` = **0.87–1.04** |
 | 2026-08-28 | [A one-axis corner claim is not a box](journal/one-axis-certification-does-not-superpose.md) | semantic | live | the certified axes all pass; 7/45 cross-product points lose a complex pole pair, incl. one whose three coordinates are each certified |
 | 2026-08-28 | [`LPF_BIAS_ALPHA` is part of a temperature measurement](journal/bias-alpha-is-part-of-a-temperature-measurement.md) | procedural | live | default 0 is constant-current; the delivered cells were certified at 1.1, and 27 °C cannot tell them apart |
