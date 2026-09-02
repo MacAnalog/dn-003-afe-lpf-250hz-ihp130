@@ -15,7 +15,7 @@ produced it, or is named as a gap.
 | [`../../signoff/paper-draft/`](../../signoff/paper-draft/) | **the reviewer response pack**: the derived equations (`theory.md`), every number that checks them (`validation.md`), and six figures — half-circuit, transfer function, poles/zeros, per-biquad Q, the noise equation, THD/IIP3, pre- and post-layout |
 | `workflow.md` | the method: agent roles, gates, the review DSL, the iteration trail, the optimizer backend, co-optimization, **cost/effort with provenance**, and the human-decision log |
 | `figures/` | the figures, PNG + PDF, with `figures/README.md` naming each one's script and inputs |
-| `scripts/` | the generating scripts — eight of them, all reading committed artifacts |
+| `scripts/` | the generating scripts — nine of them, all reading committed artifacts |
 
 **Provenance rule this repo enforces** (`make lint`): no proprietary node,
 foundry, simulator or schematic-editor name appears anywhere. The PDK

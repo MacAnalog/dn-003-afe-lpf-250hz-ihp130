@@ -7,6 +7,9 @@ dependencies = [
     "numpy>=1.26",
     "matplotlib>=3.8",
     "scipy>=1.11",
+    # the paper pack renders the layout of record from its GDS
+    # (doc/paper/scripts/fig_layout_record.py); KLayout is the PDK's own viewer
+    "klayout>=0.29",
 ]
 
 [tool.uv]
