@@ -1,0 +1,74 @@
+# The one file that describes this design repo to the platform's spicexplorer-harness.
+# Keys not listed keep their defaults; unknown keys fail `make lint`.
+name: lpf-250hz-ihp130
+exp_env: LPF_EXP          # stamps every ledger row with the experiment id
+jobs_env: LPF_JOBS        # width of lab.parallel.batch (default cpu_count - 2)
+
+goal: "IRN(0.5-200 Hz) < 40 uVrms, down from the certified reference, by combining >= 2 papers, without giving anything else back"
+
+# The acceptance box (machine twin of doc/target-spec.md; every bound must appear there too).
+spec:
+  - {key: ph_max_deg, label: "S1 biquad-order certificate (max unwrapped phase lag)", op: ">=", bound: 330.0, unit: deg}
+  - {key: a1000_db,   label: "S1 companion: |H| at 1 kHz", op: "<=", bound: -48.0, unit: dB}
+  - {key: fc_hz,      label: "S2 cutoff", op: in, bound: [245.0, 255.0], unit: Hz}
+  - {key: dc_db,      label: "S3 passband gain", op: "abs<=", bound: 0.2, unit: dB}
+  - {key: peak_db,    label: "S4 peaking", op: "<=", bound: 0.2, unit: dB}
+  - {key: ripple_db,  label: "S3 passband flatness to 150 Hz", op: "<=", bound: 0.2, unit: dB}
+  - {key: irn_uv,     label: "S5 input-referred noise, 0.5-200 Hz", op: "<", bound: 40.0, unit: uVrms}
+  - {key: p_core_nw,  label: "S6 filter-core power", op: "<", bound: 50.0, unit: nW}
+spec_notes:
+  - "soft (report-only): c_total_pf, idd_total_na, i_core_na, onoise_uv, ph_step_deg, f_scored_hi, mono_db"
+  - "S7 THD <= -40 dB at 175 mVpp differential, fin = 50 Hz; sign-off = independent long-transient DFT re-measure (lab.thd), never the fast strobed FFT; expensive runs are gated on the cheap box (lab.metrics.gate)"
+
+# Certified artefacts: sha-locked by decks/reference/SHA256SUMS. A re-vendor re-freezes AND re-runs `make check`.
+frozen: [decks/reference]
+reference_scorecard: decks/reference/scorecard.json
+
+# Entries stay under 20 KB (one topic each); the index is one line per entry and may grow past that.
+memory: {index_size_cap: 32000}
+
+gitignore_must: ["runs/", "*.raw", "__pycache__/", "experiments/*/out/"]
+
+# Provenance hygiene: this is the OPEN port of a campaign that ran on a proprietary node with a
+# commercial simulator and schematic editor; nothing in the tree may name any of it.
+# flags: "" = case-sensitive (default is case-insensitive).
+denylist:
+  - {pattern: "tsmc", why: originating foundry name}
+  - {pattern: "\\b65\\s*nm\\b", why: originating node length}
+  - {pattern: "\\bspectre\\b", why: originating simulator}
+  - {pattern: "\\bvirtuoso\\b", why: originating schematic editor}
+  - {pattern: "\\bcadence\\b", why: originating EDA vendor}
+  - {pattern: "\\bskill\\b", why: originating scripting language}
+  - {pattern: "\\bmaestro\\b", why: originating ADE tool}
+  - {pattern: "\\bpsf\\b", why: originating result format}
+  - {pattern: "\\b[np]ch_25\\b", why: originating device names, flags: ""}
+  - {pattern: "\\brppolywo\\b", why: originating resistor model}
+  - {pattern: "\\bCM[C]\\b", why: originating kit vendor tag, flags: ""}
+  - {pattern: "/CM[C]/kits", why: originating PDK install path}
+  - {pattern: "Tapeout_1_Filter", why: originating library name}
+  - {pattern: "Filter_Test_Bench", why: originating cell name}
+  - {pattern: "Super_Source_Follower", why: originating cell name}
+
+# `make runs` layouts per ledger row kind ({key, w: width, p: decimals}; strings left-justified).
+ledger_columns:
+  evaluate:
+    - {key: topology, w: 8}
+    - {key: dc_db, w: 8, p: 3}
+    - {key: fc_hz, w: 8, p: 1}
+    - {key: peak_db, w: 7, p: 3}
+    - {key: irn_uv, w: 7, p: 2}
+    - {key: p_core_nw, w: 10, p: 2}
+    - {key: c_total_pf, w: 11, p: 2}
+  thd:
+    - {key: fin_hz, w: 7, p: 0}
+    - {key: ampl_v, w: 8, p: 4}
+    - {key: out_vpp, w: 8, p: 4}
+    - {key: thd_db, w: 8, p: 2}
+    - {key: hd3_db, w: 8, p: 2}
+  corner:
+    - {key: corner, w: 16}
+    - {key: temp, w: 6, p: 0}
+    - {key: vdd, w: 5, p: 2}
+    - {key: fc_hz, w: 8, p: 1}
+    - {key: irn_uv, w: 7, p: 2}
+    - {key: dc_db, w: 8, p: 3}

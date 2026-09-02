@@ -1,7 +1,7 @@
 """The scorecard: one simulation in, one spec verdict out.
 
-`SPEC` here is the machine-readable twin of doc/target-spec.md.  If you change
-one, change the other -- `scripts/lint.py` fails the build when they disagree.
+`SPEC` is read from harness.yaml, the machine-readable twin of doc/target-spec.md;
+`make lint` fails when the two disagree.
 
 Design note on what is technology-independent.  S1-S5 and S7-S8 are properties
 of the FILTER (order, cutoff, flatness, noise, distortion, provenance) and carry
@@ -15,6 +15,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from spicexplorer_harness import violations as _violations
+
 from . import config as C
 from . import ngspice as ng
 from . import raw as R
@@ -22,17 +24,9 @@ from .dut import Design
 from .deck import ac_noise
 
 # ---------------------------------------------------------------- the spec --
-# (key, human label, comparison, bound)
-SPEC: dict[str, tuple] = {
-    "ph_max_deg": ("S1 biquad-order certificate (max unwrapped phase lag)", ">=", 330.0),
-    "a1000_db":   ("S1 companion: |H| at 1 kHz", "<=", -48.0),
-    "fc_hz":      ("S2 cutoff", "in", (245.0, 255.0)),      # 250 Hz +-2 %
-    "dc_db":      ("S3 passband gain", "abs<=", 0.2),
-    "peak_db":    ("S4 peaking", "<=", 0.2),
-    "ripple_db":  ("S3 passband flatness to 150 Hz", "<=", 0.2),
-    "irn_uv":     ("S5 input-referred noise, 0.5-200 Hz", "<", 40.0),
-    "p_core_nw":  ("S6 filter-core power", "<", 50.0),
-}
+# {key: (human label, comparison, bound)}: the harness.yaml rows in this module's historic shape.
+SPEC: dict[str, tuple] = {r.key: (r.label, r.op, tuple(r.bound) if r.op == "in" else r.bound)
+                          for r in C.H.spec}
 
 # Soft/report-only columns: measured and logged, never a pass/fail.
 SOFT = ("c_total_pf", "idd_total_na", "i_core_na", "onoise_uv", "ph_step_deg",
@@ -96,23 +90,7 @@ class Score:
 
 def check(values: dict) -> list[str]:
     """Every spec line this measurement violates, as human sentences."""
-    out = []
-    for key, (label, op, bound) in SPEC.items():
-        v = values.get(key)
-        if v is None or (isinstance(v, float) and math.isnan(v)):
-            out.append(f"{label}: NOT MEASURED")
-            continue
-        if op == ">=" and not v >= bound:
-            out.append(f"{label}: {v:.4g} < {bound:g}")
-        elif op == "<=" and not v <= bound:
-            out.append(f"{label}: {v:.4g} > {bound:g}")
-        elif op == "<" and not v < bound:
-            out.append(f"{label}: {v:.4g} >= {bound:g}")
-        elif op == "abs<=" and not abs(v) <= bound:
-            out.append(f"{label}: |{v:.4g}| > {bound:g}")
-        elif op == "in" and not (bound[0] <= v <= bound[1]):
-            out.append(f"{label}: {v:.4g} outside [{bound[0]:g}, {bound[1]:g}]")
-    return out
+    return _violations(C.H.spec, values)
 
 
 def goal_met(values: dict) -> bool:

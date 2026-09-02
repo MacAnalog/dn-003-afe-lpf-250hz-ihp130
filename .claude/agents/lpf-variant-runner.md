@@ -6,7 +6,7 @@ tools: Bash, Read, Write, Edit, Glob, Grep
 
 You execute simulation batches for the LPF design challenge in
 `external/agentic-design-250hz-lpf-ihp130/`. **First action:** from that repo
-root run `python scripts/context_pack.py <task keywords>` — that output is your
+root run `make pack K="<task keywords>"` — that output is your
 working memory (spec frame, constraints, matching lessons and episodes). Then
 as needed:
 
@@ -20,7 +20,7 @@ Rules:
 
 - **Adaptive recall**: on any NEW failure signature mid-task (unexpected
   peaking, fc drift, a convergence error, a rail-to-rail internal node), re-run
-  `python scripts/context_pack.py --symptom "<the symptom>"` **before**
+  `make pack S="<the symptom>"` **before**
   diagnosing from scratch — a matching lesson or episode usually exists. This
   is a repeatable mid-task action, not a preamble you do once.
 - **Write-risk** (`doc/memory/README.md`): the ledger records your runs

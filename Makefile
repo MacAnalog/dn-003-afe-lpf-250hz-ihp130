@@ -1,9 +1,11 @@
 # The front door.  `make help` lists everything; every target is one command an
-# agent (or a human) is expected to run directly.  The scripts under scripts/
-# are the agent-facing surface; lab/ is the library behind them.
+# agent (or a human) is expected to run directly.  The generic harness (lint,
+# pack, runs, freeze) is the platform's spicexplorer-harness driven by
+# harness.yaml; scripts/ and lab/ hold what is specific to this design.
 
 # Prefer the checkout's own venv (uv sync creates it); fall back to python3.
 PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+HARNESS := $(PY) -m spicexplorer_harness.cli --repo .
 ARGS ?=
 
 # Fail with a readable message instead of a ModuleNotFoundError when a target
@@ -22,14 +24,17 @@ baseline:  ## simulate the frozen reference deck and print its scorecard
 check:  ## lint + the reference deck still reproduces its certified scorecard
 	@rc=0; $(PY) scripts/lint.py || rc=1; echo; $(PY) scripts/baseline.py --check || rc=1; exit $$rc
 
-lint:  ## repo invariants; every failure message carries its own remediation
+lint:  ## repo invariants (harness.yaml + scripts/lint.py extras); failures carry their remediation
 	@$(PY) scripts/lint.py
 
-runs:  ## query the run ledger (ARGS="--fails" | "--best irn_uv" | "--exp 006")
-	@$(PY) scripts/runs.py $(ARGS)
+runs:  ## query the run ledger (ARGS="--fails" | "--best irn_uv" | "--exp 006" | "--kind thd" | "--where topology=b")
+	@$(HARNESS) runs $(ARGS)
 
-pack:  ## assemble the working-memory context pack (ARGS="noise irn")
-	@$(PY) scripts/context_pack.py $(ARGS)
+pack:  ## working-memory context pack (K="noise irn" S="symptom text")
+	@$(HARNESS) pack $(K) $(if $(S),--symptom "$(S)") $(ARGS)
+
+freeze:  ## write decks/reference/SHA256SUMS after a deliberate re-certification
+	@$(HARNESS) freeze
 
 thd:  ## THD sign-off: 175 mVpp differential at fin = 50 Hz (S7)
 	$(call need,lab.thd,run the transient by hand via lab.deck.tran_thd until lab/thd.py lands)
@@ -46,4 +51,4 @@ clean:  ## delete this checkout's simulation work dir (never the ledger)
 	@d=$$($(PY) -c "from lab import config; print(config.WORK)"); \
 	  echo "rm -rf $$d"; rm -rf "$$d"
 
-.PHONY: help baseline check lint runs pack thd doctor char clean
+.PHONY: help baseline check lint runs pack freeze thd doctor char clean

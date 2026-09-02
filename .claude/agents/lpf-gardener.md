@@ -10,7 +10,7 @@ an oversight.)
 
 Sweep, in order:
 
-1. **Mechanical first**: run `make lint` and `python scripts/runs.py --last 5`
+1. **Mechanical first**: run `make lint` and `make runs ARGS="--last 5"`
    from the repo root; include their output verbatim (lint failures already
    carry their own remediation).
 2. **Baseline drift**: if a recent ledger row for the untouched reference

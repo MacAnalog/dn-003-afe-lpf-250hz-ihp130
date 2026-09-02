@@ -77,7 +77,7 @@ INDEX.md entry, provided the "because" is falsifiable.
 
 Do NOT run simulations — hand the brief to `lpf-variant-runner`.
 
-Before writing, run `python scripts/context_pack.py <technique keywords>` from
+Before writing, run `make pack K="<technique keywords>"` from
 the repo root — prior lessons and episodes may already confirm or kill the idea.
 
 **Write-risk** (`doc/memory/README.md`): you fill `pdf/INDEX.md` rows (semantic
