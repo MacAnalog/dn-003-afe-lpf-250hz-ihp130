@@ -13,9 +13,10 @@ array it names; nothing is recomputed from geometry at run time.
 
 What is labelled, and why these names:
 
-* every MIM array, by its **schematic instance** (`xc13`, `xc17`, `xc19`,
-  `xc1`, `xc10`, `xc12` -- the names in `decks/reference/lpf_core.sp` and the
-  device table of `doc/design-reference.md` section 2) and its **role**
+* every MIM array, by its **role** (the schematic instances -- `xc13`, `xc17`,
+  `xc19`, `xc1`, `xc10`, `xc12` in `decks/reference/lpf_core.sp` and the device
+  table of `doc/design-reference.md` section 2 -- stay in the `CAPS` comments,
+  not on the figure)
   (`C1` = internal node to that half's output, `C2` = differential across the
   biquad outputs; subscript A/B = the biquad; P/N = the half). `xc19` is drawn
   as two mirror halves, one each side of the axis, so it carries two labels.
@@ -36,6 +37,8 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+# IEEE (Times-compatible) text and math: STIX is the Times-metric family matplotlib ships.
+matplotlib.rcParams.update({"font.family": "STIXGeneral", "mathtext.fontset": "stix"})
 import matplotlib.image as mpimg      # noqa: E402
 import matplotlib.patches as mpatches  # noqa: E402
 import matplotlib.pyplot as plt       # noqa: E402
@@ -52,22 +55,22 @@ MARGIN_FRAC, PX_PER_UM, DPI = 0.02, 6.0, 600
 # --- capacitor arrays: centre (um), label. From gen.py CAPS + the GDS bboxes ---
 CAPS = [
     # bank A (bottom): xc19 = c2_a split in two mirror halves, xc13/xc17 = c1_a
-    ((-107.0, 51.0), r"$C_{2A}$ · xc19 (½)"),
-    ((107.0, 51.0), r"$C_{2A}$ · xc19 (½)"),
-    ((-25.0, 84.0), r"$C_{1A,P}$ · xc13"),   # stacked: the two arrays straddle the axis
-    ((25.0, 36.0), r"$C_{1A,N}$ · xc17"),
+    ((-107.0, 51.0), r"$C_{2A}$ (½)"),
+    ((107.0, 51.0), r"$C_{2A}$ (½)"),
+    ((-25.0, 84.0), r"$C_{1A,P}$"),   # stacked: the two arrays straddle the axis
+    ((25.0, 36.0), r"$C_{1A,N}$"),
     # bank B (top): xc1/xc10 = c1_b (16 units each), xc12 = c2_b (7 units)
-    ((-108.5, 352.0), r"$C_{1B,P}$ · xc1"),
-    ((108.5, 352.0), r"$C_{1B,N}$ · xc10"),
-    ((0.0, 489.0), r"$C_{2B}$ · xc12"),
+    ((-108.5, 352.0), r"$C_{1B,P}$"),
+    ((108.5, 352.0), r"$C_{1B,N}$"),
+    ((0.0, 489.0), r"$C_{2B}$"),
 ]
 
 # --- stage outlines (um): bank + device island of each biquad ---
 STAGES = [
     dict(box=(-214.0, -6.0, 214.0, 188.0), name="Biquad #1 (A)",
-         sub="vinp/vinn → vout_1/vout_2", color="#00695c"),
+         sub=r"$v_{in,p}/v_{in,n} \rightarrow v_{out1}/v_{out2}$", color="#00695c"),
     dict(box=(-214.0, 194.0, 214.0, 517.0), name="Biquad #2 (B)",
-         sub="vout_1/vout_2 → voutp/voutn", color="#6a1b9a"),
+         sub=r"$v_{out1}/v_{out2} \rightarrow v_{out,p}/v_{out,n}$", color="#6a1b9a"),
 ]
 
 PAD_IN = 0.75   # white column added on the left for the stage brackets
@@ -97,7 +100,7 @@ def main() -> None:
     box_kw = dict(boxstyle="round,pad=0.35,rounding_size=0.6", fc="white", alpha=0.96, lw=0.6)
     for (x, y), text in CAPS:
         px, py = um_to_px(x, y)
-        ax.text(px + pad, py, text, ha="center", va="center", fontsize=7.5, color="black",
+        ax.text(px + pad, py, text, ha="center", va="center", fontsize=9, color="black",
                 bbox=dict(ec="#444444", **box_kw), zorder=5)
 
     for s in STAGES:
@@ -111,9 +114,9 @@ def main() -> None:
         for yy in (y0, y1):
             ax.plot([xb, xb + pad * 0.12], [yy, yy], color=s["color"], lw=1.2, zorder=4)
         ax.text(pad * 0.40, (y0 + y1) / 2, s["name"], rotation=90, ha="center", va="center",
-                fontsize=10, fontweight="bold", color=s["color"])
+                fontsize=10.5, fontweight="bold", color=s["color"])
         ax.text(pad * 0.22, (y0 + y1) / 2, s["sub"], rotation=90, ha="center", va="center",
-                fontsize=6.5, color=s["color"])
+                fontsize=7.5, color=s["color"])
 
     for ext in ("png", "pdf"):
         out = FIGS / f"layout_record_labelled.{ext}"
