@@ -28,11 +28,13 @@ What is labelled, and why these names:
 
     PDK_ROOT=~/local/pdks .venv/bin/python doc/paper/scripts/fig_layout_record_labelled.py
 
-Two variants: `layout_record_labelled` (no scale bar) and
-`layout_record_labelled_scale`, which adds a white strip under the layout with a
-100 um bar (6 px/um, so it is exactly 600 px of the raster).
+Three variants: `layout_record_labelled` (no scale bar); `layout_record_labelled_scale`,
+which adds a white strip under the layout with a 100 um bar (6 px/um, so it is
+exactly 600 px of the raster); and `layout_record_labelled_dims`, which keeps the
+bar and draws the cell's outer width and height (432.0 x 528.0 um, the bbox
+`fig_layout_record.py` frames) as dimension lines.
 
-Outputs: doc/paper/figures/layout_record_labelled{,_scale}.png / .pdf
+Outputs: doc/paper/figures/layout_record_labelled{,_scale,_dims}.png / .pdf
 """
 from __future__ import annotations
 
@@ -79,6 +81,8 @@ STAGES = [
 
 PAD_IN = 0.75   # white column added on the left for the stage brackets
 PAD_BOTTOM_IN = 0.32   # white strip under the layout for the scale bar
+PAD_BOTTOM_DIMS_IN = 0.60   # taller strip when the width dimension is drawn too
+PAD_RIGHT_DIMS_IN = 0.60    # right column for the height dimension
 SCALE_UM = 100.0       # scale-bar length; 6 px/um makes it exactly 600 px
 
 
@@ -89,31 +93,52 @@ def um_to_px(x: float, y: float) -> tuple[float, float]:
     return (x - (l - m)) * PX_PER_UM, ((t + m) - y) * PX_PER_UM
 
 
-def render(scale_bar: bool) -> None:
+def render(scale_bar: bool, dims: bool = False) -> None:
     img = mpimg.imread(SRC)[:, :, :3]
     h, w = img.shape[:2]
     pad = int(PAD_IN * DPI)
-    padb = int(PAD_BOTTOM_IN * DPI) if scale_bar else 0
-    canvas = np.ones((h + padb, w + pad, 3), dtype=img.dtype)
-    canvas[:h, pad:, :] = img
+    padb = int((PAD_BOTTOM_DIMS_IN if dims else PAD_BOTTOM_IN) * DPI) if scale_bar else 0
+    padr = int(PAD_RIGHT_DIMS_IN * DPI) if dims else 0
+    canvas = np.ones((h + padb, w + pad + padr, 3), dtype=img.dtype)
+    canvas[:h, pad:pad + w, :] = img
 
-    fig = plt.figure(figsize=((w + pad) / DPI, (h + padb) / DPI), dpi=DPI)
+    fig = plt.figure(figsize=((w + pad + padr) / DPI, (h + padb) / DPI), dpi=DPI)
     ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
     ax.imshow(canvas, interpolation="none")
-    ax.set_xlim(0, w + pad)
+    ax.set_xlim(0, w + pad + padr)
     ax.set_ylim(h + padb, 0)
     ax.axis("off")
 
     if scale_bar:
         # scale bar in the bottom strip, left-aligned with the cell's left edge
         x0, _ = um_to_px(CELL[0], 0.0)
-        xs, ys = x0 + pad, h + padb * 0.45
+        xs, ys = x0 + pad, h + 0.16 * DPI
         bar = SCALE_UM * PX_PER_UM
         ax.plot([xs, xs + bar], [ys, ys], color="black", lw=2.2, solid_capstyle="butt", zorder=6)
         for xx in (xs, xs + bar):
-            ax.plot([xx, xx], [ys - padb * 0.10, ys + padb * 0.10], color="black", lw=1.2, zorder=6)
-        ax.text(xs + bar / 2, ys - padb * 0.16, f"{SCALE_UM:g} µm", ha="center", va="bottom",
+            ax.plot([xx, xx], [ys - 0.03 * DPI, ys + 0.03 * DPI], color="black", lw=1.2, zorder=6)
+        ax.text(xs + bar / 2, ys - 0.05 * DPI, f"{SCALE_UM:g} µm", ha="center", va="bottom",
                 fontsize=9, color="black", zorder=6)
+
+    if dims:
+        # outer dimensions of the cell: width along the bottom strip, height on the right
+        l, b, r, t = CELL
+        (xl, yt), (xr, yb) = um_to_px(l, t), um_to_px(r, b)
+        xl += pad; xr += pad
+        ext = dict(color="#666666", lw=0.7, ls=(0, (2, 2)), zorder=5)
+        arr = dict(arrowstyle="<|-|>", color="black", lw=1.0, mutation_scale=9, shrinkA=0, shrinkB=0)
+        yd = h + 0.42 * DPI
+        for xx in (xl, xr):
+            ax.plot([xx, xx], [yb, yd + 0.04 * DPI], **ext)
+        ax.annotate("", xy=(xl, yd), xytext=(xr, yd), arrowprops=arr, zorder=6)
+        ax.text((xl + xr) / 2, yd - 0.04 * DPI, f"{r - l:.1f} µm", ha="center", va="bottom",
+                fontsize=9, color="black", zorder=6)
+        xd = w + pad + 0.28 * DPI
+        for yy in (yt, yb):
+            ax.plot([xr, xd + 0.04 * DPI], [yy, yy], **ext)
+        ax.annotate("", xy=(xd, yt), xytext=(xd, yb), arrowprops=arr, zorder=6)
+        ax.text(xd + 0.05 * DPI, (yt + yb) / 2, f"{t - b:.1f} µm", rotation=90, ha="left",
+                va="center", fontsize=9, color="black", zorder=6)
 
     box_kw = dict(boxstyle="round,pad=0.35,rounding_size=0.6", fc="white", alpha=0.96, lw=0.6)
     for (x, y), text in CAPS:
@@ -136,7 +161,7 @@ def render(scale_bar: bool) -> None:
         ax.text(pad * 0.22, (y0 + y1) / 2, s["sub"], rotation=90, ha="center", va="center",
                 fontsize=7.5, color=s["color"])
 
-    stem = "layout_record_labelled" + ("_scale" if scale_bar else "")
+    stem = "layout_record_labelled" + ("_dims" if dims else "_scale" if scale_bar else "")
     for ext in ("png", "pdf"):
         out = FIGS / f"{stem}.{ext}"
         fig.savefig(out, dpi=DPI, pad_inches=0, metadata={"CreationDate": None} if ext == "pdf" else None)
@@ -147,6 +172,7 @@ def render(scale_bar: bool) -> None:
 def main() -> None:
     render(scale_bar=False)   # layout_record_labelled: the figure as merged
     render(scale_bar=True)    # layout_record_labelled_scale: + the 100 um bar
+    render(scale_bar=True, dims=True)   # layout_record_labelled_dims: + cell width / height
 
 
 if __name__ == "__main__":
