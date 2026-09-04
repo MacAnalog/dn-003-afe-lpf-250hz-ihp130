@@ -28,10 +28,11 @@ What is labelled, and why these names:
 
     PDK_ROOT=~/local/pdks .venv/bin/python doc/paper/scripts/fig_layout_record_labelled.py
 
-A 100 um scale bar sits in a white strip under the layout (6 px/um, so it is
-exactly 600 px of the raster).
+Two variants: `layout_record_labelled` (no scale bar) and
+`layout_record_labelled_scale`, which adds a white strip under the layout with a
+100 um bar (6 px/um, so it is exactly 600 px of the raster).
 
-Outputs: doc/paper/figures/layout_record_labelled.png / .pdf
+Outputs: doc/paper/figures/layout_record_labelled{,_scale}.png / .pdf
 """
 from __future__ import annotations
 
@@ -88,11 +89,11 @@ def um_to_px(x: float, y: float) -> tuple[float, float]:
     return (x - (l - m)) * PX_PER_UM, ((t + m) - y) * PX_PER_UM
 
 
-def main() -> None:
+def render(scale_bar: bool) -> None:
     img = mpimg.imread(SRC)[:, :, :3]
     h, w = img.shape[:2]
     pad = int(PAD_IN * DPI)
-    padb = int(PAD_BOTTOM_IN * DPI)
+    padb = int(PAD_BOTTOM_IN * DPI) if scale_bar else 0
     canvas = np.ones((h + padb, w + pad, 3), dtype=img.dtype)
     canvas[:h, pad:, :] = img
 
@@ -103,15 +104,16 @@ def main() -> None:
     ax.set_ylim(h + padb, 0)
     ax.axis("off")
 
-    # scale bar in the bottom strip, left-aligned with the cell's left edge
-    x0, _ = um_to_px(CELL[0], 0.0)
-    xs, ys = x0 + pad, h + padb * 0.45
-    bar = SCALE_UM * PX_PER_UM
-    ax.plot([xs, xs + bar], [ys, ys], color="black", lw=2.2, solid_capstyle="butt", zorder=6)
-    for xx in (xs, xs + bar):
-        ax.plot([xx, xx], [ys - padb * 0.10, ys + padb * 0.10], color="black", lw=1.2, zorder=6)
-    ax.text(xs + bar / 2, ys - padb * 0.16, f"{SCALE_UM:g} µm", ha="center", va="bottom",
-            fontsize=9, color="black", zorder=6)
+    if scale_bar:
+        # scale bar in the bottom strip, left-aligned with the cell's left edge
+        x0, _ = um_to_px(CELL[0], 0.0)
+        xs, ys = x0 + pad, h + padb * 0.45
+        bar = SCALE_UM * PX_PER_UM
+        ax.plot([xs, xs + bar], [ys, ys], color="black", lw=2.2, solid_capstyle="butt", zorder=6)
+        for xx in (xs, xs + bar):
+            ax.plot([xx, xx], [ys - padb * 0.10, ys + padb * 0.10], color="black", lw=1.2, zorder=6)
+        ax.text(xs + bar / 2, ys - padb * 0.16, f"{SCALE_UM:g} µm", ha="center", va="bottom",
+                fontsize=9, color="black", zorder=6)
 
     box_kw = dict(boxstyle="round,pad=0.35,rounding_size=0.6", fc="white", alpha=0.96, lw=0.6)
     for (x, y), text in CAPS:
@@ -134,11 +136,17 @@ def main() -> None:
         ax.text(pad * 0.22, (y0 + y1) / 2, s["sub"], rotation=90, ha="center", va="center",
                 fontsize=7.5, color=s["color"])
 
+    stem = "layout_record_labelled" + ("_scale" if scale_bar else "")
     for ext in ("png", "pdf"):
-        out = FIGS / f"layout_record_labelled.{ext}"
+        out = FIGS / f"{stem}.{ext}"
         fig.savefig(out, dpi=DPI, pad_inches=0, metadata={"CreationDate": None} if ext == "pdf" else None)
         print(f"  {out.name:32s} {out.stat().st_size / 1e6:5.2f} MB")
     plt.close(fig)
+
+
+def main() -> None:
+    render(scale_bar=False)   # layout_record_labelled: the figure as merged
+    render(scale_bar=True)    # layout_record_labelled_scale: + the 100 um bar
 
 
 if __name__ == "__main__":
