@@ -14,8 +14,8 @@ result** rather than with an error.
 
 | lane | when | how the PDK resolves | how the OSDI objects resolve |
 |---|---|---|---|
-| **docker** (default) | always available where Docker runs | the image's `~/.spiceinit` puts the PDK `models/` dir on ngspice's `sourcepath`, so `.lib cornerMOShv.lib mos_tt` resolves by bare name | the image's `~/.spiceinit` `pre_osdi`-loads the OpenVAF-compiled `psp103`, `r3_cmc` and `mosvar` `.osdi` objects |
-| **native** (opt-in) | `LPF_NGSPICE=/path/to/ngspice` | **you** must put the PDK `models/` on `sourcepath` in your own `~/.spiceinit` | **you** must load the same `.osdi` objects in your own `~/.spiceinit` |
+| **docker** (fallback) | wherever Docker runs and the host does not qualify for native | the image's `~/.spiceinit` puts the PDK `models/` dir on ngspice's `sourcepath`, so `.lib cornerMOShv.lib mos_tt` resolves by bare name | the image's `~/.spiceinit` `pre_osdi`-loads the OpenVAF-compiled `psp103`, `r3_cmc` and `mosvar` `.osdi` objects |
+| **native** (automatic when the host qualifies) | `ngspice` on PATH **and** `$SPICE_USERINIT_DIR/.spiceinit` (else `~/.spiceinit`) loads osdi objects — the lab workstation shape, `SPICE_USERINIT_DIR` = the PDK's `libs.tech/ngspice`; `LPF_NGSPICE=/path/to/ngspice` forces a binary, `LPF_LANE=docker` forces docker | **you** must put the PDK `models/` on `sourcepath` in your own `~/.spiceinit` | **you** must load the same `.osdi` objects in your own `~/.spiceinit` |
 
 The image is `spicexplorer-spice-base:local` (override with `LPF_DOCKER_IMAGE`).
 Each run gets its own directory under `LPF_WORK`, bind-mounted at `/w`, and runs
