@@ -40,15 +40,41 @@ WORK = Path(os.environ.get("LPF_WORK", f"/tmp/lpf_work-{_ns}"))
 #           the IHP PDK models and the OpenVAF-compiled PSP103/r3_cmc OSDI
 #           objects.  IHP MOS devices are PSP 103.6 compact models: they CANNOT
 #           be simulated by a stock ngspice without those .osdi files.
-#   native  set LPF_NGSPICE=/path/to/ngspice when the host itself has ngspice
-#           with OSDI *and* a ~/.spiceinit that loads the IHP osdi objects and
-#           puts the PDK model dir on `sourcepath`.
-NGSPICE = os.environ.get("LPF_NGSPICE", "")          # non-empty => native lane
+#   native  the host itself has ngspice with OSDI *and* a .spiceinit that loads
+#           the IHP osdi objects and puts the PDK model dir on `sourcepath`.
+#           Taken AUTOMATICALLY when `ngspice` is on PATH and
+#           `$SPICE_USERINIT_DIR/.spiceinit` (else `~/.spiceinit`) names osdi
+#           objects -- the lab workstation shape (SPICE_USERINIT_DIR points at the
+#           PDK's libs.tech/ngspice). `LPF_NGSPICE=/path/to/ngspice` forces a
+#           binary; `LPF_LANE=docker` forces the docker lane.
+
+
+def _native_default() -> str:
+    """The native ngspice when the host can actually run this PDK, else '' (docker).
+
+    Two facts are required, not one: a stock ngspice without the OSDI objects
+    reports `Unknown model type psp103va`, so an `ngspice` on PATH alone is not
+    a lane. The `.spiceinit` is where the osdi `load`s live (IHP ships one under
+    libs.tech/ngspice; SPICE_USERINIT_DIR is how ngspice finds it)."""
+    if os.environ.get("LPF_LANE", "").lower() == "docker":
+        return ""
+    exe = shutil.which("ngspice")
+    if not exe:
+        return ""
+    init = Path(os.environ.get("SPICE_USERINIT_DIR") or Path.home()) / ".spiceinit"
+    try:
+        return exe if "osdi" in init.read_text().lower() else ""
+    except OSError:
+        return ""
+
+
+NGSPICE = os.environ.get("LPF_NGSPICE") or _native_default()   # non-empty => native lane
 DOCKER_IMAGE = os.environ.get("LPF_DOCKER_IMAGE", "spicexplorer-spice-base:local")
 DOCKER = os.environ.get("LPF_DOCKER", shutil.which("docker") or "docker")
 
 def lane() -> str:
-    """'native' if LPF_NGSPICE points at a binary, else 'docker'."""
+    """'native' if LPF_NGSPICE points at a binary or the host qualifies (see
+    `_native_default`), else 'docker'."""
     return "native" if NGSPICE else "docker"
 
 # ------------------------------------------------------------------ PDK -----
