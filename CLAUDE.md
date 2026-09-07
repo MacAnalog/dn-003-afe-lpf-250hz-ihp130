@@ -66,6 +66,23 @@ hold only what is specific to this design.
 - `make thd` — THD profile at 175 mVpp across passband fins (slow).
 - `make clean` — remove this checkout's simulation work dirs.
 
+## Simulation lanes and reuse (contract for every agent in this repo)
+
+- **Open-source PDK (IHP SG13G2, sky130, gf180 …) → the open lane.** ngspice (with OSDI/openvaf models) through this repo's lane
+  module (`design/sim.py` or its equivalent here), KLayout / magic / netgen / kpex for layout and sign-off, xschem for schematics — natively
+  on the workstation; `make doctor` proves the lane. An open-PDK bench is never routed through the commercial tools.
+- **Commercial PDK under NDA → the bridge lane only.** Those simulations run on the EDA server through the lab's
+  remote-simulator bridge (the bridge submodule of the lab's shared agent library and its two simulator method definitions): decks are built here, uploaded by basename with *relative* `include`s,
+  simulated there, and only results come back. Kit bytes never reach the workstation or the model (`pdk_guard`
+  blocks it); every server-side artifact is design-named, never tool-named (`naming_guard`).
+- **SpiceXplorer first.** Before writing a script, use what exists and compose it: the platform packages
+  (`spicexplorer_core` — `spice_engine.run_deck`, measurements; `spicexplorer_harness` — ledger, pack, lint,
+  spec; `spicexplorer-optimize`; `spicexplorer_gmid`; `spicexplorer_layout` + `spicexplorer_signoff`;
+  `spicexplorer_waveview`; `spicexplorer_circuitgraph`; `spicexplorer_netlist2xschem`), the orchestration
+  workflows and MCP tools (`spicexplorer_orchestration.workflows`: layout, sizing, campaign, sign-off,
+  literature), and the reusable agents and method definitions in the lab's shared agent library (this repo's `.sx` submodule once its template migration lands). A missing function is added to the platform or the
+  library by PR (gap-as-signal), never reimplemented privately in this repo.
+
 ## Rules (mechanically enforced where possible; the rest is contract)
 
 1. **Reference first** — fast metrics iterate; the frozen definitions in
