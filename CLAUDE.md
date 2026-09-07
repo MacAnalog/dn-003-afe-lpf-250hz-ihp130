@@ -82,6 +82,14 @@ hold only what is specific to this design.
   workflows and MCP tools (`spicexplorer_orchestration.workflows`: layout, sizing, campaign, sign-off,
   literature), and the reusable agents and method definitions in the lab's shared agent library (this repo's `.sx` submodule once its template migration lands). A missing function is added to the platform or the
   library by PR (gap-as-signal), never reimplemented privately in this repo.
+- **Visual evidence and reports.** Every design cell and every testbench has a **human-readable xschem
+  sheet** (the `schematic-of-record` and `testbench-schematic` method definitions): generated from the certified netlist with `spicexplorer-netlist2xschem`, proven equal
+  to it, PNG render committed — never a hand drawing offered as a schematic. When a cell must live in the
+  commercial schematic editor it is **ported from that sheet** through the bridge's `xvport` lane and
+  re-proven identical with `circuitgraph`. Findings are **tables or plots regenerated from simulated
+  data** with the spec boxes drawn (the `findings-as-plots` method definition); a simulation report is one `experiments/NNN-*/` directory —
+  `run.py` simulates into git-ignored `out/*.json`, figures land in committed `figs/`, `mk_readme.py`
+  rewrites its README from `out/` — or this repo's documented equivalent, so no number is typed into prose.
 
 ## Rules (mechanically enforced where possible; the rest is contract)
 
