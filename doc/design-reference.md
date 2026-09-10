@@ -92,7 +92,7 @@ followers (§5).
 Total drawn = 2(29.468) + 6.221 + 2(11.453) + 9.946 = **98.01 pF**
 (`Design.total_cap`), which is what `c_total_pf` reports.
 
-**Placement rule, load-bearing:**
+**Placement rule — the term every sizing formula in §3 depends on:**
 
 * `c1` bridges the biquad's **internal node → that same half's output**, i.e. it
   is the gate–drain (Miller) capacitance of the shunt-feedback device. **One per
@@ -175,12 +175,11 @@ Three things fall straight out and are worth stating:
 * **`C1` is drawn twice and scales as 1/Q; `C2_drawn` is drawn once and scales
   as Q.** That asymmetry is the whole basis of the re-allocation control (§4.3).
 
-> **Docstring discrepancy — flagged, not fixed.** `lab/dut.py`'s module
-> docstring writes `Q = sqrt(gm_i*gm_f*C1/C2)/gm_i`, which is the **reciprocal**
-> of the correct expression derived above. Only the docstring is affected — no
-> code path computes Q — but it will mislead anyone sizing by hand. The
-> numerical check in §4.1 confirms the form used here. Fixing `lab/` is a
-> procedural write: propose the diff, do not self-apply it.
+> **Docstring discrepancy — closed.** `lab/dut.py`'s module docstring once wrote
+> `Q = sqrt(gm_i*gm_f*C1/C2)/gm_i`, the **reciprocal** of the expression derived
+> above. `lab/dut.py:20` now states `Q = sqrt(gm_i * C2 / (gm_f * C1))`, which
+> agrees; the numerical check in §4.1 confirms that form. No code path in `lab/`
+> computes Q either way.
 
 ### Cancellation variant (kept for continuity)
 
@@ -225,7 +224,10 @@ quoting them anywhere else.
 
 The geometric mean of the two pole frequencies lands on **250.0 Hz** against a
 **measured fc of 250.00 Hz** — the model closes on the measurement using nothing
-but the drawn capacitors and the measured gm/ID limit. The pair is a *staggered*
+but the drawn capacitors and the measured gm/ID limit. (That fc is the
+2026-08-11 certification at 10 pts/decade; the current certified value on the
+50 pts/decade grid is **250.37 Hz**, so the model closes to 0.15 % either way.)
+The pair is a *staggered*
 Butterworth-like allocation (reference Butterworth: f0 = 250 Hz both,
 Q = 0.5412 / **1.3066**, `lab.shape.BUTTER_Q`), slightly sharper than
 maximally flat: measured `a1000_db` = **−48.43 dB** against the Butterworth
@@ -395,9 +397,10 @@ flatness is judged **two-sided only ≤ 150 Hz**; no-peaking is judged one-sided
 combined with −3 dB at 247 Hz is infeasible by construction and will make a
 correct design look impossible.
 
-**C5 — Linearity is slew-bounded, and this reference has little margin.**
-DERIVED arithmetic (not a transient measurement — S7 has not been simulated on
-this reference): at the S7 point the single-ended peak is
+**C5 — Linearity is slew-bounded, and this reference sits at the boundary.**
+The table below is DERIVED arithmetic, not a transient measurement; the measured
+S7 number for this reference is **−48.37 dB** (`doc/target-spec.md` §S7). At the
+S7 point the single-ended peak is
 `Vp = 175 mVpp / 2 / 2 = 43.75 mV`, so the slew feasibility check
 `I/C > 2π·fc·Vp` demands **68.7 V/s**. In-band the internal node is quiet
 (eq. 2), so each output node sees ≈ `C1 + C2_single`, and the one-way current
@@ -408,11 +411,12 @@ limit is the output bias source, 2 units = 2.01 nA:
 | A | 41.91 | 48.0 | 68.7 |
 | B | 31.34 | 64.1 | 68.7 |
 
-Both sit **at or below** the boundary, so S7 is genuinely at risk and **must be
-measured, not assumed**. Any technique that shrinks bias current or grows
-capacitance eats this margin from above; lower caps or higher bias current
-improve THD. Those are the same currencies as noise and power — re-run THD
-whenever swing, capacitance or bias changes.
+Both sit **at or below** the boundary, yet the measured THD is −48.37 dB, 8.4 dB
+inside the −40 dB bound — so the arithmetic is a screen, not a predictor, and
+**every candidate's S7 is measured, never assumed**. Any technique that shrinks
+bias current or grows capacitance eats this margin from above; lower caps or
+higher bias current improve THD. Those are the same currencies as noise and
+power — re-run THD whenever swing, capacitance or bias changes.
 
 **C6 — The power budget is filter-core only, and there is headroom.** S6 is
 `< 50 nW` measured at the `vflt` series probe; the reference draws 12.07 nW, so
@@ -435,7 +439,7 @@ subset that constrains DUT design decisions.
 
 | claim | why it matters here | status |
 |---|---|---|
-| The eight in-DUT bias sources are ≈ 61.7 % of the IRN power; the input followers ≈ 27.8 %; the shunt-feedback devices ≈ 10.5 % | If it reproduces, the whole −20.3 % ask is a bias-source problem, not a follower problem, and the corpus's slew/THD row is irrelevant to it | **NOT re-measured here** |
+| The eight in-DUT bias sources are ≈ 61.7 % of the IRN power; the input followers ≈ 27.8 %; the shunt-feedback devices ≈ 10.5 % | If it reproduces, the whole −20.0 % ask is a bias-source problem, not a follower problem, and the corpus's slew/THD row is irrelevant to it | **NOT re-measured here** |
 | The bench's reference/bias network contributes ≈ 0 % of the *differential* IRN (it is common mode and rejected) | Justifies keeping the reference ideal; would make S6's exclusion noise-neutral as well as power-neutral | **NOT re-measured here** |
 | Flicker is ≈ 5 % of the noise power ⇒ chopping is worth ≈ −2.7 % at best | Pre-refutes an expensive technique. This repo's gate-referred flicker data (`doc/pdk-notes.md`) is per-device only, not a system split | **NOT re-measured here** |
 | I–C homothety: scale every multiplier *and* every capacitor by k ⇒ fc, Q, dc gain, ph_max and THD invariant, power ∝ k, `IRN ∝ 1/√k` | The technique-free control curve. Every technique must be quoted **against** it, or it is just buying noise with current | **NOT re-measured here** |

@@ -9,19 +9,15 @@ change one, change the other** — they are meant to be kept in sync mechanicall
 
 ## The challenge
 
-> Redesign the 250 Hz super-source-follower low-pass filter for **dramatically
-> lower input-referred noise** by **combining techniques from at least TWO
-> papers** in `pdf/` — a single-paper result does not qualify. Everything else
-> about the filter must hold.
-
-Concretely: cut IRN(0.5–200 Hz) from the **49.98 µVrms** reference baseline
-measured in this repo to **< 40 µVrms** — a **−20.0 %** reduction — while
-holding order, cutoff, flatness, distortion and power inside the box below.
-Total capacitance is **reported, never specced**.
+Cut IRN(0.5–200 Hz) from the **49.98 µVrms** reference baseline measured in this
+repo to **< 40 µVrms** — a **−20.0 %** reduction — by **combining techniques from
+at least TWO papers** in `pdf/`; a single-paper result does not qualify.
+Everything else about the filter holds inside the box below: order, cutoff,
+flatness, distortion and power. Total capacitance is **reported, never specced**.
 
 ## Conditions
 
-| | |
+| item | value |
 |---|---|
 | PDK | **IHP SG13G2**, 130 nm BiCMOS, open source (Apache-2.0). No NDA: decks, models and logs may be committed and published. |
 | Devices | **`sg13_hv_nmos` / `sg13_hv_pmos`** (thick-oxide, 3.3 V class), selected by measurement — see `doc/pdk-notes.md`. MIM cap `cap_cmim`; resistors `rsil`/`rhigh`/`rppd`. |
@@ -56,13 +52,10 @@ otherwise.
 
 **Two lines are NOT spec lines and must stay that way:**
 
-* **Total capacitance** is a *report* column (die cost), subordinate to noise.
-  Reference: **98.01 pF** (`c1_a` 29.468 / `c2_a` 6.221 / `c1_b` 11.453 /
-  `c2_b` 9.946 pF). A candidate may spend or save capacitance freely; it must
-  disclose the number.
-* **`idd_total_na`** (whole-testbench supply, reference **10.05 nA**) is
-  report-only. 2.01 nA of it is the reference current and its mirror, which S6
-  excludes by construction.
+| line | reference value | the rule |
+|---|---|---|
+| total drawn capacitance | **98.01 pF** (`c1_a` 29.468 / `c2_a` 6.221 / `c1_b` 11.453 / `c2_b` 9.946 pF) | a *report* column (die cost), subordinate to noise. A candidate may spend or save capacitance freely; it must disclose the number |
+| `idd_total_na` (whole-testbench supply) | **10.05 nA** | report-only. 2.01 nA of it is the reference current and its mirror, which S6 excludes by construction |
 
 **Soft box is empty.** `lab.metrics.SOFT` names report-only columns
 (`c_total_pf`, `idd_total_na`, `i_core_na`, `onoise_uv`, `ph_step_deg`,
@@ -132,7 +125,7 @@ rather than quietly inheriting the reference's pass.
 
 | # | held verbatim (technology-independent) | re-anchored here, and why |
 |---|---|---|
-| S1 | "two true biquads, 4th-order LP" is pure transfer-function shape. The companion `a1000 ≤ −48 dB` is **arithmetic, not silicon**: a 4-pole maximally flat response at 4× the cutoff is exactly 4⁻⁴ = **−48.16 dB** (`lab.shape.A1000_BUTTER_DB`). The **330°** threshold is also held. | Only the *baseline* moved: the reference measures **346.43°**, clearing the box by 16.43°. The **−100 dB magnitude floor** was re-validated on this repo's own response — the scored band ends at **3162.3 Hz**, and the worst unwrap-corrected step inside it is **46.94°**, a third of the 150° guard. **The floor also caps the achievable score, and 360° is not it:** pushed through `lab.raw.ph_max_deg` on the scoring grid, a *mathematically ideal* 4-pole Butterworth returns **350.53°**, because |H| has already fallen through −100 dB (at 15.9 × fc) while the phase is still ~9° short of its asymptote. Unfloored, the same response returns 359.57°. So the ceiling for a true 4-pole cell is ~350°, the reference sits 4° under it, and a cell scoring **above** ~351° is not "more fourth-order" — it is carrying parasitic lag that the 4-pole model does not contain. |
+| S1 | "two true biquads, 4th-order LP" is pure transfer-function shape. The companion `a1000 ≤ −48 dB` is **arithmetic, not silicon**: a 4-pole maximally flat response at 4× the cutoff is exactly 4⁻⁴ = **−48.16 dB** (`lab.shape.A1000_BUTTER_DB`). The **330°** threshold is also held. | Only the *baseline* moved: the reference measures **346.74°**, clearing the box by 16.74°. The **−100 dB magnitude floor** was re-validated on this repo's own response (scored band ends at **3162.3 Hz**; worst unwrap-corrected step inside it **46.94°**, a third of the 150° guard). **The floor also caps the achievable score, and 360° is not it:** an ideal 4-pole Butterworth returns **350.53°** through the same floor, so a cell scoring **above** ~351° is carrying parasitic lag, not extra order. Derivation and the unfloored comparison: §`ph_max_deg` below. |
 | S2 | 250 Hz and ±2 % ⇒ 245.0–255.0 Hz. **Held verbatim.** | Nothing in the number. The *sizing* that hits it (gm and C) is entirely technology-dependent and was re-synthesized — see `doc/design-reference.md`. |
 | S3 | 0 dB, \|dc\| ≤ 0.2 dB. Structural: shunt feedback pins H(0) = 1 independently of process. Flatness judged two-sided only **≤ 150 Hz** — do not police ripple *through* the corner. | The **structure** changed: with no isolated NMOS in SG13G2, an n-input follower's dc gain is exactly 1/n and blows this line by 10×. Both stages are p-type here. The measured −0.0047 dB is this repo's reference, not a carried-forward number. See `doc/design-reference.md` §"Body effect". |
 | S4 | peaking ≤ 0.2 dB. **Held verbatim.** | Nothing. Implementation note: `lab.raw.peaking_db` scores one-sided (`max(0, …)`) over f ≤ 1 kHz. |
@@ -150,15 +143,16 @@ differently silently changes what "49.98 µVrms" or "346.74°" is.
 
 ### IRN — input-referred noise, 0.5–200 Hz
 
-`.noise v(voutp,voutn) vsig dec 10 0.1 1k` → the `inoise_spectrum` vector,
+`.noise v(voutp,voutn) vsig dec 50 0.1 1k` → the `inoise_spectrum` vector,
 trapezoidally integrated over **0.5–200 Hz** (`lab.metrics.IRN_BAND`,
 `lab.raw.integrate_noise`). Implementation detail that is part of the
 definition: the integral is a **linear-frequency trapezoid on the power**
-(`sqrt(∫ S² df)`) applied to a **log-spaced 10 pts/decade** sweep, with the two
+(`sqrt(∫ S² df)`) applied to a **log-spaced 50 pts/decade** sweep
+(`lab.config.AC_DEC`), with the two
 band edges added by interpolating the density in log-frequency so 0.5 Hz and
 200 Hz are exact endpoints.
 
-**Band-limiting is load-bearing, not a convenience.** Input-referred density
+**Band-limiting is part of the definition, not a convenience.** Input-referred density
 diverges above the cutoff because the gain goes to zero, so the same trace
 integrated to 1 kHz reads milli-volts and means nothing. Never use ngspice's
 `noise2` / `inoise_total` plot — that is precisely the whole-band artefact.
@@ -192,12 +186,12 @@ aborts the noise analysis with `doAnalyses: ac input not found`.
 "Total phase shift → 360°" is the two-biquad requirement, measured operationally
 as **maximum unwrapped phase lag**, because a real response never literally
 reaches 360°: parasitic feed-through bends the phase back once the magnitude has
-collapsed. The box is anchored at **≥ 330°**; the reference measures **346.43°**.
+collapsed. The box is anchored at **≥ 330°**; the reference measures **346.74°**.
 
 `lab.raw.ph_max_deg(f, h, floor_db=-100.0)`:
 
 1. take the differential response `h = v(voutp) − v(voutn)` from a
-   `ac dec 10 0.1 100k` run, as complex;
+   `ac dec 50 0.1 100k` run, as complex;
 2. keep only samples where **\|H\| ≥ −100 dB relative to dc**
    (`lab.metrics.PH_FLOOR_DB`);
 3. unwrap the phase over that band and return `−min(φ − φ₀)` — the maximum lag,
@@ -230,15 +224,27 @@ Reference: **46.94°**, comfortably resolved.
 > Proposing that change is a procedural edit — propose the diff, don't
 > self-apply it.
 
+**The ceiling is ~350°, not 360°.** Pushed through `lab.raw.ph_max_deg` on the
+scoring grid, a *mathematically ideal* 4-pole Butterworth returns **350.53°**,
+because |H| has already fallen through −100 dB (at 15.9 × fc) while the phase is
+still ~9° short of its asymptote. Unfloored, the same response returns
+**359.57°**. The reference sits 4° under the floored ceiling, and a cell scoring
+**above** ~351° is not "more fourth-order" — it is carrying parasitic lag that
+the 4-pole model does not contain.
+
 **A cancellation-style LHP zero caps the achievable lag near 293°** and will
 fail S1 while the magnitude response still looks like a clean low-pass. That is
 the whole reason the certificate exists: magnitude-only scoring lets an order
 defect through. Score `ph_max_deg`, not just `a1000_db`.
 
-**The AC sweep density (`dec = 10`) is part of the definition.** The guard's
-150° calibration is meaningful only against that grid. Densifying the sweep
-weakens the guard (it never makes it wrong) and moves the certificate — if you
-densify for a diagnostic, do not re-anchor the box to the dense number.
+**The AC sweep density is part of the definition, and it is `dec = 50`.**
+`lab.config.AC_DEC = 50` is what the frozen deck sweeps and what every scorecard
+number above was measured on. The 150° guard was calibrated against the older
+`dec = 10` grid the reference was first certified on (2026-08-11); at 50
+pts/decade the per-sample steps are smaller, so the guard is *weaker* — it never
+becomes wrong, but a comfortable `ph_step_deg` is less evidence than it was.
+Densifying further moves the certificate: densify for a diagnostic, never to
+re-anchor the box to the dense number.
 
 ### Power probe — S6, filter core only
 

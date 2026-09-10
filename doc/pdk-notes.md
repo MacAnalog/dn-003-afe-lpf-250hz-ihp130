@@ -151,7 +151,7 @@ comparing devices on.
 Spread across every flavour and geometry is **10.38 … 13.44 µV**, i.e. ±13 %
 around 11.9 µV. **Device flavour is not a noise lever here.** Big-WL /
 small-I_B still helps at the margin (17/8 beats 12/4 by 1.3 µV on the hv
-n-channel device), but nothing in this table buys the −20.3 % that S5 needs.
+n-channel device), but nothing in this table buys the −20.0 % that S5 needs.
 
 ### 2.6 Conclusion, as recorded
 

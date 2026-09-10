@@ -1,23 +1,36 @@
 # CLAUDE.md — 250 Hz LPF design challenge (IHP SG13G2)
 
 **Map, not manual.** This file routes; the docs below hold the substance.
-Sessions usually run from `spicexplorer-workspace/`; every path here is
-relative to this repo (`external/agentic-design-250hz-lpf-ihp130/`).
+The checkout is `macanalog-design-directory/designs/dn-003-afe-lpf-250hz-ihp130/`
+(a plain clone, not a submodule); every path here is relative to it. Sessions run
+from that checkout; the generic harness comes from the `spicexplorer-workspace`
+platform checkout named in `pyproject.toml` (`[tool.uv.sources]`).
 
 ## Mission
 
 Redesign a fully differential **4th-order 250 Hz super-source-follower
 low-pass filter** in the open **IHP SG13G2** 130 nm BiCMOS PDK, at VDD = 1.5 V,
-so that **IRN(0.5–200 Hz) < 40 µVrms** — down from the **50.18 µVrms** of the
-certified reference baseline in `decks/reference/` (−20.3 %) — by **combining
-techniques from ≥ 2 papers in `pdf/`**, while holding two true biquads
-(ph_max ≥ 330°, |H|@1 kHz ≤ −48 dB), fc = 250 Hz ±2 %, |dc| ≤ 0.2 dB, peaking
-≤ 0.2 dB, THD ≤ −40 dB at 175 mVpp differential at fin = 50 Hz, and
-filter-core power < 50 nW. Total capacitance is **reported, never specced**.
+so that **IRN(0.5–200 Hz) < 40 µVrms** — down from the **49.98 µVrms** of the
+certified reference baseline in `decks/reference/` (−20.0 %) — by **combining
+techniques from ≥ 2 papers in `pdf/`**, without giving anything else back.
+
+Everything else must hold. The box, in full, is `doc/target-spec.md`:
+
+| what must hold | bound |
+|---|---|
+| two true biquads | ph_max ≥ 330° **and** \|H\| at 1 kHz ≤ −48 dB |
+| cutoff | fc = 250 Hz ±2 % |
+| passband gain | \|dc\| ≤ 0.2 dB |
+| peaking | ≤ 0.2 dB |
+| distortion | THD ≤ −40 dB at 175 mVpp differential, fin = 50 Hz |
+| filter-core power | < 50 nW |
+| total capacitance | **reported, never specced** |
 
 The reference baseline is the yardstick, not a target to beat on every axis:
-it is on spec, measured in this repo, and frozen. A candidate wins by cutting
-IRN without giving anything else back.
+it is measured in this repo and frozen, and it is on spec on every line except
+S5 noise **and S3 flatness** (ripple 0.2512 dB against the 0.2 dB bound —
+`decks/reference/scorecard.json`, which forbids the shorter description). A
+candidate wins by cutting IRN without giving anything else back.
 
 ## Read this before that
 
@@ -32,7 +45,7 @@ IRN without giving anything else back.
 | start an experiment | copy `experiments/_template/`; log one row in `doc/experiment-log.md` |
 | learn from / add a lesson | `doc/journal.md` (index) — entries are one file each in `doc/journal/`, typed semantic/procedural; supersede, don't delete |
 | understand what to read/write when | `doc/memory/README.md` — the memory model (working/episodic/semantic/procedural) + write-risk ordering |
-| draw or deliver a schematic | `xschem/README.md` — the schematic lane, its package rules, and the two identity gates |
+| draw or deliver a schematic | `signoff/<set>/schematic/` — the committed `.sch`/`.sym`/`.png` of record and its two testbenches. (This row named `xschem/README.md`; no `xschem/` directory exists in this checkout.) |
 
 ## Harness commands
 
@@ -68,31 +81,56 @@ hold only what is specific to this design.
 
 ## Simulation lanes and reuse (contract for every agent in this repo)
 
-- **Open-source PDK (IHP SG13G2, sky130, gf180 …) → the open lane.** ngspice (with OSDI/openvaf models) through this repo's lane
-  module (`design/sim.py` or its equivalent here), KLayout / magic / netgen / kpex for layout and sign-off, xschem for schematics — natively
-  on the workstation; `make doctor` proves the lane. An open-PDK bench is never routed through the commercial tools.
-- **Commercial PDK under NDA → the bridge lane only.** Those simulations run on the EDA server through the lab's
-  remote-simulator bridge (the bridge submodule of the lab's shared agent library and its two simulator method definitions): decks are built here, uploaded by basename with *relative* `include`s,
-  simulated there, and only results come back. Kit bytes never reach the workstation or the model (`pdk_guard`
-  blocks it); every server-side artifact is design-named, never tool-named (`naming_guard`).
-  **A declined permission prompt about the NDA kit tree is never a stop:** continue without those bytes
-  (the kit is consumed by path on the server; open-PDK files are unrestricted; ask the person one sentence
-  if a kit fact is needed).
-- **SpiceXplorer first.** Before writing a script, use what exists and compose it: the platform packages
-  (`spicexplorer_core` — `spice_engine.run_deck`, measurements; `spicexplorer_harness` — ledger, pack, lint,
-  spec; `spicexplorer-optimize`; `spicexplorer_gmid`; `spicexplorer_layout` + `spicexplorer_signoff`;
-  `spicexplorer_waveview`; `spicexplorer_circuitgraph`; `spicexplorer_netlist2xschem`), the orchestration
-  workflows and MCP tools (`spicexplorer_orchestration.workflows`: layout, sizing, campaign, sign-off,
-  literature), and the reusable agents and method definitions in the lab's shared agent library (this repo's `.sx` submodule once its template migration lands). A missing function is added to the platform or the
-  library by PR (gap-as-signal), never reimplemented privately in this repo.
-- **Visual evidence and reports.** Every design cell and every testbench has a **human-readable xschem
-  sheet** (the `schematic-of-record` and `testbench-schematic` method definitions): generated from the certified netlist with `spicexplorer-netlist2xschem`, proven equal
-  to it, PNG render committed — never a hand drawing offered as a schematic. When a cell must live in the
-  commercial schematic editor it is **ported from that sheet** through the bridge's `xvport` lane and
-  re-proven identical with `circuitgraph`. Findings are **tables or plots regenerated from simulated
-  data** with the spec boxes drawn (the `findings-as-plots` method definition); a simulation report is one `experiments/NNN-*/` directory —
-  `run.py` simulates into git-ignored `out/*.json`, figures land in committed `figs/`, `mk_readme.py`
-  rewrites its README from `out/` — or this repo's documented equivalent, so no number is typed into prose.
+**Open-source PDK (IHP SG13G2, sky130, gf180 …) → the open lane.**
+
+- ngspice (with OSDI/openvaf models) through this repo's lane module
+  (`design/sim.py` or its equivalent here); KLayout / magic / netgen / kpex for
+  layout and sign-off; xschem for schematics — natively on the workstation.
+- `make doctor` proves the lane. An open-PDK bench is never routed through the
+  commercial tools.
+
+**Commercial PDK under NDA → the bridge lane only.**
+
+- Those simulations run on the EDA server through the lab's remote-simulator
+  bridge (the bridge submodule of the lab's shared agent library and its two
+  simulator method definitions): decks are built here, uploaded by basename with
+  *relative* `include`s, simulated there, and only results come back.
+- Kit bytes never reach the workstation or the model (`pdk_guard` blocks it);
+  every server-side artifact is design-named, never tool-named (`naming_guard`).
+- **A declined permission prompt about the NDA kit tree is never a stop:**
+  continue without those bytes (the kit is consumed by path on the server;
+  open-PDK files are unrestricted; ask the person one sentence if a kit fact is
+  needed).
+
+**SpiceXplorer first.** Before writing a script, use what exists and compose it.
+A missing function is added to the platform or the library by PR
+(gap-as-signal), never reimplemented privately in this repo.
+
+- **Platform packages** — `spicexplorer_core` (`spice_engine.run_deck`,
+  measurements), `spicexplorer_harness` (ledger, pack, lint, spec),
+  `spicexplorer-optimize`, `spicexplorer_gmid`, `spicexplorer_layout` +
+  `spicexplorer_signoff`, `spicexplorer_waveview`, `spicexplorer_circuitgraph`,
+  `spicexplorer_netlist2xschem`.
+- **Orchestration** — `spicexplorer_orchestration.workflows` (layout, sizing,
+  campaign, sign-off, literature) and its MCP tools.
+- **The lab's shared agent library** — its reusable agents and method
+  definitions (this repo's `.sx` submodule once its template migration lands).
+
+**Visual evidence and reports.**
+
+- **Every design cell and every testbench has a human-readable xschem sheet**
+  (the `schematic-of-record` and `testbench-schematic` method definitions):
+  generated from the certified netlist with `spicexplorer-netlist2xschem`,
+  proven equal to it, PNG render committed — never a hand drawing offered as a
+  schematic. When a cell must live in the commercial schematic editor it is
+  **ported from that sheet** through the bridge's `xvport` lane and re-proven
+  identical with `circuitgraph`.
+- **Findings are tables or plots regenerated from simulated data** with the spec
+  boxes drawn (the `findings-as-plots` method definition).
+- **A simulation report is one `experiments/NNN-*/` directory** — `run.py`
+  simulates into git-ignored `out/*.json`, figures land in committed `figs/`,
+  `mk_readme.py` rewrites its README from `out/` — or this repo's documented
+  equivalent, so no number is typed into prose.
 
 ## Rules (mechanically enforced where possible; the rest is contract)
 
@@ -172,9 +210,8 @@ no serialization at all — only "two generators must never write the same
 sessions in the same checkout (shared index/branch = clobbering).**
 
 ```bash
-git -C external/agentic-design-250hz-lpf-ihp130 \
-    worktree add ../lpf-wt/001-<technique> -b feat/001-<technique>
-cd external/lpf-wt/001-<technique> && uv sync && export LPF_EXP=001
+git worktree add ../lpf-wt/001-<technique> -b feat/001-<technique>
+cd ../lpf-wt/001-<technique> && uv sync && export LPF_EXP=001
 ```
 
 **Isolated automatically per checkout** — `lab.config` namespaces the work dir
@@ -189,19 +226,17 @@ rawfiles. `LPF_EXP` stamps every ledger row (`make runs ARGS="--exp NNN"`).
 | `runs/ledger.ndjson` | every session in the *same* checkout | repo-relative, append-only, one line per run; never hand-edit, never delete rows. Two worktrees get two ledgers — that is intended; keeper numbers graduate into the experiment README, which is what merges. |
 | `decks/reference/` | everyone, always | **frozen.** sha-pinned by `make lint`. Read it, splice against it, never edit it. A re-vendor is a deliberate act: update the pin *and* re-run `make check` so the certified scorecard is re-certified. |
 | `doc/journal.md`, `doc/experiment-log.md`, `pdf/INDEX.md` | every session at merge time | write into **your own** `experiments/NNN-*/README.md` during the work; graduate lessons to the shared docs at merge/close-out. That is what keeps the shared files conflict-free. |
-| `xschem/<cell>.sch` | whoever draws | cells are namespaced by experiment (`lpf_core_001.sch`). Never modify the reference cell or another experiment's cell; new sizing gets a new cell name and git holds the history. Delivery is still a close-out step, so the netlist can be independently re-verified. |
+| `xschem/<cell>.sch` — today these live under `signoff/<set>/schematic/` | whoever draws | cells are namespaced by experiment (`lpf_core_001.sch`). Never modify the reference cell or another experiment's cell; new sizing gets a new cell name and git holds the history. Delivery is still a close-out step, so the netlist can be independently re-verified. |
 
 Edit only your own `experiments/NNN-*/` dir during parallel work.
 
 **Merge:** PR `feat/NNN-*` → `main`, squash into one descriptive commit;
-**re-pin the meta repo's submodule SHA afterwards**; `git worktree remove` when
-done (never `rm -rf`).
+`git worktree remove` when done (never `rm -rf`).
 
 ## Git
 
-Work on `feat/<name>` off `main`; PR and squash. This repo is a **submodule** of
-`spicexplorer-workspace` — after a merge, re-pin the meta repo. PR bodies follow
-the workspace's four-part shape (What was done / Assumptions / Errors, setbacks,
+Work on `feat/<name>` off `main`; PR and squash. PR bodies follow the
+workspace's four-part shape (What was done / Assumptions / Errors, setbacks,
 gotchas / Next Steps).
 
 **Ask before pushing.** Never commit `runs/`, `/tmp` work-dir output, rawfiles,

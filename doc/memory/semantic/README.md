@@ -17,7 +17,7 @@ Undated distilled design knowledge, **one topic per file**, provenance required
 | `doc/journal/<slug>.md` | it is a **dated lesson**: a symptom, its mechanism, and the rule it establishes; fits in one screen |
 | **here** | it is a *topic*, not a lesson — a study, a map, a table that keeps growing: it has no single date, it will be extended, and it would blow the 20 KB journal cap or drown a design-reference bullet |
 
-Expected first occupant: the IHP SG13G2 device-behaviour study — gm/ID, gm/gds,
+Expected next: the IHP SG13G2 device-behaviour study — gm/ID, gm/gds,
 Vgs at 1 nA, leakage and integrated gate-referred noise versus inversion level
 and geometry for `sg13_hv_nmos` / `sg13_hv_pmos` / `sg13_lv_*`, currently seeded
 as a table in `doc/pdk-notes.md` and expected to outgrow it.

@@ -66,7 +66,7 @@ unchanged.
 | **semantic** | distilled knowledge, provenance-linked: `doc/journal.md` + `doc/journal/` (lessons), `doc/design-reference.md` (constraints), `doc/pdk-notes.md` (measured device data), `pdf/INDEX.md` (paper knowledge), experiment READMEs (verdicts) | **distillation at close-out** (or immediately on a surprising failure) | the context pack's lessons/constraints/papers slots; direct read of the curated docs |
 | **procedural** | the code that implements actions and decisions; **human-initialized**: `lab/`, `scripts/`, `xschem/`, `Makefile`, the lints, the agent definitions in `.claude/agents/`, and `CLAUDE.md` | **trap→gate promotion, human-reviewed only** | the harness-commands section of `CLAUDE.md` |
 
-**Working-memory retrieval policy** (load-bearing, and stated twice on purpose —
+**Working-memory retrieval policy** (stated twice on purpose —
 here and in `CLAUDE.md`): run the pack **at task start, and re-run it keyed
 on every new symptom** (`make pack S="…"`).
 
@@ -126,16 +126,17 @@ Related enforcing rules in `CLAUDE.md`:
 
 ### How the human-review rule shows up in practice
 
-Three mechanisms, all three in use:
+Three mechanisms:
 
 1. **A flag line ends the entry.** Any procedural journal entry that proposes a
    `lab/` or `scripts/` change ends with:
    `Procedural write (lab/) — flagged for owner review per CLAUDE.md rule 10.`
-2. **A standing review queue exists.** `doc/proposed-lab-fixes.md`
+2. **A standing review queue.** `doc/proposed-lab-fixes.md`
    (`KIND: TODO (owner review)`) is the destination for every agent-proposed
    procedural diff: the defect, the ledger evidence that exposed it, the diff,
    what it changes about what "sign-off" means, and a `PENDING` /
-   `APPLIED (owner-authorized <date>)` marker.
+   `APPLIED (owner-authorized <date>)` marker. **The file does not exist in this
+   checkout** — create it with the first proposal.
 3. **Applied writes are stamped.** When a procedural change *is* applied, the
    row in `doc/experiment-log.md` (and the entry) says
    **APPLIED (owner-authorized)** — so the audit trail shows who authorized the
@@ -213,22 +214,22 @@ has not been evaluated, whatever the reasoning around it looked like.
 
 ## 8. Enforcement
 
-`scripts/lint.py check_journal`, over every `doc/journal/*.md`:
+`make lint` runs `spicexplorer_harness.lint.journal` over every
+`doc/journal/*.md` and every `doc/memory/{semantic,procedural}/*.md`
+(`memory_dirs`), plus `doc/journal.md` itself.
 
-1. **indexed** — the filename must appear in `doc/journal.md`.
-   FIX: *add its one-line row (date | entry | type | status | hook) — the index
-   is what agents scan; unindexed entries are invisible.*
-2. **typed** — `re.search(r"type: (semantic|procedural)", head)` over the first
-   400 bytes. FIX: *add `type: <t> | status: live` on the line after the title —
-   the memory model (doc/memory/README.md) keys on it.*
-3. **size** — every entry **and** `doc/journal.md` ≤ 20 000 bytes. FIX: *split
-   it: entries stay single-topic; move overflow to
-   `doc/memory/semantic|procedural/` — every memory surface must fit an agent
-   context.*
-4. **sorted** — index rows newest-first.
-5. **supersession complete** — an entry containing `[superseded` must also carry
-   `status: superseded` on line 3 **and** a `**superseded**` status cell in the
-   index.
+| # | check | FIX the failure prints |
+|---|---|---|
+| 1 | **indexed** — the filename must appear in `doc/journal.md` | *add its one-line row (date \| entry \| type \| status \| hook) — the index is what agents scan; unindexed entries are invisible* |
+| 2 | **typed** — `re.search(r"type: (semantic\|procedural)", head)` over the first 400 bytes | *add `KIND: journal entry \| type: <t> \| status: live` on the line after the title — the memory model keys on it* |
+| 3 | **dated** — the first line must match `# YYYY-MM-DD` | *entries start with an H1 whose first token is the ISO date* |
+| 4 | **size** — every entry ≤ **20 000 bytes** (`memory_size_cap`); `doc/journal.md` ≤ **32 000 bytes** (`memory.index_size_cap` in `harness.yaml`) | *split it: entries stay single-topic; move overflow to `doc/memory/semantic\|procedural/` — every memory surface must fit an agent context* |
+| 5 | **supersession complete** — an entry containing `[superseded` must also carry `status: superseded` on line 3 | *supersession is a three-place edit: header status, the bracket note, the index cell* |
+
+**Not enforced, despite what this file used to claim:** newest-first ordering of
+the index rows. No lint reads the order, and `doc/journal.md`'s rows are not
+strictly sorted today (2026-08-28 precedes 2026-08-29). Treat the ordering as a
+convention, or add the check.
 
 Design principle for every lint in this repo: *a doc that fails to change
 behaviour gets promoted to a linter, and the failure message itself teaches the

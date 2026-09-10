@@ -20,16 +20,18 @@ land **human-reviewed**, and anything that proposes a change to `lab/`,
 | **here** | it is a **procedure**: an ordered multi-step flow with preconditions, checks between steps, and a stated failure mode per step |
 | `lab/` or `scripts/` | the procedure has run three times without changing — promote it to code and delete the recipe (**that promotion is a procedural write: propose the diff, do not self-apply**) |
 
-Expected first occupants:
+Expected next:
 
 * the corner / Monte-Carlo run recipe (which `.lib` sections
   `cornerMOShv.lib` actually provides — `mos_tt`, `mos_ss`, `mos_ff`, `mos_sf`,
   `mos_fs` — how to batch them through `lab.parallel`, and the mandatory
   self-test that two Monte-Carlo samples are **not** bit-identical before any
   yield claim is made);
-* the xschem → netlist → `lab.verify` recipe (draw, netlist, diff the delivered
+* the xschem → netlist → verify recipe (draw, netlist, diff the delivered
   netlist against the netlist-lane netlist through the **same** netlister,
-  re-certify as-built).
+  re-certify as-built). The lane exists today as `lab/xsch.py` +
+  `scripts/check_netlist.py` + `signoff/<set>/verify.py`; there is **no
+  `lab.verify` module**, though `lab/raw.py:23` still names one.
 
 ## Entry conventions
 
