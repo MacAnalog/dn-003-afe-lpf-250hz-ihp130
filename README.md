@@ -93,6 +93,27 @@ notes + diffs), `opt/results/` (600-trial area campaign: the bias dummy rows
 were 5.6 % of the cell for no measured benefit — removed in it14), and the
 paper pack [`doc/paper/`](doc/paper/README.md).
 
+### Known limitation: what the post-layout numbers do not model
+
+The post-layout column above is an **extraction**, and four things it does not
+model are open. Each is *bounded*; none is *closed*. They belong beside the
+headline row rather than only in the paper pack's gap list
+([`doc/paper/README.md`](doc/paper/README.md) §5, gaps **G8–G11**) and the
+reviewer's findings F24 / F11 / F3 / F13 in
+[`REVIEW.md`](layout/H12-pdk-cap/REVIEW.md).
+
+| what is not modelled | bound / consequence |
+|---|---|
+| **RC extraction is not deterministic** (**G8**, F24). Two RC runs on the same GDS differ in **17 221 lines** of sub-node naming while every C card and every device card is byte-identical, and three RC meshes measure fc = 248.6366 / 248.6763 / 248.6833 Hz. On the CC side the record is mixed: the reviewer's three CC runs were byte-identical, but the designer's own HD2 note (`scorecard_post.json`) records two CC netlists of the same GDS differing in instance ordering. | **±0.047 Hz of mesh scatter on `fc`** — the same size as the CC↔RC agreement the scorecard quotes as its cross-check (CC 248.6636 vs RC 248.7104 Hz). So **the RC cross-check agrees to the extractor's own repeatability, not finer than it**, and extractions must be compared by *sorted card set*, never by file sha. The designer's one pathological mesh (a shorted operating point) did not recur in three reviewer draws, so its frequency is neither reproduced nor bounded. |
+| **MIM top plates are stripped before extraction** (**G9**, F11). kpex's IHP tech marks `cmim_top` `<TODO>`, so the plates are removed from the GDS handed to the extractor and the six certified `cap_cmim` cards are re-inserted verbatim into `asbuilt/core_pex.sp`. | The top-plate environment capacitance on `net2`/`net3` is a **carried ≤ 15 fF bound worth up to −0.39° of `ph_max`** — carried, not closed. Needs a MIM-aware kpex tech or a hand/FasterCap number. |
+| **n-well / p-substrate junction capacitance is outside every model in the flow** (**G10**, F3 — deferred by the approved plan). The only evidence is a lumped-`Cj` what-if at 0.05 / 0.12 fF/µm². | **−0.108…−0.259° on `ph_max`.** S1 is a **minimum** (≥ 330°), so the sign is adverse: this bound eats phase margin, it does not restore it. It has not been measured at the accepted `cap_bcs ×0.9` corner, whose 0.179° shortfall is therefore a floor rather than the whole story. |
+| **The LVS gate does not check the pin list** (**G11**, F13). `vbp` is a *deliberate* unused port — BRIEF §9: "keep the pin for LVS, route nothing to it" — drawn as a 4 × 2 µm labelled Metal1 pad, present on the `.subckt` header of both `asbuilt/core_lvs.sp` and `asbuilt/core_pex.sp` and on **no device card in either** (this replica-biased cell gates its pmos loads from `net4`/`net1`/`vbr`/`rep_x`; `vbp` is live only in the pre-replica reference deck). The reviewer's own extraction dropped the port entirely and LVS still reported *Netlists match*, and the two committed headers do not agree — `core_pex.sp` declares 7 pins, omitting `vss`, which kpex ties to node 0. | **1 of 8 declared pins is outside the LVS evidence.** Nothing about the delivered cell is known to be wrong; the gate simply cannot see this pin either way. Needs a pin-list assertion inside `signoff.lvs`. |
+
+None of these moves the **nominal** post-layout scorecard, which reproduces
+exactly on the reviewer's own build, extraction and benches. They bound how much
+the extraction could be wrong by, and — G10 in particular — they all push `ph_max`
+the wrong way for S1.
+
 ## Quickstart
 
 ```bash
