@@ -58,6 +58,11 @@ RETIRED = (
     re.compile(r"mismatch all[- ]pass", re.I),
     re.compile(r"\d+\s*/\s*\d+[*\s]+all[- ]pass", re.I),   # "**82/100** all-pass"
     re.compile(r"ALL-PASS YIELD"),
+    # The sibling benches (lab.droop, the PVT figures) score the same S1-S6
+    # box and made the same unqualified claim.  Qualified forms are fine and do
+    # not match ("every spec line *this bench scores*", "every spec line THIS
+    # DRAW SCORED"): the pattern needs the verb straight after the noun.
+    re.compile(r"every spec line (still )?(passes|inside)", re.I),
 )
 
 
