@@ -37,8 +37,19 @@ box only -- today S1-S6.  S7 (THD) needs an independent long transient
 quantity at all; neither is in the harness.yaml acceptance box.  Every report
 this module prints names the covered and the excluded ids, and `summary()`
 records them in the ledger row, so a number lifted out of a table still says
-what it stands for.  The scope is derived from `lab.metrics.SPEC` -- put THD in
-the box and the headline widens by itself.
+what it stands for.
+
+**The scope is derived from what the DRAWS MEASURED, never from the acceptance
+box.**  `McResult.measured_keys` is the set of metric keys every draw that came
+back with a result actually produced; the scored box is that set intersected
+with `lab.metrics.SPEC`, and the covered ids follow from it.  Deriving it from
+`SPEC` instead would be an overstatement machine: a `thd_db` row added to the
+acceptance box would widen the printed claim to S1-S7 while `sample()` still
+ran nothing but `lab.deck.ac_noise`.  Widening the claim is `sample()`'s job --
+the day a draw also measures THD, that key is in the values and the scope
+widens WITH the evidence rather than ahead of it.  A spec line the draws do not
+measure is reported as excluded; it is in neither the yield's numerator nor the
+per-line table, and its absence is not a convergence failure.
 
 The dict key stays `all_pass_yield`: it is the column name in the committed
 sign-off scorecards, `doc/paper/figures/data/mc_samples.json` and the
@@ -96,26 +107,58 @@ class Sample:
     error: str = ""          # non-empty => the simulation itself failed
 
     @property
+    def measured(self) -> list[str]:
+        """The SPEC keys this draw actually produced a value for, in SPEC order.
+
+        The acceptance box may hold lines this bench does not run at all.  A
+        key that is not in `values` was never measured here, and neither the
+        yield nor the scope may pretend otherwise.
+        """
+        return [k for k in M.SPEC if k in self.values]
+
+    @property
     def usable(self) -> bool:
-        """A real measurement: it ran, and every spec line has a finite value.
+        """A real measurement: it ran, and every line it MEASURED is finite.
 
         A NaN spec column is treated exactly like a failed run.  `M.check`
-        would call it 'NOT MEASURED' and count it as a violation, which is
-        honest for a scorecard but wrong for a yield: it would put a hole in the
+        would call it 'missing' and count it as a violation, which is honest
+        for a scorecard but wrong for a yield: it would put a hole in the
         statistics and pretend the sample was measured and lost.
+
+        Only the keys this draw produced are judged.  A spec line the bench
+        never runs is not a non-converged sample -- counting it as one would
+        report a missing BENCH as a simulator failure.
         """
         if self.score is None:
             return False
-        for key in M.SPEC:
+        keys = self.measured
+        if not keys:
+            return False
+        for key in keys:
             v = self.score.values.get(key)
             if v is None or (isinstance(v, float) and not math.isfinite(v)):
                 return False
         return True
 
     @property
+    def scored_violations(self) -> list[str]:
+        """Violations of the spec lines this draw actually measured.
+
+        `M.check` reports one 'missing' line per unmeasured spec key; those are
+        a statement about the BENCH, not about this draw, so they are not what
+        makes a draw fail.
+        """
+        labels = tuple(M.SPEC[k][0] for k in self.measured)
+        return [v for v in self.violations if labels and v.startswith(labels)]
+
+    @property
     def ok(self) -> bool:
-        """Passes every spec line.  A non-usable sample is never ok."""
-        return self.usable and self.score.ok
+        """Passes every spec line THIS DRAW SCORED.  Non-usable is never ok.
+
+        A line the draw did not measure can be neither passed nor failed here;
+        it is named in `McResult.spec_ids_excluded` instead.
+        """
+        return self.usable and not self.scored_violations
 
     @property
     def values(self) -> dict:
@@ -132,8 +175,10 @@ class Sample:
             return f"sim error: {self.error.splitlines()[0][:120]}"
         if self.score is None:
             return "no result"
+        if not self.measured:
+            return "no spec line measured"
         if not self.usable:
-            bad = [k for k in M.SPEC
+            bad = [k for k in self.measured
                    if not isinstance(self.score.values.get(k), (int, float))
                    or not math.isfinite(float(self.score.values.get(k, float("nan"))))]
             return "non-finite metric: " + ", ".join(bad)
@@ -224,22 +269,45 @@ class McResult:
     def all_pass_yield(self) -> float:
         """THE headline: every SCORED spec line met at once, over attempted.
 
-        Scored = `spec_ids_covered`; `spec_ids_excluded` is what this number is
-        silent about.  Key name kept for the committed records -- see the module
-        docstring.
+        Scored = `scored_keys` / `spec_ids_covered`; `spec_ids_excluded` is what
+        this number is silent about.  Key name kept for the committed records --
+        see the module docstring.
         """
         return self.n_pass / self.n if self.n else float("nan")
 
     # -- scope ---------------------------------------------------------------
     @property
+    def measured_keys(self) -> list[str]:
+        """The metric keys EVERY draw that returned a result produced.
+
+        THIS, not `lab.metrics.SPEC`, is where the scope comes from: the claim
+        may only be as wide as the evidence.  The intersection, not the union --
+        a key one result is missing is a key the campaign cannot speak for.
+        Draws that never came back (a sim error, `score is None`) produced
+        nothing and are not part of it; they are counted as failures elsewhere.
+        """
+        seen = [set(s.values) for s in self.samples if s.score is not None]
+        return sorted(set.intersection(*seen)) if seen else []
+
+    @property
+    def scored_keys(self) -> list[str]:
+        """The spec lines these draws measured, in SPEC order -- the scored box."""
+        got = set(self.measured_keys)
+        return [k for k in M.SPEC if k in got]
+
+    @property
     def spec_ids_covered(self) -> list[str]:
-        """The requirement ids these draws carry evidence for."""
-        return M.spec_ids()
+        """The requirement ids these draws carry evidence for.
+
+        Derived from `scored_keys` -- what the draws measured -- so a spec line
+        added to the acceptance box but not to the bench does NOT widen it.
+        """
+        return M.spec_ids(self.scored_keys)
 
     @property
     def spec_ids_excluded(self) -> list[str]:
-        """The requirement ids the yield is SILENT about (S7 THD, S8)."""
-        return M.spec_ids_unscored()
+        """The requirement ids the yield is SILENT about (today S7 THD, S8)."""
+        return M.spec_ids_unscored(self.scored_keys)
 
     def line_pass(self, key: str) -> int:
         """How many attempted samples meet ONE spec line."""
@@ -281,7 +349,7 @@ class McResult:
                "spec_ids_covered": ",".join(self.spec_ids_covered),
                "spec_ids_excluded": ",".join(self.spec_ids_excluded),
                "corner": self.corner, "seed0": self.seed0}
-        for k in M.SPEC:
+        for k in self.scored_keys:
             out[f"yield_{k}"] = round(self.line_yield(k), 6)
         for k in STAT_KEYS:
             st = self.stats(k)
@@ -302,7 +370,8 @@ def _excess(s: Sample) -> tuple[float, str]:
     if not s.usable:
         return (float("inf"), s.why)
     worst, who = 0.0, ""
-    for key, (label, op, bound) in M.SPEC.items():
+    for key in s.measured:
+        label, op, bound = M.SPEC[key]
         v = float(s.values[key])
         if op == ">=":
             e = (bound - v) / abs(bound)
@@ -389,9 +458,15 @@ def scope_note(r: McResult) -> str:
     """One paragraph naming the ids this yield covers and those it does not.
 
     Printed with every table so the headline cannot be read as an all-S1-S8
-    yield, and regenerated from `lab.metrics.SPEC` so it cannot go stale.
+    yield, and regenerated from what the draws measured (`McResult.scored_keys`)
+    so it can neither go stale nor run ahead of the evidence.
     """
     cov, exc = r.spec_ids_covered, r.spec_ids_excluded
+    if not cov:
+        return ("**Scope — these draws measured no spec line at all**, so this "
+                "is a run report, not a yield: it carries evidence for none of "
+                f"{id_span(list(M.SPEC_IDS_ALL))} and must not be quoted as a "
+                "yield for any of them.")
     line = (f"**Scope — this yield covers {id_span(cov)}**, the lines one "
             f"`lab.deck.ac_noise` draw measures.")
     if not exc:
@@ -404,14 +479,20 @@ def scope_note(r: McResult) -> str:
 
 def table(r: McResult) -> str:
     """Yield table + statistics table + the five worst samples."""
+    span = id_span(r.spec_ids_covered)
+    headline = (
+        f"**{r.n_pass} of {r.n} samples pass every scored spec line "
+        f"({span}) — SCORED-BOX YIELD = {100 * r.all_pass_yield:.1f} % "
+        f"(denominator: {r.n} samples attempted, seeds "
+        f"{r.seed0}–{r.seed0 + r.n - 1}).**"
+        if r.spec_ids_covered else
+        f"**No spec line was measured by every draw ({span}), so there is no "
+        f"scored box and no yield to quote here: {r.n_failed} of {r.n} draws "
+        f"produced no usable measurement.**")
     out = [f"### Mismatch Monte Carlo — `{r.tag}` ({r.design.topology}), "
            f"corner `{r.corner}`, T = {r.temp:g} °C",
            "",
-           f"**{r.n_pass} of {r.n} samples pass every scored spec line "
-           f"({id_span(r.spec_ids_covered)}) — SCORED-BOX YIELD = "
-           f"{100 * r.all_pass_yield:.1f} % "
-           f"(denominator: {r.n} samples attempted, seeds "
-           f"{r.seed0}–{r.seed0 + r.n - 1}).**",
+           headline,
            "",
            scope_note(r),
            "",
@@ -422,13 +503,15 @@ def table(r: McResult) -> str:
            f"yields are over all {r.n} attempted.",
            f"Wall time {r.wall_s:.1f} s.", "",
            "| spec line | bound | pass | yield |", "|---|---|---|---|"]
-    for key, (label, op, bound) in M.SPEC.items():
+    for key in r.scored_keys:
+        label, op, bound = M.SPEC[key]
         b = (f"{bound[0]:g}..{bound[1]:g}" if op == "in"
              else f"{op} {bound:g}" if op != "abs<=" else f"|·| <= {bound:g}")
         out.append(f"| {label} | {b} | {r.line_pass(key)}/{r.n} | "
                    f"{100 * r.line_yield(key):.1f} % |")
-    out.append(f"| **ALL SCORED LINES ({id_span(r.spec_ids_covered)})** | — | "
-               f"**{r.n_pass}/{r.n}** | **{100 * r.all_pass_yield:.1f} %** |")
+    if r.spec_ids_covered:
+        out.append(f"| **ALL SCORED LINES ({span})** | — | "
+                   f"**{r.n_pass}/{r.n}** | **{100 * r.all_pass_yield:.1f} %** |")
 
     out += ["", "| quantity | mean | sigma | min | max | n |", "|---|---|---|---|---|---|"]
     for key in STAT_KEYS:

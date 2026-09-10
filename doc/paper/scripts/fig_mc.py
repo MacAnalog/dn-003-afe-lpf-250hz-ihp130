@@ -58,7 +58,7 @@ def simulate() -> dict:
     os.chdir(EXP)
 
     from common import from_json                       # noqa: E402
-    from lab import mc as MC, metrics as M             # noqa: E402
+    from lab import mc as MC                           # noqa: E402
 
     base = from_json(json.loads(SIZING.read_text())["design"])
     duts = {PRE: ("mcpaper_pre", base),
@@ -81,14 +81,14 @@ def simulate() -> dict:
             # have to guess (lab.mc prints the same two spans).
             "scope": {"covered": MC.id_span(r.spec_ids_covered),
                       "excluded": MC.id_span(r.spec_ids_excluded)},
-            "line_yield": {k: r.line_yield(k) for k in M.SPEC},
+            "line_yield": {k: r.line_yield(k) for k in r.scored_keys},
             "stats": {k: {kk: float(vv) for kk, vv in r.stats(k).items()
                           if isinstance(vv, (int, float))} for k in KEYS
                       if k in ("fc_hz", "irn_uv", "dc_db", "p_core_nw")},
             "rows": rows,
         }
         print(f"{label}: {r.n_pass}/{r.n} pass the scored box "
-              f"{M.spec_ids()[0]}-{M.spec_ids()[-1]} ({100*r.all_pass_yield:.1f} %), "
+              f"{MC.id_span(r.spec_ids_covered)} ({100*r.all_pass_yield:.1f} %), "
               f"{r.n_failed} non-usable, wall {r.wall_s:.0f} s")
 
     # -- cross-check the pre-layout re-run against the CERTIFIED summary ------
@@ -155,8 +155,9 @@ def plot(out: dict) -> None:
         ax.legend(loc="upper left", fontsize=6.2)
 
     pre, post = out["campaigns"][PRE], out["campaigns"][POST]
-    # The yield is the SCORED box only; campaigns written before the scope was
-    # recorded carry the same S1-S6 / S7-S8 split (see lab.metrics.spec_ids).
+    # The yield is the SCORED box only -- what the draws measured, which
+    # `lab.mc` records per campaign (McResult.spec_ids_covered).  Campaigns
+    # written before the scope was recorded carry the same S1-S6 / S7-S8 split.
     scope = pre.get("scope") or {"covered": "S1–S6", "excluded": "S7, S8"}
     fig.suptitle("Mismatch Monte Carlo, 100 paired draws (same seeds), typical process "
                  "+ mismatch, 27 $^\\circ$C, 1.5 V\n"

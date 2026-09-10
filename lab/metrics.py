@@ -40,11 +40,21 @@ SOFT = ("c_total_pf", "idd_total_na", "i_core_na", "onoise_uv", "ph_step_deg",
 # neither is in the harness.yaml acceptance box -- see its `spec_notes`.
 #
 # Anything that reports a pass RATE over a population of simulations has to say
-# which of the eight it had evidence for on those very samples; a rate quoted as
+# which of the eight it had evidence for ON THOSE VERY SAMPLES; a rate quoted as
 # "every spec" when two lines were never simulated is an overstatement that gets
-# copied into sign-off tables and papers.  `spec_ids()` derives the answer from
-# the labels instead of hardcoding it, so the day S7 joins the box the scope
-# widens by itself rather than going quietly stale.
+# copied into sign-off tables and papers.
+#
+# `spec_ids()` reads the ids off the labels rather than hardcoding them, so it
+# answers for whatever key set it is GIVEN -- and a run must give it the keys
+# that run MEASURED (`lab.mc.McResult.scored_keys`), never `SPEC`.  `SPEC` is
+# the acceptance box, not an inventory of evidence: passing it would claim a
+# line the run never simulated the moment such a line joins the box.
+#
+# SPEC_IDS_ALL is the declared universe of requirements in doc/target-spec.md.
+# It is a literal, and not self-maintaining: S8 (provenance) is not a
+# measurement and appears in no machine-readable file, so there is nothing to
+# derive it from.  A drift is caught after the fact, by the partition check in
+# tests/test_mc_scope.py.
 SPEC_IDS_ALL = ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8")
 
 _SPEC_ID = re.compile(r"^\s*(S\d+)\b")
@@ -56,6 +66,10 @@ def spec_ids(keys=None) -> list[str]:
     Two SPEC rows may carry the same id (S1 has a phase certificate and its
     1 kHz companion; S3 has gain and flatness) -- the id is what a reader
     quotes, so it appears once.
+
+    `keys=None` answers for the whole acceptance box, which is a statement
+    about `SPEC` and nothing else.  A caller reporting what a RUN covered must
+    pass the keys that run measured; see `lab.mc.McResult.scored_keys`.
     """
     out: list[str] = []
     for k in (SPEC if keys is None else keys):
@@ -66,7 +80,12 @@ def spec_ids(keys=None) -> list[str]:
 
 
 def spec_ids_unscored(keys=None) -> list[str]:
-    """The requirement ids `keys` carries NO evidence for."""
+    """The requirement ids `keys` carries NO evidence for.
+
+    The complement of `spec_ids(keys)` in `SPEC_IDS_ALL`, so a line that is in
+    the acceptance box but was not measured lands here, named, rather than
+    disappearing.
+    """
     covered = set(spec_ids(keys))
     return [i for i in SPEC_IDS_ALL if i not in covered]
 
