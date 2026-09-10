@@ -7,7 +7,8 @@ file agrees with itself and with the acceptance box in `harness.yaml`.
 
 The defect these tests were written for (reviewer's F23 / gap G18): the file
 ended on an unscoped `"all_pass": true` while its own `corners` table carried
-five S1 misses and `corner_miss` recorded 329.821 deg against a 330.0 limit.
+five post-layout S1 misses (eight across both DUTs) and `corner_miss`
+recorded 329.821 deg against a 330.0 limit.
 `all_pass` was not WRONG -- it is `all(passes.values())`, the nominal bench
 only -- it was unlabelled, and `lab.corners` uses the same name for the
 opposite scope.  The fix was additive (`all_pass_scope`, `corner_pass`,
