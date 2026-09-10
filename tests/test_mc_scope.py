@@ -160,6 +160,35 @@ class SpecScopeComesFromTheDraws(unittest.TestCase):
         self.assertNotIn("SCORED-BOX YIELD", t)
 
 
+class ViolationMatching(unittest.TestCase):
+    """A failed line must fail the draw whatever shape its sentence has."""
+
+    def test_an_abs_bound_failure_fails_the_draw(self):
+        """`abs<=` renders as `|S3 passband gain| <= 0.2 dB: got 0.5`.
+
+        The sentence does not BEGIN with the label, so a prefix match drops it
+        and a draw that misses S3 gain by 2.5x is counted as a pass.
+        """
+        bad = dict(GOOD, dc_db=0.5)
+        self.assertEqual(M.check(bad), ["|S3 passband gain| <= 0.2 dB: got 0.5"])
+        r = result_of(bad, 4, violations=M.check(bad))
+        self.assertEqual(r.n_pass, 0)
+        self.assertEqual(r.all_pass_yield, 0.0)
+
+    def test_an_abs_bound_failure_fails_its_own_line_column(self):
+        """The per-line column, too: `yield_dc_db` is not 100 % here.
+
+        Pre-existing: `line_pass` matched the label as a prefix, so every
+        `abs<=` line reported every usable draw as passing it, whatever the
+        measurement was.
+        """
+        bad = dict(GOOD, dc_db=0.5)
+        r = result_of(bad, 4, violations=M.check(bad))
+        self.assertEqual(r.line_pass("dc_db"), 0)
+        self.assertEqual(r.summary()["yield_dc_db"], 0.0)
+        self.assertEqual(r.line_pass("fc_hz"), 4)      # only the failing line
+
+
 class Summary(unittest.TestCase):
     def test_summary_records_the_scope(self):
         """The ledger row / scorecard carries what the yield covered."""

@@ -147,9 +147,18 @@ class Sample:
         `M.check` reports one 'missing' line per unmeasured spec key; those are
         a statement about the BENCH, not about this draw, so they are not what
         makes a draw fail.
+
+        The filter works by EXCLUSION -- a violation counts unless it names a
+        line this draw did not measure -- because a violation sentence does not
+        always BEGIN with its label: `abs<=` renders as
+        `|S3 passband gain| <= 0.2 dB: got 0.5`.  Matching on the prefix would
+        drop that one and pass a draw that fails S3 gain.  When every spec key
+        is present (the case today) nothing is filtered and this is exactly
+        `Score.ok`.
         """
-        labels = tuple(M.SPEC[k][0] for k in self.measured)
-        return [v for v in self.violations if labels and v.startswith(labels)]
+        absent = [M.SPEC[k][0] for k in M.SPEC if k not in self.values]
+        return [v for v in self.violations
+                if not any(label in v for label in absent)]
 
     @property
     def ok(self) -> bool:
@@ -310,10 +319,18 @@ class McResult:
         return M.spec_ids_unscored(self.scored_keys)
 
     def line_pass(self, key: str) -> int:
-        """How many attempted samples meet ONE spec line."""
+        """How many attempted samples meet ONE spec line.
+
+        The label is matched anywhere in the violation sentence, not as a
+        prefix: `abs<=` lines are rendered `|S3 passband gain| <= 0.2 dB`, so a
+        prefix match never found them and this column reported every draw as
+        passing an `abs<=` line whatever it measured.  (`lab.metrics.gate`
+        already matched by substring.)  No two SPEC labels are substrings of
+        one another.
+        """
         label = M.SPEC[key][0]
         return sum(1 for s in self.samples
-                   if s.usable and not any(v.startswith(label) for v in s.violations))
+                   if s.usable and not any(label in v for v in s.violations))
 
     def line_yield(self, key: str) -> float:
         return self.line_pass(key) / self.n if self.n else float("nan")
