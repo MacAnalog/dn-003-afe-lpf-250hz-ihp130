@@ -70,8 +70,13 @@ hold only what is specific to this design.
   sync, no proprietary-node references). **Failure messages carry their own
   remediation.** Run after any doc or structure edit. `make freeze` re-writes
   the manifest after a deliberate re-certification.
-- `make check` — lint + the reference deck still reproduces the certified
-  scorecard within tolerance. This is what re-certifies the yardstick.
+- `make test` — the unit tests in `tests/`. Pure python, no simulator, so they
+  run anywhere. They pin the CLAIMS the code makes (what a Monte Carlo yield
+  covers; wording retired from the live prose), never measured numbers — a test
+  that needs a number belongs behind `make check`.
+- `make check` — lint + `make test` + the reference deck still reproduces the
+  certified scorecard within tolerance. This is what re-certifies the yardstick,
+  and it needs a live simulator lane.
 - `make baseline` — run the reference deck, print the scorecard.
 - `make runs ARGS="--fails | --best irn_uv | --exp NNN | --kind thd | --where topology=b"` —
   query the run ledger (`runs/ledger.ndjson`; every `lab.metrics.evaluate()`

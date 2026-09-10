@@ -99,7 +99,9 @@ paper pack [`doc/paper/`](doc/paper/README.md).
 uv sync            # this checkout's own .venv (every worktree needs one)
 make doctor        # is the simulator lane alive? prints lane, PDK, op-plot names
 make baseline      # run the reference deck, print the scorecard
-make check         # lint + the reference deck still reproduces its certified numbers
+make test          # the unit tests: pure python, no simulator (they pin CLAIMS)
+make check         # lint + `make test` + the reference deck still reproduces
+                   #   its certified numbers  (the full gate; needs a simulator)
 make lint          # repo invariants only (fast, no simulation)
 make runs          # query the run ledger (ARGS="--fails")
 make pack K="noise irn"   # working-memory context pack
@@ -237,6 +239,7 @@ Why hv rather than lv, in three measurements:
 | `pdk/` | regenerated device-characterisation LUTs (git-ignored) |
 | `runs/` | `ledger.ndjson` — local observability, git-ignored; keeper numbers graduate into experiment READMEs |
 | `harness.yaml` | the design described to the platform's `spicexplorer-harness` (spec rows, frozen dirs, denylist, ledger columns); `make lint / pack / runs / freeze` are that package |
+| `tests/` | the unit tests (`make test`, also inside `make check`): pure python, no simulator. They pin the CLAIMS the code makes — what a Monte Carlo yield covers, what wording was retired from the live prose — not measured numbers |
 | `scripts/` | `lint.py` (repo-specific checks on top of the harness), `baseline.py`, `draw_xschem.py` / `draw_lpf_core_022.py` (schematic drawers), `check_netlist.py` (connectivity gate) — the Makefile's implementation |
 
 ### The `lab/` package
