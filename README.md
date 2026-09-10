@@ -83,7 +83,7 @@ review, and a 14-iteration audit trail with before|after pictures):
 | THD @ 175 mVpp, 50 Hz | −50.40 dB | −49.73 dB |
 | core power | 11.91 nW | 11.91 nW |
 | mismatch yield (100 samples, paired seeds) | 82 % | 87 % |
-| worst MIM-cap corner (`cap_bcs`, iref ×0.9), phase max | 331.02° | 329.82° — the one post-layout miss, accepted |
+| worst MIM-cap corner (`cap_bcs`, iref ×0.9), phase max | 331.02° | 329.82° — the one *accepted* post-layout miss (the untrimmed `cap_bcs` ×1.0 point drops to 329.76° too, but it fails S2 pre-layout as well) |
 | cell | — | 432.0 × 528.0 µm = **0.228 mm²** (MIM 54 %), DRC 0, LVS match |
 
 Story and evidence: [`layout/H12-pdk-cap/REPORT.md`](layout/H12-pdk-cap/REPORT.md)

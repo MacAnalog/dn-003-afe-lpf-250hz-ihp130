@@ -89,5 +89,64 @@ class CitationsResolve(unittest.TestCase):
                              f"layout/H12-pdk-cap/REVIEW.md")
 
 
+ASBUILT = REPO / "layout" / "H12-pdk-cap" / "asbuilt"
+LIVE_DOCS = (README, PAPER, REPO / "doc" / "paper" / "results_layout.md")
+
+
+def subckt_pins(path) -> list[str]:
+    """The `.subckt lpf_core ...` header of a committed netlist, as a pin list."""
+    for line in path.read_text().splitlines():
+        if line.lower().startswith(".subckt"):
+            return line.split()[2:]
+    raise AssertionError(f"{path} has no .subckt header")
+
+
+def vbp_lines(path) -> list[str]:
+    return [ln for ln in path.read_text().splitlines() if re.search(r"\bvbp\b", ln, re.I)]
+
+
+class VbpIsWhereTheProseSaysItIs(unittest.TestCase):
+    """The `vbp` limitation is prose ABOUT two committed netlists, so it is checkable.
+
+    Three live documents (`README.md`'s limitation block, gap **G11**, the **F13**
+    mirror) say the same three things: `vbp` is on the `.subckt` header of both
+    as-built netlists, on no device card in either, and the two headers disagree on
+    pin count.  An earlier wording said instead that `vbp` was "absent from the
+    extracted netlist" -- true only of the reviewer's own uncommitted run, and
+    false of `asbuilt/core_pex.sp`, which is the extracted netlist of record.
+    These tests read the netlists, so the prose cannot drift back.
+    """
+
+    def test_vbp_is_declared_by_both_asbuilt_netlists(self):
+        for name in ("core_lvs.sp", "core_pex.sp"):
+            self.assertIn("vbp", subckt_pins(ASBUILT / name),
+                          f"{name} no longer declares vbp; the vbp limitation is now wrong")
+
+    def test_vbp_is_on_no_device_card_in_either_netlist(self):
+        """"Dangling port" (BRIEF section 9) means the header line and nothing else."""
+        for name in ("core_lvs.sp", "core_pex.sp"):
+            hits = vbp_lines(ASBUILT / name)
+            self.assertEqual(len(hits), 1, f"{name}: vbp appears on {len(hits)} lines, not just "
+                                           f"the .subckt header: {hits}")
+            self.assertTrue(hits[0].lower().startswith(".subckt"))
+
+    def test_the_two_headers_disagree_exactly_as_documented(self):
+        """8 pins vs 7: `core_pex.sp` omits `vss`, which kpex ties to node 0."""
+        lvs, pex = subckt_pins(ASBUILT / "core_lvs.sp"), subckt_pins(ASBUILT / "core_pex.sp")
+        self.assertEqual(len(lvs), 8)
+        self.assertEqual(len(pex), 7)
+        self.assertEqual(sorted(set(lvs) - set(pex)), ["vss"])
+
+    def test_no_live_doc_still_calls_vbp_absent_from_the_extracted_netlist(self):
+        """The stale wording, pinned against the artifact that refutes it."""
+        for doc in LIVE_DOCS:
+            for line in doc.read_text().splitlines():
+                if re.search(r"\bvbp\b", line, re.I):
+                    self.assertNotRegex(
+                        line, r"absent from the extracted netlist",
+                        f"{doc.relative_to(REPO)}: vbp IS on the .subckt header of "
+                        f"asbuilt/core_pex.sp, the extracted netlist of record")
+
+
 if __name__ == "__main__":
     unittest.main()
