@@ -109,10 +109,12 @@ reviewer's findings F24 / F11 / F3 / F13 in
 | **n-well / p-substrate junction capacitance is outside every model in the flow** (**G10**, F3 — deferred by the approved plan). The only evidence is a lumped-`Cj` what-if at 0.05 / 0.12 fF/µm². | **−0.108…−0.259° on `ph_max`.** S1 is a **minimum** (≥ 330°), so the sign is adverse: this bound eats phase margin, it does not restore it. It has not been measured at the accepted `cap_bcs ×0.9` corner, whose 0.179° shortfall is therefore a floor rather than the whole story. |
 | **The LVS gate does not check the pin list** (**G11**, F13). `vbp` is a *deliberate* unused port — BRIEF §9: "keep the pin for LVS, route nothing to it" — drawn as a 4 × 2 µm labelled Metal1 pad, present on the `.subckt` header of both `asbuilt/core_lvs.sp` and `asbuilt/core_pex.sp` and on **no device card in either** (this replica-biased cell gates its pmos loads from `net4`/`net1`/`vbr`/`rep_x`; `vbp` is live only in the pre-replica reference deck). The reviewer's own extraction dropped the port entirely and LVS still reported *Netlists match*, and the two committed headers do not agree — `core_pex.sp` declares 7 pins, omitting `vss`, which kpex ties to node 0. | **1 of 8 declared pins is outside the LVS evidence.** Nothing about the delivered cell is known to be wrong; the gate simply cannot see this pin either way. Needs a pin-list assertion inside `signoff.lvs`. |
 
-None of these moves the **nominal** post-layout scorecard, which reproduces
-exactly on the reviewer's own build, extraction and benches. They bound how much
-the extraction could be wrong by, and — G10 in particular — they all push `ph_max`
-the wrong way for S1.
+The nominal post-layout scorecard reproduces exactly on the reviewer's own
+build, extraction and benches — but that is the *same* MIM-stripped, `Cj`-free
+extraction reproduced twice, not independent evidence that it is right. These
+four bounds say how far the true numbers may sit from it, and the two that carry
+a sign (**G9**, **G10**) both push `ph_max` **down** — the wrong way for a spec
+line that is a minimum.
 
 ## Quickstart
 

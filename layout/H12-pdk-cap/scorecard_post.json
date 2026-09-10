@@ -740,7 +740,18 @@
       "corners.cap[cap_bcs iref x1.0]: ph_max 329.758 < 330",
       "corners.cap[cap_bcs iref x0.9]: ph_max 329.821 < 330"
     ],
-    "note": "harness.yaml scores ph_max_deg with op '>=' bound 330.0, so the limit is a MINIMUM and 329.821 deg is a real S1 miss, not a rounding artefact. `corner_miss` records the A7 point the block owner approved delivering with; the cap_bcs iref x1.0 row misses S1 too, and the axes misses are the uncertified supply/temperature points the cell was never claimed to hold."
+    "certified_window": {
+      "vdd_v_at_27c": [
+        1.4,
+        1.65
+      ],
+      "temp_c_at_1v5": [
+        0.0,
+        70.0
+      ],
+      "source": "signoff/post-pvt/README.md, the H12 column ('supply @ 27 C: 1.40-1.65 V (1.35: dc -0.78, ph 308)'; 'temperature @ 1.5 V: 0 ... +70 C'). It is a ONE-AXIS-AT-A-TIME claim, not a box -- the cross product does not superpose. Mirrored in code as CERT_VDDS / CERT_TEMPS in signoff/paper-draft/scripts/extract_bench.py."
+    },
+    "note": "harness.yaml scores ph_max_deg with op '>=' bound 330.0, so the limit is a MINIMUM and 329.821 deg is a real S1 miss, not a rounding artefact. `corner_miss` records the A7 point the block owner approved delivering with; the cap_bcs iref x1.0 row misses S1 too. The three axes misses are 1.35 V, -40 C and 125 C -- every one OUTSIDE `certified_window` below, i.e. points this cell was never claimed to hold. Every axes row inside that window passes, on both DUTs."
   },
   "reproduces_round3": {
     "gds_sha256": "fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed",

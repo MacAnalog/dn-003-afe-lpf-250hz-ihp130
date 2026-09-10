@@ -22,6 +22,7 @@ Run:  .venv/bin/python -m unittest discover -s tests -v
 from __future__ import annotations
 
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -132,6 +133,49 @@ class TablesAgreeWithThemselves(unittest.TestCase):
         self.assertEqual(len(typ), 1)
         self.assertAlmostEqual(d["scorecard"]["ph_max_deg"], typ[0]["ph_max_deg"], places=2)
         self.assertAlmostEqual(d["scorecard"]["fc_hz"], typ[0]["fc_hz"], places=2)
+
+
+class TheCertifiedWindowIsNotJustAsserted(unittest.TestCase):
+    """`corner_pass_detail.note` says the three axes misses are outside the
+    window this cell is certified over.  That is a CLAIM about the corner table,
+    so it gets checked against the table -- and the window it names gets checked
+    against the code that mirrors it, so the two cannot drift apart.
+
+    The window is one-axis-at-a-time (supply swept at 27 C, temperature swept at
+    1.5 V), not a box: `extract_bench.py` says so, and the cross product is known
+    NOT to superpose.  These tests only ever ask about single-axis rows, which is
+    all `lab.corners.AXES` contains.
+    """
+
+    def window(self) -> tuple[tuple[float, float], tuple[float, float]]:
+        w = card()["corner_pass_detail"]["certified_window"]
+        return tuple(w["vdd_v_at_27c"]), tuple(w["temp_c_at_1v5"])
+
+    def test_the_window_matches_the_code_that_mirrors_it(self):
+        vdds, temps = self.window()
+        src = (REPO / "signoff" / "paper-draft" / "scripts" / "extract_bench.py").read_text()
+        for name, want in (("CERT_VDDS", vdds), ("CERT_TEMPS", temps)):
+            m = re.search(rf"^{name}\s*=\s*\(([^)]*)\)", src, re.M)
+            self.assertIsNotNone(m, f"{name} is gone from extract_bench.py")
+            got = tuple(float(x) for x in m.group(1).replace(",", " ").split())
+            self.assertEqual(got, want, f"{name} and the scorecard's certified_window disagree")
+
+    def test_no_axes_row_inside_the_window_fails(self):
+        """The claim that makes the misses acceptable, stated as an invariant."""
+        (v_lo, v_hi), (t_lo, t_hi) = self.window()
+        for r in card()["corners"]["axes"]:
+            inside = v_lo <= r["vdd"] <= v_hi and t_lo <= r["temp"] <= t_hi
+            if inside:
+                self.assertTrue(r["pass"], f"{r['dut']} / {r['slug']} is inside the certified "
+                                           f"window and fails: {r['violations']}")
+
+    def test_every_axes_S1_miss_is_outside_the_window(self):
+        (v_lo, v_hi), (t_lo, t_hi) = self.window()
+        for r in card()["corners"]["axes"]:
+            if any(v.startswith("S1 biquad-order certificate") for v in r["violations"]):
+                self.assertFalse(v_lo <= r["vdd"] <= v_hi and t_lo <= r["temp"] <= t_hi,
+                                 f"{r['dut']} / {r['slug']} misses S1 INSIDE the certified "
+                                 f"window -- corner_pass_detail.note is no longer true")
 
 
 if __name__ == "__main__":
