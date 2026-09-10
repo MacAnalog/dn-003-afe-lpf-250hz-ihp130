@@ -48,7 +48,7 @@ nominal; (b) post − pre; (c) one-axis corners pre (solid) vs post (dashed);
 - **Monte Carlo** (100 paired seeds): τ_dc 1.651 ± 0.028 ms pre → 1.656 ± 0.023
   ms post; peak 2.478 ± 0.042 → 2.488 ± 0.033 ms; the post-layout spread is
   slightly *tighter* (the extraction adds fixed C that dilutes the device
-  mismatch), consistent with the paired all-pass yield 82 → 87 %.
+  mismatch), consistent with the paired scored-box (S1–S6) yield 82 → 87 %.
 
 ## 2. Tables
 

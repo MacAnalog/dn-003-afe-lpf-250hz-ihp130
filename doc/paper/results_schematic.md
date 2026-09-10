@@ -203,7 +203,7 @@ reported yield.
 
 | quantity | value |
 |---|---|
-| **all-pass yield** | **82 % (82/100)** |
+| **scored-box (S1–S6) yield** | **82 % (82/100)** |
 | non-converged / non-finite | 0 |
 | `fc_hz` | mean 249.2104, σ **3.7578**, min 238.0053, max 258.3262 |
 | `dc_db` | mean −0.0081533, σ **7.04e-05**, min −0.0083459, max −0.0079616 |
@@ -389,7 +389,7 @@ Source: `doc/sizing-history/rounds.md`
 
 ### 9.4 The pre-PVT variant ladder (nine sign-off cells, all pass all nine lines)
 
-| cell | IRN µV | P nW | C pF | THD dB | `ph` ° | `fc` Hz | MC all-pass | σ(fc) Hz |
+| cell | IRN µV | P nW | C pF | THD dB | `ph` ° | `fc` Hz | MC S1–S6 yield | σ(fc) Hz |
 |---|---|---|---|---|---|---|---|---|
 | `A-minarea` | **39.695** | **4.146** | **104.41** | −41.684 | 339.77 | 249.856 | 45 % | 5.070 |
 | `B-balanced` | 29.376 | 6.010 | 152.85 | −41.944 | 332.23 | 250.010 | 70 % | 3.319 |
@@ -422,7 +422,7 @@ Source: `signoff/pre-pvt/COMPARISON.md` and `signoff/pre-pvt/<cell>/scorecard.js
 | supply window | **1.35–1.65 V** | " | 1.40–1.65 V | **1.40–1.65 V** |
 | temperature window | **−20 … +55 °C** | " | 0 … +70 °C | **0 … +70 °C** |
 | one-axis / reduced / full | 7/9 · 8/22 · 18/45 | " | 6/9 · 6/22 · 16/45 | **6/9 · 6/22 · 16/45** |
-| **MC all-pass** | 67 % | 64 % | 82 % | **82 %** |
+| **MC scored-box (S1–S6) yield** | 67 % | 64 % | 82 % | **82 %** |
 | all S1–S8 | PASS | PASS | PASS | **PASS** |
 
 `H12-pdk-cap` was taken to layout because it has the best mismatch yield and the

@@ -114,8 +114,8 @@ what to search for.
 
 **`021-final` passes all of S1–S8 at nominal:** fc 249.87, dc −0.0078, ripple
 0.0557, peak +0.0000, **mono 0.0000**, @1 kHz −49.60, ph_max 333.29,
-**IRN 30.71 µV**, **6.01 nW**, **THD −42.22**, C 150.6 pF; mismatch all-pass
-**78 %** (100 samples), σ(fc) 3.32 Hz against the reference's 13.99. S8 measured
+**IRN 30.71 µV**, **6.01 nW**, **THD −42.22**, C 150.6 pF; mismatch scored-box
+(S1–S6) yield **78 %** (100 samples), σ(fc) 3.32 Hz against the reference's 13.99. S8 measured
 here: stacking −18.1 % IRN / −67.5 % power at **equal capacitance**; the
 floating differential cap −45.1 % drawn farads for a 0.00002 dB response
 difference. It is **NOT corner-robust (1/22)** and has **NO droop margin**

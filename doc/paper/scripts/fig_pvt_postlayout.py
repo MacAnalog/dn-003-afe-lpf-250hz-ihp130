@@ -122,7 +122,8 @@ def plot(out: dict) -> None:
     ax.set_xticklabels(labels, fontsize=6.4)
     ax.set_ylabel("cutoff  (Hz)")
     ax.legend(loc="upper left", ncols=2)
-    ax.set_title("(a) one corner axis at a time — green = every spec line passes, "
+    ax.set_title("(a) one corner axis at a time — green = every scored line "
+                 "(S1–S6) passes, "
                  "red = at least one fails")
 
     # ---- (b)/(c) the 45-point grid, both cells -----------------------------

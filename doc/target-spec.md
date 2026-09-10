@@ -70,10 +70,16 @@ is in that box — `lab.metrics.SPEC_IDS_ALL` is the full eight, and
 reports a pass RATE over a population — the mismatch Monte Carlo above all —
 must name the ids it had evidence for on those very samples** and the ids it is
 silent about; `lab.mc` prints both and records them in its ledger row
-(`spec_ids_covered` / `spec_ids_excluded`). An "all S1–S8" rate may only be
-quoted when every one of the eight was gated on the SAME draws — which today
-means ANDing an `lab.mc` draw with an `lab.thd` measurement of that draw, as
-`experiments/021-publication-cell/certify.py` does per cell.
+(`spec_ids_covered` / `spec_ids_excluded`), and it takes them from the metric
+keys the draws actually produced, so a spec row added to the box that no bench
+measures widens neither. An "all S1–S8" rate may only be quoted when every one
+of the eight was gated on the SAME draws — and **no such rate exists in this
+repo**: `lab.mc.sample` runs one `lab.deck.ac_noise` deck and no transient, so
+THD is never measured on a Monte Carlo draw at all.
+`experiments/021-publication-cell/certify.py` does AND S1–S6 with S7
+(`all_pass = not s.violations and s7_pass`), but on ONE NOMINAL cell — a single
+`lab.metrics.evaluate` and a single `lab.thd.measure` at the nominal corner —
+which is a per-cell verdict, not a rate over a population.
 
 ### Reference-baseline detail (all measured here, `runs/ledger.ndjson` tag `ref_fit`)
 

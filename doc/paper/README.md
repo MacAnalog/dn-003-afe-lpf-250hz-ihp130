@@ -44,7 +44,7 @@ Headline numbers, all measured in this repo:
 | `fc` / `ph_max` / \|H\|@1 kHz | 250.37 Hz / 346.74° / −48.43 dB | **249.775 Hz / 332.38° / −49.03 dB** | all in box |
 | passband ripple | **0.2512 dB — fails S3** | **0.0523 dB** | the baseline fails its own flatness clause on a dense sweep |
 | process corner span (fc) | 1.02× | **1.02×** | the merged ladder *without* the replica spanned 3–38× |
-| mismatch all-pass yield, n = 100 | — | **82 %** | every failure is S2 (`fc`), never shape |
+| mismatch scored-box (S1–S6) yield, n = 100 | — | **82 %** | every failure is S2 (`fc`), never shape |
 | cell area | — | **228 093.6 µm²** (round 4) | −7.7 % vs round 3 |
 | DRC / LVS / PEX | — | **0 violations / matched / 69 C (kpex CC)** | |
 | post-layout S1 | — | **331.221°** nominal; **329.821°** at `cap_bcs ×0.9 / iref ×0.9` | one documented corner miss, owner-approved |
@@ -86,7 +86,7 @@ Headline numbers, all measured in this repo:
 |---|---|---|---|
 | C1 | −41.6 % IRN vs a certified in-repo baseline, all S1–S8 passing | `results_schematic.md` §2, §3 | `lab.metrics.evaluate` on the frozen ac+noise bench; baseline `decks/reference/scorecard.json` (sha-pinned deck) |
 | C2 | The replica bias converts an unmanufacturable ladder into a 1.02× fc-span one | `results_schematic.md` §4, §9.1 | 9-point one-axis corner set, `H12-pdk-cap.robust.a1p1.json` |
-| C3 | 82 % mismatch all-pass yield; every failure is S2, never shape | `results_schematic.md` §5; `figures/mc_hist.png` | `lab.mc.run`, n = 100, `mos_tt_mismatch`, seeds 1–100, PDK `agauss` model |
+| C3 | 82 % mismatch scored-box (S1–S6) yield; every failure is S2, never shape | `results_schematic.md` §5; `figures/mc_hist.png` | `lab.mc.run`, n = 100, `mos_tt_mismatch`, seeds 1–100, PDK `agauss` model |
 | C4 | The layout closes: DRC 0, LVS matched, PEX-verified, the post-layout scorecard still passes S1–S7 at nominal, **and the extraction does not change a single verdict across all 45 PVT corners** | `results_layout.md` §2, §3, §6.2 | KLayout DRC/LVS with the PDK's own decks; kpex 2.5D; the cell's own benches + `lab.corners` on the extracted subckt |
 | C5 | Pre→post shift is small **and attributed** | `results_layout.md` §5; `figures/prepost_bode.png` | 3 × `lab.deck.ac_noise` runs, `Design.dut_override` with the PEX subckt |
 | C6 | The layout is optimizable: −7.7 % area at *better* `ph_max` and *better* `net2` | `results_layout.md` §8; `figures/area_campaign.png` | 600 nevergrad trials, each a full build→DRC→LVS→PEX→bench |
@@ -200,7 +200,7 @@ artifacts.
 | run | cost | result |
 |---|---|---|
 | `fig_prepost_bode.py` — 3 × ac+noise (pre, it13 PEX, it14 PEX) at `mos_tt`/27 °C/1.5 V | seconds | pre 332.3823° / 249.7746 Hz; it13 331.1595° / 248.6388 Hz; it14 331.2208° / 248.6636 Hz — no violations in any. Reproduces the designer's numbers to four decimals |
-| `fig_mc.py` — 2 × 100 mismatch draws, paired seeds 1–100 | 17 s + 51 s wall at 14 workers | pre-layout **82/100** all-pass (reproduces the certified summary to every printed digit); post-layout **87/100** |
+| `fig_mc.py` — 2 × 100 mismatch draws, paired seeds 1–100 | 17 s + 51 s wall at 14 workers | pre-layout **82/100** pass the scored box S1–S6 (reproduces the certified summary to every printed digit); post-layout **87/100** |
 | `fig_pvt_postlayout.py` — 2 DUTs × (9 + 22 + 45) corners, bias law α = 1.1 | **12 s total** | pre-layout 6/9, 6/22, 16/45 (reproduces the certified sign-off exactly); post-layout **6/9, 6/22, 16/45 — zero of the 45 corners changes verdict**. Mean shift `fc` −1.27 Hz, `ph_max` −1.16° |
 
 The post-layout MC yield (**87 %**) is a **new measurement** made for this pack:
