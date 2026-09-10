@@ -21,8 +21,12 @@ help:  ## list every target
 baseline:  ## simulate the frozen reference deck and print its scorecard
 	@$(PY) scripts/baseline.py $(ARGS)
 
-check:  ## lint + the reference deck still reproduces its certified scorecard
-	@rc=0; $(PY) scripts/lint.py || rc=1; echo; $(PY) scripts/baseline.py --check || rc=1; exit $$rc
+check:  ## lint + unit tests + the reference deck still reproduces its certified scorecard
+	@rc=0; $(PY) scripts/lint.py || rc=1; echo; $(PY) -m unittest discover -s tests -q || rc=1; \
+	  echo; $(PY) scripts/baseline.py --check || rc=1; exit $$rc
+
+test:  ## the pure-python unit tests (no simulator; they pin CLAIMS, not measurements)
+	@$(PY) -m unittest discover -s tests -v
 
 lint:  ## repo invariants (harness.yaml + scripts/lint.py extras); failures carry their remediation
 	@$(PY) scripts/lint.py
@@ -51,4 +55,4 @@ clean:  ## delete this checkout's simulation work dir (never the ledger)
 	@d=$$($(PY) -c "from lab import config; print(config.WORK)"); \
 	  echo "rm -rf $$d"; rm -rf "$$d"
 
-.PHONY: help baseline check lint runs pack freeze thd doctor char clean
+.PHONY: help baseline check test lint runs pack freeze thd doctor char clean

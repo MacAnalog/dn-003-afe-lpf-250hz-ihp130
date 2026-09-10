@@ -25,9 +25,25 @@ Three facts about ngspice shape the whole design of this module.
     denominator is the number of samples ATTEMPTED, so dropping a bad sample can
     only ever lower the reported yield, not raise it.
 
-The headline number is the **all-pass yield**: the fraction of attempted samples
-that pass *every* spec line at once.  The per-line yields are diagnostics that
-explain it; they do not multiply into it (the lines are strongly correlated).
+The headline number is the **scored-box yield**: the fraction of attempted
+samples that pass every spec line *this bench scores* at once.  The per-line
+yields are diagnostics that explain it; they do not multiply into it (the lines
+are strongly correlated).
+
+**It is not an "all S1-S8" yield, and must never be quoted as one.**  One draw
+is one `lab.deck.ac_noise` run, so it carries evidence for the ac/noise/power
+box only -- today S1-S6.  S7 (THD) needs an independent long transient
+(`lab.thd`) that is NOT run per draw, and S8 (provenance) is not a simulated
+quantity at all; neither is in the harness.yaml acceptance box.  Every report
+this module prints names the covered and the excluded ids, and `summary()`
+records them in the ledger row, so a number lifted out of a table still says
+what it stands for.  The scope is derived from `lab.metrics.SPEC` -- put THD in
+the box and the headline widens by itself.
+
+The dict key stays `all_pass_yield`: it is the column name in the committed
+sign-off scorecards, `doc/paper/figures/data/mc_samples.json` and the
+`experiments/021-publication-cell/*.json` records, and renaming it would orphan
+every one of them.  What was wrong was the CLAIM, not the column.
 
 For this follower family the mismatch figure of merit is **sigma(dc_db)**.  A
 source follower's passband gain is self-referenced -- it is set by one device's
@@ -206,8 +222,24 @@ class McResult:
 
     @property
     def all_pass_yield(self) -> float:
-        """THE headline: every spec line met at once, over samples attempted."""
+        """THE headline: every SCORED spec line met at once, over attempted.
+
+        Scored = `spec_ids_covered`; `spec_ids_excluded` is what this number is
+        silent about.  Key name kept for the committed records -- see the module
+        docstring.
+        """
         return self.n_pass / self.n if self.n else float("nan")
+
+    # -- scope ---------------------------------------------------------------
+    @property
+    def spec_ids_covered(self) -> list[str]:
+        """The requirement ids these draws carry evidence for."""
+        return M.spec_ids()
+
+    @property
+    def spec_ids_excluded(self) -> list[str]:
+        """The requirement ids the yield is SILENT about (S7 THD, S8)."""
+        return M.spec_ids_unscored()
 
     def line_pass(self, key: str) -> int:
         """How many attempted samples meet ONE spec line."""
@@ -246,6 +278,8 @@ class McResult:
         """Flat dict -- what goes in the ledger and in a scorecard."""
         out = {"n": self.n, "n_pass": self.n_pass, "n_failed": self.n_failed,
                "all_pass_yield": round(self.all_pass_yield, 6),
+               "spec_ids_covered": ",".join(self.spec_ids_covered),
+               "spec_ids_excluded": ",".join(self.spec_ids_excluded),
                "corner": self.corner, "seed0": self.seed0}
         for k in M.SPEC:
             out[f"yield_{k}"] = round(self.line_yield(k), 6)
@@ -331,15 +365,55 @@ def run(design: Design, tag: str, *, n: int = 64, workers: int = WORKERS,
 
 # ------------------------------------------------------------------ output ---
 
+# Why each requirement outside the acceptance box is outside it.  The reader of
+# a yield table has to be told what the number is silent about, in the same
+# breath as the number.
+_WHY_UNSCORED = {
+    "S7": "THD at 175 mVpp, 50 Hz — an independent long transient, `lab.thd`; "
+          "it is NOT run per draw",
+    "S8": "technique provenance — not a simulated quantity",
+}
+
+
+def id_span(ids: list[str]) -> str:
+    """'S1–S6' for a contiguous run, else 'S1, S3, S5'."""
+    if not ids:
+        return "no spec line"
+    n = [int(i[1:]) for i in ids]
+    if len(n) > 2 and n == list(range(n[0], n[-1] + 1)):
+        return f"{ids[0]}–{ids[-1]}"
+    return ", ".join(ids)
+
+
+def scope_note(r: McResult) -> str:
+    """One paragraph naming the ids this yield covers and those it does not.
+
+    Printed with every table so the headline cannot be read as an all-S1-S8
+    yield, and regenerated from `lab.metrics.SPEC` so it cannot go stale.
+    """
+    cov, exc = r.spec_ids_covered, r.spec_ids_excluded
+    line = (f"**Scope — this yield covers {id_span(cov)}**, the lines one "
+            f"`lab.deck.ac_noise` draw measures.")
+    if not exc:
+        return line + " Every requirement in doc/target-spec.md is scored here."
+    miss = "; ".join(f"**{i}** ({_WHY_UNSCORED.get(i, 'not scored by this bench')})"
+                     for i in exc)
+    return (line + f" It is SILENT about {miss}. Do not quote it as an "
+            f"\"all {id_span(list(M.SPEC_IDS_ALL))}\" yield.")
+
+
 def table(r: McResult) -> str:
     """Yield table + statistics table + the five worst samples."""
     out = [f"### Mismatch Monte Carlo — `{r.tag}` ({r.design.topology}), "
            f"corner `{r.corner}`, T = {r.temp:g} °C",
            "",
-           f"**{r.n_pass} of {r.n} samples pass every spec line — "
-           f"ALL-PASS YIELD = {100 * r.all_pass_yield:.1f} % "
+           f"**{r.n_pass} of {r.n} samples pass every scored spec line "
+           f"({id_span(r.spec_ids_covered)}) — SCORED-BOX YIELD = "
+           f"{100 * r.all_pass_yield:.1f} % "
            f"(denominator: {r.n} samples attempted, seeds "
            f"{r.seed0}–{r.seed0 + r.n - 1}).**",
+           "",
+           scope_note(r),
            "",
            f"Non-converged / non-finite samples: **{r.n_failed}** "
            f"({100 * r.n_failed / r.n if r.n else float('nan'):.1f} % of "
@@ -353,8 +427,8 @@ def table(r: McResult) -> str:
              else f"{op} {bound:g}" if op != "abs<=" else f"|·| <= {bound:g}")
         out.append(f"| {label} | {b} | {r.line_pass(key)}/{r.n} | "
                    f"{100 * r.line_yield(key):.1f} % |")
-    out.append(f"| **ALL LINES** | — | **{r.n_pass}/{r.n}** | "
-               f"**{100 * r.all_pass_yield:.1f} %** |")
+    out.append(f"| **ALL SCORED LINES ({id_span(r.spec_ids_covered)})** | — | "
+               f"**{r.n_pass}/{r.n}** | **{100 * r.all_pass_yield:.1f} %** |")
 
     out += ["", "| quantity | mean | sigma | min | max | n |", "|---|---|---|---|---|---|"]
     for key in STAT_KEYS:
@@ -419,7 +493,9 @@ def histogram(r: McResult, path="mc_hist.png", *, title: str | None = None):
                  f"μ = {st['mean']:.4g}, σ = {st['sigma']:.4g}  (n = {st['n']})")
     fig.suptitle(title or
                  f"Mismatch Monte Carlo — {r.tag} ({r.design.topology}), "
-                 f"{r.n_pass}/{r.n} all-pass, {r.n_failed} non-converged",
+                 f"{r.n_pass}/{r.n} pass the scored box "
+                 f"({id_span(r.spec_ids_covered)}), "
+                 f"{r.n_failed} non-converged",
                  fontsize=10)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     return P._save(fig, path)

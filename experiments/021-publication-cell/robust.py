@@ -12,8 +12,10 @@ useful number alongside it is VDD_min (`lab.droop`), not a +-10 % verdict.
 
 **Mismatch** (`lab.mc`) is the LOCAL axis and is the one that answers "yield" as
 a fab would mean it: every device draws its own delvto/factuo/dw/dl from the
-PDK's agauss expressions.  The headline is the all-pass fraction over ATTEMPTED
-samples, so a non-converged sample can only lower it.  For this follower family
+PDK's agauss expressions.  The headline is the SCORED-BOX (S1-S6) pass fraction
+over ATTEMPTED samples, so a non-converged sample can only lower it; the draws
+are ac+noise, so S7 (THD) is not in that number -- `certify.py` is what ANDs the
+two together.  For this follower family
 the figure of merit is sigma(dc_db): a source follower's passband gain is
 self-referenced, so a threshold shift moves the operating point and barely moves
 the gain -- a topology that loses that property shows it here first.

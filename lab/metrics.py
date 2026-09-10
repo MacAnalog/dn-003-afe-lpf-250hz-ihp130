@@ -11,6 +11,7 @@ in it, and it is stated in WATTS, so it survives the supply change on its own.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -31,6 +32,43 @@ SPEC: dict[str, tuple] = {r.key: (r.label, r.op, tuple(r.bound) if r.op == "in" 
 # Soft/report-only columns: measured and logged, never a pass/fail.
 SOFT = ("c_total_pf", "idd_total_na", "i_core_na", "onoise_uv", "ph_step_deg",
         "f_scored_hi", "mono_db")
+
+# ------------------------------------------------------------- spec scope --
+# doc/target-spec.md defines EIGHT requirements; `SPEC` above is only the part
+# one ac+noise sweep can score.  S7 (THD) is measured by an independent long
+# transient (`lab.thd`) and S8 (provenance) is not a measurement at all, so
+# neither is in the harness.yaml acceptance box -- see its `spec_notes`.
+#
+# Anything that reports a pass RATE over a population of simulations has to say
+# which of the eight it had evidence for on those very samples; a rate quoted as
+# "every spec" when two lines were never simulated is an overstatement that gets
+# copied into sign-off tables and papers.  `spec_ids()` derives the answer from
+# the labels instead of hardcoding it, so the day S7 joins the box the scope
+# widens by itself rather than going quietly stale.
+SPEC_IDS_ALL = ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8")
+
+_SPEC_ID = re.compile(r"^\s*(S\d+)\b")
+
+
+def spec_ids(keys=None) -> list[str]:
+    """The requirement ids (`S1` ...) that `keys` of `SPEC` score, in order.
+
+    Two SPEC rows may carry the same id (S1 has a phase certificate and its
+    1 kHz companion; S3 has gain and flatness) -- the id is what a reader
+    quotes, so it appears once.
+    """
+    out: list[str] = []
+    for k in (SPEC if keys is None else keys):
+        m = _SPEC_ID.match(SPEC[k][0])
+        if m and m.group(1) not in out:
+            out.append(m.group(1))
+    return sorted(out, key=lambda s: int(s[1:]))
+
+
+def spec_ids_unscored(keys=None) -> list[str]:
+    """The requirement ids `keys` carries NO evidence for."""
+    covered = set(spec_ids(keys))
+    return [i for i in SPEC_IDS_ALL if i not in covered]
 
 # S3's flatness clause is judged over dc .. FLAT_FMAX.
 FLAT_FMAX = 150.0
