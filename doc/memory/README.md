@@ -66,7 +66,7 @@ unchanged.
 | **semantic** | distilled knowledge, provenance-linked: `doc/journal.md` + `doc/journal/` (lessons), `doc/design-reference.md` (constraints), `doc/pdk-notes.md` (measured device data), `pdf/INDEX.md` (paper knowledge), experiment READMEs (verdicts) | **distillation at close-out** (or immediately on a surprising failure) | the context pack's lessons/constraints/papers slots; direct read of the curated docs |
 | **procedural** | the code that implements actions and decisions; **human-initialized**: `lab/`, `scripts/`, `xschem/`, `Makefile`, the lints, the agent definitions in `.claude/agents/`, and `CLAUDE.md` | **trap→gate promotion, human-reviewed only** | the harness-commands section of `CLAUDE.md` |
 
-**Working-memory retrieval policy** (load-bearing, and stated twice on purpose —
+**Working-memory retrieval policy** (stated twice on purpose —
 here and in `CLAUDE.md`): run the pack **at task start, and re-run it keyed
 on every new symptom** (`make pack S="…"`).
 

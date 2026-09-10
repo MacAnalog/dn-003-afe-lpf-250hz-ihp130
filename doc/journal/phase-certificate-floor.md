@@ -75,4 +75,4 @@ Procedural write (lab/) — flagged for owner review per CLAUDE.md rule 10; queu
 in `doc/proposed-lab-fixes.md`.
 
 See also: [`irn-band-definition.md`](irn-band-definition.md) (the same
-band-limits-are-load-bearing failure, on the noise side).
+band-limit-is-part-of-the-definition failure, on the noise side).

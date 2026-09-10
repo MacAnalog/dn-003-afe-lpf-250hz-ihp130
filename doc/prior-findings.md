@@ -51,7 +51,7 @@ table with measurements from this PDK.**
 
 | finding | carried-forward value | class |
 |---|---|---|
-| baseline IRN, 0.5–200 Hz | **55.59 µVrms** (this repo's reference measures 50.18 µV — a different circuit in a different process; the two are **not** comparable) | **BOUND** |
+| baseline IRN, 0.5–200 Hz | **55.59 µVrms** (this repo's reference measures 49.98 µV — a different circuit in a different process; the two are **not** comparable) | **BOUND** |
 | noise power split | 8 bias current sources **43.68 µV = 61.7 %**; input followers 29.32 µV = 27.8 %; shunt feedback 17.98 µV = 10.5 %; testbench bias/reference network **0.00 µV = 0.0 %** | **BOUND** |
 | thermal / flicker split | 54.09 / 12.85 µV = **94.7 % / 5.3 %** | **BOUND** |
 | ⇒ chopping is pre-refuted | a *perfect* chopper removes only the flicker term: 55.59 → 54.09 µV = **−2.7 %** | **IND** given the split; the split itself is **BOUND** — if flicker is a larger share here, re-open |
@@ -103,7 +103,7 @@ Contrast with a gm-ratio cell, where the passband gain is a ratio between two
 | gain-robustness yield, one experiment | follower **75 %** vs gate-driven **6 %** | **BOUND** |
 | honest limit of the campaign | the follower reference won mismatch yield **73–75 % vs 31–33 %** against the lowest-noise candidates at equal power | **BOUND** |
 
-**Why this is load-bearing here.** This repo's structural port decision — both
+**Why this constrains every candidate here.** This repo's structural port decision — both
 input followers p-type (`doc/experiment-log.md` 020) — was taken *specifically*
 to keep the gain self-referenced through one device rather than converting it
 into a device ratio. Any candidate that replaces a follower with a gm-ratio

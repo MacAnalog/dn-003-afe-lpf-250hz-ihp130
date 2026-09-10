@@ -92,7 +92,7 @@ followers (§5).
 Total drawn = 2(29.468) + 6.221 + 2(11.453) + 9.946 = **98.01 pF**
 (`Design.total_cap`), which is what `c_total_pf` reports.
 
-**Placement rule, load-bearing:**
+**Placement rule — the term every sizing formula in §3 depends on:**
 
 * `c1` bridges the biquad's **internal node → that same half's output**, i.e. it
   is the gate–drain (Miller) capacitance of the shunt-feedback device. **One per
@@ -435,7 +435,7 @@ subset that constrains DUT design decisions.
 
 | claim | why it matters here | status |
 |---|---|---|
-| The eight in-DUT bias sources are ≈ 61.7 % of the IRN power; the input followers ≈ 27.8 %; the shunt-feedback devices ≈ 10.5 % | If it reproduces, the whole −20.3 % ask is a bias-source problem, not a follower problem, and the corpus's slew/THD row is irrelevant to it | **NOT re-measured here** |
+| The eight in-DUT bias sources are ≈ 61.7 % of the IRN power; the input followers ≈ 27.8 %; the shunt-feedback devices ≈ 10.5 % | If it reproduces, the whole −20.0 % ask is a bias-source problem, not a follower problem, and the corpus's slew/THD row is irrelevant to it | **NOT re-measured here** |
 | The bench's reference/bias network contributes ≈ 0 % of the *differential* IRN (it is common mode and rejected) | Justifies keeping the reference ideal; would make S6's exclusion noise-neutral as well as power-neutral | **NOT re-measured here** |
 | Flicker is ≈ 5 % of the noise power ⇒ chopping is worth ≈ −2.7 % at best | Pre-refutes an expensive technique. This repo's gate-referred flicker data (`doc/pdk-notes.md`) is per-device only, not a system split | **NOT re-measured here** |
 | I–C homothety: scale every multiplier *and* every capacitor by k ⇒ fc, Q, dc gain, ph_max and THD invariant, power ∝ k, `IRN ∝ 1/√k` | The technique-free control curve. Every technique must be quoted **against** it, or it is just buying noise with current | **NOT re-measured here** |

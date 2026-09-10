@@ -157,9 +157,9 @@ set filetype=binary
 set appendwrite
 op
 write sim.raw
-ac dec 10 0.1 100k
+ac dec 50 0.1 100k
 write sim.raw
-noise v(voutp,voutn) vsig dec 10 0.1 1k
+noise v(voutp,voutn) vsig dec 50 0.1 1k
 setplot noise1
 write sim.raw
 .endc
@@ -167,8 +167,8 @@ write sim.raw
 
 | setting | value | why it is not a free choice |
 |---|---|---|
-| ac sweep | **0.1 Hz → 100 kHz, `dec 10`** | The `dec 10` grid is what the S1 phase certificate and its 150° resolvability guard are calibrated against. Densifying moves the certificate; do it for a diagnostic, never to re-anchor the box. The 0.1 Hz start point *is* the definition of `dc_db`. The 100 kHz stop is what lets the −100 dB floor find the feed-through plateau. |
-| noise sweep | **0.1 Hz → 1 kHz, `dec 10`**, output `v(voutp,voutn)`, input `vsig` | The output is differential and the input is the balun source, so `inoise_spectrum` is the differential IRN density directly. The 0.5–200 Hz integration band is applied afterwards, in Python. |
+| ac sweep | **0.1 Hz → 100 kHz, `dec 50`** (`lab.config.AC_DEC`) | The scoring grid. It moved from `dec 10` at the 2026-08-12 re-certification, which is why fc and ph_max shifted without the circuit moving. Densifying further moves the certificate again; do it for a diagnostic, never to re-anchor the box. The 0.1 Hz start point *is* the definition of `dc_db`. The 100 kHz stop is what lets the −100 dB floor find the feed-through plateau. |
+| noise sweep | **0.1 Hz → 1 kHz, `dec 50`**, output `v(voutp,voutn)`, input `vsig` | The output is differential and the input is the balun source, so `inoise_spectrum` is the differential IRN density directly. The 0.5–200 Hz integration band is applied afterwards, in Python. |
 | op | before both | supplies `i(vflt)` and `i(vdd_meas)` for S6. |
 | `.temp` | 27.0 | `lab.config.TEMP_NOM`. |
 | corner | `.lib cornerMOShv.lib mos_tt` | `lab.config.CORNER_NOM`; the other sections are `mos_ss`, `mos_ff`, `mos_sf`, `mos_fs`. |
@@ -205,8 +205,10 @@ internal step so the output grid really is uniform.
 * **Drive:** `lab.deck._stim_sine(fin, ampl)` puts `sin(0 {ampl} {fin})` on
   `vsig` and keeps `ac 1`. The S7 point is `ampl = 87.5 m`, `fin = 50 Hz`.
 
-**Open gap:** the deck exists; the analysis/scoring helper does **not**. S7 has
-no measured value for the reference baseline yet. See target-spec §"S7 gap".
+**Scored by `lab.thd.measure`** (`make thd`), which reads the strobed transient
+and returns harmonics 2–10 against `lab.metrics.THD_LIMIT_DB`. The reference
+baseline measures **−48.37 dB**, HD3-dominated — see target-spec §"S7 (closed —
+measured here)".
 
 ### 4.4 Supply droop — `lab.deck.vdd_sweep`
 
@@ -269,19 +271,19 @@ is not a measurement.
 
 | metric | bench statement | Python | definition |
 |---|---|---|---|
-| `dc_db` | `ac dec 10 0.1 100k`, first point | `R.db(h)[0]` | 20·log₁₀\|H\| at **0.1 Hz**, **absolute** (vs the 1 V drive), not normalised |
+| `dc_db` | `ac dec 50 0.1 100k`, first point | `R.db(h)[0]` | 20·log₁₀\|H\| at **0.1 Hz**, **absolute** (vs the 1 V drive), not normalised |
 | `fc_hz` | same sweep | `R.f3db` | first downward crossing of dc − 3 dB, **log-log interpolated** between bracketing samples |
 | `peak_db` | same sweep, f ≤ 1 kHz | `R.peaking_db` | `max(0, max \|H\|/\|H(dc)\|)` in dB — one-sided, so a monotone response reads exactly 0 |
 | `a1000_db` | same sweep | `R.value_at(f, y, 1000)` | dB relative to dc at 1 kHz, **linearly interpolated in log-frequency** |
 | `ph_max_deg` | same sweep, `v(voutp)−v(voutn)` complex | `R.ph_max_deg(..., PH_FLOOR_DB)` | max unwrapped **lag**, scored only where \|H\| ≥ **−100 dB** rel. dc |
 | `ph_step_deg` | same | `R.max_phase_step_deg` | worst unwrap-corrected step inside the scored band; guard 150° |
 | `f_scored_hi` | same | `f[y >= PH_FLOOR_DB][-1]` | top of the scored band — reference **3162.3 Hz** |
-| `irn_uv` | `noise ... vsig dec 10 0.1 1k`, `noise1` | `R.integrate_noise(f, inoise, 0.5, 200)` | trapezoid on the **power** over **0.5–200 Hz**, band edges interpolated exactly |
+| `irn_uv` | `noise ... vsig dec 50 0.1 1k`, `noise1` | `R.integrate_noise(f, inoise, 0.5, 200)` | trapezoid on the **power** over **0.5–200 Hz**, band edges interpolated exactly |
 | `onoise_uv` | same plot | `R.integrate_noise(f, onoise, 0.1, 1e3)` | output noise over the **full** sweep — report-only, **not** IRN |
 | `i_core_na`, `p_core_nw` | `op`, `i(vflt)` | `abs(...)`, `× VDD` | S6, filter core only |
 | `idd_total_na` | `op`, `i(vdd_meas)` | `abs(...)` | whole bench — report-only |
 | `c_total_pf` | — | `Design.total_cap()` | `2·c1_a + c2_a + 2·c1_b + c2_b`, from the design, not a netlist scrape |
-| THD | `lab.deck.tran_thd`, coherent FFT | **helper not written** | harmonics 2–10 of the strobed transient at 175 mVpp / 50 Hz |
+| THD | `lab.deck.tran_thd`, coherent FFT | `lab.thd.measure` | harmonics 2–10 of the strobed transient at 175 mVpp / 50 Hz; reference **−48.37 dB** |
 
 ---
 

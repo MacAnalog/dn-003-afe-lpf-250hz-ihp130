@@ -14,8 +14,8 @@ result** rather than with an error.
 
 | lane | when | how the PDK resolves | how the OSDI objects resolve |
 |---|---|---|---|
-| **docker** (fallback) | wherever Docker runs and the host does not qualify for native | the image's `~/.spiceinit` puts the PDK `models/` dir on ngspice's `sourcepath`, so `.lib cornerMOShv.lib mos_tt` resolves by bare name | the image's `~/.spiceinit` `pre_osdi`-loads the OpenVAF-compiled `psp103`, `r3_cmc` and `mosvar` `.osdi` objects |
 | **native** (automatic when the host qualifies) | `ngspice` on PATH **and** `$SPICE_USERINIT_DIR/.spiceinit` (else `~/.spiceinit`) loads osdi objects — the lab workstation shape, `SPICE_USERINIT_DIR` = the PDK's `libs.tech/ngspice`; `LPF_NGSPICE=/path/to/ngspice` forces a binary, `LPF_LANE=docker` forces docker | **you** must put the PDK `models/` on `sourcepath` in your own `~/.spiceinit` | **you** must load the same `.osdi` objects in your own `~/.spiceinit` |
+| **docker** (fallback) | wherever Docker runs and the host does not qualify for native | the image's `~/.spiceinit` puts the PDK `models/` dir on ngspice's `sourcepath`, so `.lib cornerMOShv.lib mos_tt` resolves by bare name | the image's `~/.spiceinit` `pre_osdi`-loads the OpenVAF-compiled `psp103`, `r3_cmc` and `mosvar` `.osdi` objects |
 
 The image is `spicexplorer-spice-base:local` (override with `LPF_DOCKER_IMAGE`).
 Each run gets its own directory under `LPF_WORK`, bind-mounted at `/w`, and runs
@@ -54,7 +54,7 @@ Everything `lab.config` honours. All are optional; defaults are shown.
 |---|---|---|
 | `LPF_DECK_DIR` | `<repo>/decks/reference` | where the frozen reference bench lives. Point elsewhere to score a different vendored deck. |
 | `LPF_DECK_TB` | `lpf_tb.sp` | the testbench filename inside `LPF_DECK_DIR`. |
-| `LPF_WORK` | `/tmp/lpf_work-<repo dir name>-<sha1(abs path)[:6]>` — here `/tmp/lpf_work-agentic-design-250hz-lpf-ihp130-76f0b9` | run directories, one per tag. **Namespaced per checkout** so two worktrees can never clobber each other's runs. The ledger (`runs/ledger.ndjson`) is repo-relative and therefore per-worktree too. |
+| `LPF_WORK` | `/tmp/lpf_work-<repo dir name>-<sha1(abs path)[:6]>` — in this checkout `/tmp/lpf_work-dn-003-afe-lpf-250hz-ihp130-b74add` | run directories, one per tag. **Namespaced per checkout** so two worktrees can never clobber each other's runs. The ledger (`runs/ledger.ndjson`) is repo-relative and therefore per-worktree too. |
 | `LPF_NGSPICE` | *(empty)* | non-empty ⇒ **native lane**, and this is the binary invoked. Empty ⇒ docker lane. |
 | `LPF_DOCKER_IMAGE` | `spicexplorer-spice-base:local` | the image used by the docker lane. |
 | `LPF_DOCKER` | `shutil.which("docker")` or `docker` | the docker CLI. Set it for podman-style shims. |
@@ -63,6 +63,14 @@ Everything `lab.config` honours. All are optional; defaults are shown.
 | `LPF_VOCM` | `1.25` | expected output CM — used only as the `.nodeset` dc hint. |
 | `LPF_JOBS` | `max(2, cpu_count − 2)` | concurrency cap for `lab.parallel.batch`. Each ngspice is single-threaded but container start-up is not, so leave a couple of cores free. |
 | `LPF_EXP` | *(empty)* | stamped into every ledger row's `exp` field by `lab.ledger.log_run`, so a batch can be filtered back out by experiment number. Set it to the experiment directory number while working in one. |
+| `LPF_LANE` | *(empty)* | `docker` forces the docker lane even on a host that qualifies for native (`lab.config._native_default`). Any other value is ignored. |
+| `LPF_BIAS_ALPHA` | `0` | temperature shaping of the ideal reference, `I(T) = iref·(T/300.15)^alpha`. `0` = constant current; `1` = constant gm (what a beta-multiplier delivers). It is an **ideal** shaping — it bounds what a bias circuit could buy, it does not model a real reference's own spread. See `doc/journal/bias-alpha-is-part-of-a-temperature-measurement.md`. |
+| `LPF_CAP_CORNER` | `cap_typ` | the `cornerCAP.lib` section for `cap_model="cmim"` designs: `cap_typ` \| `cap_bcs` (0.9×) \| `cap_wcs` (1.1×). A cap-corner run is a separate invocation, like `LPF_BIAS_ALPHA`. |
+
+Read by the tooling rather than by `lab.config`: `LPF_XSCHEM` (a host xschem
+binary ⇒ the native netlisting lane, `lab/xsch.py`), `LPF_SIGNOFF_SET`
+(`pre-pvt` \| `post-pvt`, `scripts/plot_signoff.py`), `PDK_ROOT` and
+`SPICE_USERINIT_DIR` (where the PDK and its `.spiceinit` live).
 
 ---
 
@@ -109,9 +117,9 @@ set filetype=binary
 set appendwrite
 op
 write sim.raw
-ac dec 10 0.1 100000
+ac dec 50 0.1 100000
 write sim.raw
-noise v(voutp,voutn) vsig dec 10 0.1 1000
+noise v(voutp,voutn) vsig dec 50 0.1 1000
 setplot noise1
 write sim.raw
 .endc
