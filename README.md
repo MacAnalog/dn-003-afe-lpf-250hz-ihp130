@@ -26,6 +26,17 @@ Evidence: [`signoff/pre-pvt/README.md`](signoff/pre-pvt/README.md).
 | drawn capacitance | 98.0 pF | 366.3 pF |
 | mismatch yield | — | **95 %** (100 samples) |
 
+> **Which `022-reuse-final` numbers these are.** The **delivered** column above is
+> the sizing as fitted. The certified sign-off scorecard
+> (`signoff/pre-pvt/scorecard.json`, cell `H-shipped`) is measured on the
+> **layout-legalized** netlist (5 nm grid, PDK minimum widths, ≤ 10 µm gate
+> fingers, `lab.grid.legalize` + the fc restoration it forces,
+> `lab.retune.restore_fc`) and reads IRN **27.87 µVrms**, THD **−56.18 dB**,
+> ph_max **341.30°**, core power **14.50 nW**, ripple **0.0929 dB**, fc
+> **249.99 Hz**. The repo files the split as its own open item **G17**
+> (`doc/paper/README.md` §5), whose ruling is: quote the packaged sign-off JSON
+> everywhere. `signoff/pre-pvt/COMPARISON.md` ranks all nine sizings.
+
 - **Re-derive it in one command.** `uv run python signoff/pre-pvt/verify.py --regen`
   regenerates the schematics from the sizing, netlists them with xschem,
   simulates *those* netlists, and checks them against both the deck builder and
@@ -49,8 +60,11 @@ manufacturable one.
 The reuse ladder is threshold-referenced, so this is *proven* unfixable by
 device type or size. It needs a supply-independent bias, i.e. added components.
 
-> **Figure to build:** fc versus VDD over 1.35–1.65 V with the S2 box drawn.
-> The regenerator is `lab.droop`; no committed plot carries this claim today.
+> **Figure to build:** fc versus VDD with the S2 box drawn. `lab.droop` already
+> produces it —
+> `python -m lab.droop signoff/pre-pvt/design/022-reuse-final.json --png figs/droop_022.png`
+> prints the per-supply table and writes the plot — but no rendered plot is
+> committed for this cell, so the claim rests on the two numbers above.
 
 ### Layout of record — `H12-pdk-cap` (post-PVT cell, IHP MIM caps, all-hv)
 

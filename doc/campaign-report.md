@@ -21,19 +21,30 @@ All 42 device connections identical to the drawn topology.
 | drawn capacitance | 98.0 pF | 366.3 pF |
 | mismatch yield | — | **95 %** (100 samples) |
 
+> **Which `022-reuse-final` numbers these are.** The **`022-reuse-final`** column
+> above is the sizing as fitted. The certified sign-off scorecard
+> (`signoff/pre-pvt/scorecard.json`, cell `H-shipped`) is measured on the
+> **layout-legalized** netlist (5 nm grid, PDK minimum widths, ≤ 10 µm gate
+> fingers, `lab.grid.legalize` + the fc restoration it forces,
+> `lab.retune.restore_fc`) and reads IRN **27.87 µVrms**, THD **−56.18 dB**,
+> ph_max **341.30°**, core power **14.50 nW**, ripple **0.0929 dB**, fc
+> **249.99 Hz**. The repo files the split as its own open item **G17**
+> (`doc/paper/README.md` §5), whose ruling is: quote the packaged sign-off JSON
+> everywhere. `signoff/pre-pvt/COMPARISON.md` ranks all nine sizings.
+
 All of S1–S8 pass. The challenge asked for IRN < 40 µVrms combining ≥ 2 paper
 techniques; both are met, and the cell also beats the reference on distortion and
 on the flatness clause the reference itself misses.
 
-## 2. How it was arrived at
+## 2. How it was arrived at — four diagnoses
 
 37 sizing points across 11 rounds ([full table](sizing-history/rounds.md)). The
-path was not a search — it was four diagnoses, each of which changed what to
-search for.
+path was not a search: each of four diagnoses changed what to search for.
 
-**The passband bump was a measurement gap, not a technology limit.** Every
-optimiser-fitted cell had a visible bump and every one passed the flatness box,
-because `peak_db` is one-sided and `ripple_db` is a peak-to-peak spread — a
+### 2.1 The passband bump was a measurement gap, not a technology limit
+
+Every optimiser-fitted cell had a visible bump and every one passed the flatness
+box, because `peak_db` is one-sided and `ripple_db` is a peak-to-peak spread — a
 response that sags 0.09 dB and recovers 0.09 dB scores 0.000 and 0.084 against a
 0.2 dB bound. Fixed by scoring the *shape*: `lab.raw.monotone_db` (now on every
 scorecard) and `lab.shape.fit_butter` against the 4-pole Butterworth template.
@@ -43,11 +54,13 @@ Flatness turned out **not** to be free: it cost one candidate 5.8 dB of THD,
 confirmed by re-measuring the pre-fit sizing. That set the selection rule for
 everything after — the cell that survives flattening is the one with S7 margin.
 
-**The S1 phase certificate was inverting a verdict.** `ph_max_deg` scored every
-point above the −100 dB floor rather than the contiguous band below the first
-crossing. On a cell with a feed-through plateau (|H| falls through at 3.2 kHz,
-returns at 14.5 kHz, sits at −98.5 dB to 100 kHz) `np.unwrap` ran across the gap
-and reported **368.6°** for a cell whose lag saturates at **320.7°** — an S1 fail
+### 2.2 The S1 phase certificate was inverting a verdict
+
+`ph_max_deg` scored every point above the −100 dB floor rather than the
+contiguous band below the first crossing. On a cell with a feed-through plateau
+(|H| falls through at 3.2 kHz, returns at 14.5 kHz, sits at −98.5 dB to
+100 kHz) `np.unwrap` ran across the gap and reported **368.6°** for a cell
+whose lag saturates at **320.7°** — an S1 fail
 reported as a pass by 38°, on what had been the strongest cell in the repo. The
 150° step guard missed it (the spurious step was 75°). Fixed in `lab.raw`, and in
 `lab.plot.bode`, which had the same mask.
@@ -57,39 +70,49 @@ Pushed through the same −100 dB floor, a *mathematically ideal* 4-pole
 Butterworth scores **350.53°**. The ceiling is ~350°, not 360°, and a score above
 ~351° is parasitic lag rather than extra order.
 
-**Mismatch and phase have different owners.** The unstacked cell returned 12 %
-mismatch yield. Growing all device areas fixes σ(fc) and then fails S1 on phase
-(343.9 → 322.5°) because the phase cost is *signal-path* gate capacitance, while
-the fc spread is *bias-device* threshold mismatch — σ(I)/I = σ(V_th)/(n·U_T), so
+### 2.3 Mismatch and phase have different owners
+
+The unstacked cell returned 12 % mismatch yield. Growing all device areas fixes
+σ(fc) and then fails S1 on phase (343.9 → 322.5°) because the phase cost is
+*signal-path* gate capacitance, while the fc spread is *bias-device* threshold
+mismatch — σ(I)/I = σ(V_th)/(n·U_T), so
 a few mV is a >10 % current spread. Growing **only** the bias devices, whose
 gates sit on quiet rails, took yield 12 → 87 % for **3.2° of phase across an 81×
 area range**. The lever is not monotone: once nominal phase margin is thin,
 `ph_max` becomes the binding line and yield collapses — so the optimum depends on
 the cell's own margin (×9 for the stacked cell, ×36 for the unstacked).
 
-**The common mode is a threshold problem, and it is what forced the flavour
-work.** The all-p cascade shifts CM up one |V_SG| per stage, pinning vicm near
-0.20 V. Width buys only ~92 mV per *decade*, and the ~30× needed for 0.5 V
-converts 47 pF of MIM into non-linear **gate** capacitance — drawn C fell
+### 2.4 The common mode is a threshold problem, and it forced the flavour work
+
+The all-p cascade shifts CM up one |V_SG| per stage, pinning vicm near 0.20 V.
+Width buys only ~92 mV per *decade*, and the ~30× needed for 0.5 V converts
+47 pF of MIM into non-linear **gate** capacitance — drawn C fell
 150.6 → 104.0 pF at the same cutoff, THD collapsed to −30.3 dB, and the response
 stopped being 4-pole. `sg13_lv_pmos` attacks V_th instead: measured 0.168 V
 against hv's 0.457 V at this cell's own currents, i.e. **588 mV** of headroom,
 and it *improved* noise (gm/ID 32 vs 25).
 
-## 3. What device type and size could not fix
+## 3. What device type and size could not fix — supply rejection
 
-**Supply rejection.** The reuse ladder sets its current by
+The reuse ladder sets its current by
 `|V_SG|(gmf_b) + |V_SG|(bridge) = VDD − vbn`, so it is threshold-referenced:
-`dI/I = dVDD/(2·n·U_T)`. Measured, fc goes 250.0 → 206.5 Hz at VDD 1.45 V and
+`dI/I = dVDD/(2·n·U_T)`. Measured, fc goes
+250.0 → 206.5 Hz at VDD 1.45 V and
 **S2 is what breaks**. Moving `gmf_b` to lv roughly halved the sensitivity
 (supply-current ratio 6.4 → 2.7) and got nowhere near enough.
 
-The arithmetic closes it: fc within ±2 % needs the branch current within ±4 %,
-which over a ±10 % rail requires a device slope of ~1.9 V per e-fold against
-0.04 V (weak inversion) to ~0.2 V (strong) for real MOS. **No choice of device
-type or size can make a current-reuse ladder hold a ±2 % cutoff over a drooping
-supply.** It needs a supply-independent bias, i.e. added components. The 1/22
-corner count has the same root cause.
+The arithmetic closes it. **No choice of device type or size can make a
+current-reuse ladder hold a ±2 % cutoff over a drooping supply**; it needs a
+supply-independent bias, i.e. added components. The 1/22 corner count has the
+same root cause.
+
+| quantity | value |
+|---|---|
+| fc tolerance required (S2) | ±2 % |
+| branch-current tolerance that implies | ±4 % |
+| over a rail of | ±10 % |
+| device slope that would need | **~1.9 V per e-fold** |
+| slope real MOS delivers | 0.04 V (weak inversion) … ~0.2 V (strong) |
 
 A second structural fact came out of the same analysis: the ladder pins the
 current *density*, so widening both devices raised the current 2.15 → 55.9 nA

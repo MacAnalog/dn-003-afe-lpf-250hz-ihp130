@@ -10,6 +10,19 @@ metrics iterate, the frozen reference deck certifies. Every fast metric must map
 to a statement in this document; a fast substitute that cannot be mapped is not
 a measurement, it is a guess.
 
+## The benches, and what each one certifies
+
+| bench | builder | analyses | what it certifies | cost |
+|---|---|---|---|---|
+| **scorecard** (fast, every sizing point) | `lab.deck.ac_noise` | `op` + `ac dec 50 0.1 100k` + `noise … dec 50 0.1 1k` | S1 `ph_max_deg` / `a1000_db`, S2 `fc_hz`, S3 `dc_db` / `ripple_db`, S4 `peak_db`, S5 `irn_uv`, S6 `p_core_nw` | sub-second per point (§7) |
+| **operating point** | `lab.deck.op_only` | `op` + device-parameter `print` | the weak-inversion audit: `gm/ID` near the measured limit, `Vds` above ≈ 4·kT/q on every bias device | §4.2 |
+| **distortion** (slow, gated) | `lab.deck.tran_thd` → `lab.thd.measure` | coherent strobed transient + unwindowed DFT | S7 `thd_db`, harmonics 2–10 at 175 mVpp / 50 Hz | §4.3 |
+| **supply droop** (report-only) | `lab.deck.vdd_sweep` | `dc vdd_meas lo hi step` | VDD_min for a datasheet — **not** a spec line | §4.4 |
+
+The **frozen** deck (`decks/reference/lpf_tb.sp`, sha-pinned by `make lint`) is
+the scorecard bench built from `decks/reference/design.json`. `lab.metrics.gate`
+refuses the distortion bench until the scorecard bench passes the hard box (§7).
+
 ---
 
 ## 1. What the testbench is

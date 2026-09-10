@@ -55,7 +55,7 @@ Everything `lab.config` honours. All are optional; defaults are shown.
 | `LPF_DECK_DIR` | `<repo>/decks/reference` | where the frozen reference bench lives. Point elsewhere to score a different vendored deck. |
 | `LPF_DECK_TB` | `lpf_tb.sp` | the testbench filename inside `LPF_DECK_DIR`. |
 | `LPF_WORK` | `/tmp/lpf_work-<repo dir name>-<sha1(abs path)[:6]>` — in this checkout `/tmp/lpf_work-dn-003-afe-lpf-250hz-ihp130-b74add` | run directories, one per tag. **Namespaced per checkout** so two worktrees can never clobber each other's runs. The ledger (`runs/ledger.ndjson`) is repo-relative and therefore per-worktree too. |
-| `LPF_NGSPICE` | *(empty)* | non-empty ⇒ **native lane**, and this is the binary invoked. Empty ⇒ docker lane. |
+| `LPF_NGSPICE` | *(empty)* | non-empty ⇒ **native lane**, and this is the binary invoked. Empty ⇒ `lab.config._native_default` decides: **native** when the host qualifies (row 1 of the lane table above), else docker. |
 | `LPF_DOCKER_IMAGE` | `spicexplorer-spice-base:local` | the image used by the docker lane. |
 | `LPF_DOCKER` | `shutil.which("docker")` or `docker` | the docker CLI. Set it for podman-style shims. |
 | `LPF_VDD` | `1.5` | supply, volts. S6 is stated in **watts**, so changing this changes the current budget, not the power box. |

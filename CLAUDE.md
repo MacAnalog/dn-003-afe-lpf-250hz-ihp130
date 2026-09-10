@@ -27,8 +27,10 @@ Everything else must hold. The box, in full, is `doc/target-spec.md`:
 | total capacitance | **reported, never specced** |
 
 The reference baseline is the yardstick, not a target to beat on every axis:
-it is on spec, measured in this repo, and frozen. A candidate wins by cutting
-IRN without giving anything else back.
+it is measured in this repo and frozen, and it is on spec on every line except
+S5 noise **and S3 flatness** (ripple 0.2512 dB against the 0.2 dB bound —
+`decks/reference/scorecard.json`, which forbids the shorter description). A
+candidate wins by cutting IRN without giving anything else back.
 
 ## Read this before that
 
