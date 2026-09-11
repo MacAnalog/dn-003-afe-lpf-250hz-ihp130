@@ -110,7 +110,8 @@ class DroopPoint:
     def failing_keys(self) -> frozenset[str]:
         """Which SPEC KEYS are violated -- the identity of a failure, not its text.
 
-        `lab.metrics.check` renders each violation as "<label>: <measured> > <bound>",
+        `lab.metrics.check` renders each violation as "<label> <op> <bound>: got
+        <measured>" (`abs<=` as "|<label>| <= <bound>: got <measured>"),
         so two supplies that fail the SAME line produce DIFFERENT strings.  Comparing
         the strings makes every supply look like a new failure mode; comparing the
         keys is what "no new spec violation" actually means.
@@ -151,7 +152,7 @@ class DroopPoint:
 def _key_of(msg: str) -> str:
     """The SPEC key a violation sentence came from ('' -> the sentence itself)."""
     for k, (label, *_rest) in M.SPEC.items():
-        if msg.startswith(label + ":"):
+        if label in msg:       # never a prefix: `abs<=` renders as `|<label>| <= ...`
             return k
     return msg              # unrecognised -- keep it, never silently drop it
 

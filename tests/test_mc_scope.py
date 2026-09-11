@@ -27,7 +27,7 @@ from unittest import mock
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from lab import mc  # noqa: E402
+from lab import corners, droop, mc  # noqa: E402
 from lab import metrics as M  # noqa: E402
 from lab.dut import Design, Dev  # noqa: E402
 
@@ -187,6 +187,21 @@ class ViolationMatching(unittest.TestCase):
         self.assertEqual(r.line_pass("dc_db"), 0)
         self.assertEqual(r.summary()["yield_dc_db"], 0.0)
         self.assertEqual(r.line_pass("fc_hz"), 4)      # only the failing line
+
+    def test_the_sibling_benches_match_the_same_way(self):
+        """`lab.corners` and `lab.droop` read the same sentences.
+
+        A prefix match left `summary()['worst']['dc_db']['ok']` stuck at True
+        for any gain whatever, and left `failing_keys` carrying the raw
+        sentence -- so two supplies failing the SAME line looked like two
+        different failure modes and the droop walk stopped at its anchor.
+        """
+        self.assertFalse(corners._line_ok("dc_db", 5.0))
+        self.assertTrue(corners._line_ok("dc_db", 0.05))
+        for key, v in (("dc_db", 5.0), ("ph_max_deg", 100.0)):
+            bad = dict(GOOD, **{key: v})
+            p = droop.DroopPoint(vdd=1.2, values=bad, violations=M.check(bad))
+            self.assertEqual(p.failing_keys, frozenset({key}))
 
 
 class Summary(unittest.TestCase):
