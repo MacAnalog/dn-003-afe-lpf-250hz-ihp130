@@ -217,12 +217,18 @@ $PF signoff/paper-draft/scripts/figures.py               # rewrites figures/
 # 6. PVT / mismatch / rejection / distortion mechanism -- the §8-§10 material.
 #    LPF_BIAS_ALPHA=1.1 is the constant-gm bias the cells were certified with; without it
 #    the temperature rows measure an UNCOMPENSATED cell.
-#    OMP_NUM_THREADS=1 is not optional for the Monte Carlo: ngspice takes ~11 threads per
-#    process by default, so LPF_JOBS workers ask for 11x LPF_JOBS threads and the host
-#    thrashes -- 5 draws/min instead of ~110.  One thread per worker and ~32 workers is
-#    the fast setting here.  ~15 min for the two 1024-draw runs.
+#    Capping the batch is not optional for the Monte Carlo: uncapped, the host thrashes
+#    -- 5 draws/min instead of ~110.  ~32 workers is the fast setting here, ~15 min for
+#    the two 1024-draw runs.
+#    CORRECTED 2026-09-10: OMP_NUM_THREADS does NOT reach ngspice.  ngspice-45 calls
+#    omp_set_num_threads() unconditionally at CKTsetup from its own `num_threads` (8 via
+#    the stock spinit, else 2), so the env var caps numpy/OpenBLAS only.  Most of the
+#    simulator's CPU is libgomp barrier spin: OMP_WAIT_POLICY=PASSIVE removes ~68% of it
+#    for ~12% more wall, and it needs no deck edit -- which matters here, because the
+#    reference deck is sha-lint-pinned and must not be hand-edited.  The ~32-worker knee
+#    was measured with ngspice UNCAPPED, so re-measure it rather than trusting it.
 E="signoff/paper-draft/scripts"
-export OMP_NUM_THREADS=1 LPF_JOBS=32
+export OMP_NUM_THREADS=1 OMP_WAIT_POLICY=PASSIVE LPF_JOBS=32
 for d in pre_mim post_pex; do
   for s in cert-axes cert-box both; do
     LPF_BIAS_ALPHA=1.1 .venv/bin/python $E/extract_bench.py --pvt $s --dut $d
