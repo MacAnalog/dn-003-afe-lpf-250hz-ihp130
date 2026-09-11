@@ -152,7 +152,7 @@ class DroopPoint:
 def _key_of(msg: str) -> str:
     """The SPEC key a violation sentence came from ('' -> the sentence itself)."""
     for k, (label, *_rest) in M.SPEC.items():
-        if label in msg:       # never a prefix: `abs<=` renders as `|<label>| <= ...`
+        if label in msg:   # substring: op+bound precede the colon, `abs<=` leads with |
             return k
     return msg              # unrecognised -- keep it, never silently drop it
 
