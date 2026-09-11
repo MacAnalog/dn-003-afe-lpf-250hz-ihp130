@@ -83,7 +83,7 @@ review, and a 14-iteration audit trail with before|after pictures):
 | THD @ 175 mVpp, 50 Hz | −50.40 dB | −49.73 dB |
 | core power | 11.91 nW | 11.91 nW |
 | mismatch yield (100 samples, paired seeds) | 82 % | 87 % |
-| worst MIM-cap corner (`cap_bcs`, iref ×0.9), phase max | 331.02° | 329.82° — the one post-layout miss, accepted |
+| worst MIM-cap corner (`cap_bcs`, iref ×0.9), phase max | 331.02° | 329.82° — the one *accepted* post-layout miss (the untrimmed `cap_bcs` ×1.0 point drops to 329.76° too, but it fails S2 pre-layout as well) |
 | cell | — | 432.0 × 528.0 µm = **0.228 mm²** (MIM 54 %), DRC 0, LVS match |
 
 Story and evidence: [`layout/H12-pdk-cap/REPORT.md`](layout/H12-pdk-cap/REPORT.md)
@@ -93,13 +93,38 @@ notes + diffs), `opt/results/` (600-trial area campaign: the bias dummy rows
 were 5.6 % of the cell for no measured benefit — removed in it14), and the
 paper pack [`doc/paper/`](doc/paper/README.md).
 
+### Known limitation: what the post-layout numbers do not model
+
+The post-layout column above is an **extraction**, and four things it does not
+model are open. Each is *bounded*; none is *closed*. They belong beside the
+headline row rather than only in the paper pack's gap list
+([`doc/paper/README.md`](doc/paper/README.md) §5, gaps **G8–G11**) and the
+reviewer's findings F24 / F11 / F3 / F13 in
+[`REVIEW.md`](layout/H12-pdk-cap/REVIEW.md).
+
+| what is not modelled | bound / consequence |
+|---|---|
+| **RC extraction is not deterministic** (**G8**, F24). Two RC runs on the same GDS differ in **17 221 lines** of sub-node naming while every C card and every device card is byte-identical, and three RC meshes measure fc = 248.6366 / 248.6763 / 248.6833 Hz. On the CC side the record is mixed: the reviewer's three CC runs were byte-identical, but the designer's own HD2 note (`scorecard_post.json`) records two CC netlists of the same GDS differing in instance ordering. | **±0.047 Hz of mesh scatter on `fc`** — the same size as the CC↔RC agreement the scorecard quotes as its cross-check (CC 248.6636 vs RC 248.7104 Hz). So **the RC cross-check agrees to the extractor's own repeatability, not finer than it**, and extractions must be compared by *sorted card set*, never by file sha. The designer's one pathological mesh (a shorted operating point) did not recur in three reviewer draws, so its frequency is neither reproduced nor bounded. |
+| **MIM top plates are stripped before extraction** (**G9**, F11). kpex's IHP tech marks `cmim_top` `<TODO>`, so the plates are removed from the GDS handed to the extractor and the six certified `cap_cmim` cards are re-inserted verbatim into `asbuilt/core_pex.sp`. | The top-plate environment capacitance on `net2`/`net3` is a **carried ≤ 15 fF bound worth up to −0.39° of `ph_max`** — carried, not closed. Needs a MIM-aware kpex tech or a hand/FasterCap number. |
+| **n-well / p-substrate junction capacitance is outside every model in the flow** (**G10**, F3 — deferred by the approved plan). The only evidence is a lumped-`Cj` what-if at 0.05 / 0.12 fF/µm². | **−0.108…−0.259° on `ph_max`.** S1 is a **minimum** (≥ 330°), so the sign is adverse: this bound eats phase margin, it does not restore it. It has not been measured at the accepted `cap_bcs ×0.9` corner, whose 0.179° shortfall is therefore a floor rather than the whole story. |
+| **The LVS gate does not check the pin list** (**G11**, F13). `vbp` is a *deliberate* unused port — BRIEF §9: "keep the pin for LVS, route nothing to it" — drawn as a 4 × 2 µm labelled Metal1 pad, present on the `.subckt` header of both `asbuilt/core_lvs.sp` and `asbuilt/core_pex.sp` and on **no device card in either** (this replica-biased cell gates its pmos loads from `net4`/`net1`/`vbr`/`rep_x`; `vbp` is live only in the pre-replica reference deck). The reviewer's own extraction dropped the port entirely and LVS still reported *Netlists match*, and the two committed headers do not agree — `core_pex.sp` declares 7 pins, omitting `vss`, which kpex ties to node 0. | **1 of 8 declared pins is outside the LVS evidence.** Nothing about the delivered cell is known to be wrong; the gate simply cannot see this pin either way. Needs a pin-list assertion inside `signoff.lvs`. |
+
+The nominal post-layout scorecard reproduces exactly on the reviewer's own
+build, extraction and benches — but that is the *same* MIM-stripped, `Cj`-free
+extraction reproduced twice, not independent evidence that it is right. These
+four bounds say how far the true numbers may sit from it, and the two that carry
+a sign (**G9**, **G10**) both push `ph_max` **down** — the wrong way for a spec
+line that is a minimum.
+
 ## Quickstart
 
 ```bash
 uv sync            # this checkout's own .venv (every worktree needs one)
 make doctor        # is the simulator lane alive? prints lane, PDK, op-plot names
 make baseline      # run the reference deck, print the scorecard
-make check         # lint + the reference deck still reproduces its certified numbers
+make test          # the unit tests: pure python, no simulator (they pin CLAIMS)
+make check         # lint + `make test` + the reference deck still reproduces
+                   #   its certified numbers  (the full gate; needs a simulator)
 make lint          # repo invariants only (fast, no simulation)
 make runs          # query the run ledger (ARGS="--fails")
 make pack K="noise irn"   # working-memory context pack
@@ -237,6 +262,7 @@ Why hv rather than lv, in three measurements:
 | `pdk/` | regenerated device-characterisation LUTs (git-ignored) |
 | `runs/` | `ledger.ndjson` — local observability, git-ignored; keeper numbers graduate into experiment READMEs |
 | `harness.yaml` | the design described to the platform's `spicexplorer-harness` (spec rows, frozen dirs, denylist, ledger columns); `make lint / pack / runs / freeze` are that package |
+| `tests/` | the unit tests (`make test`, also inside `make check`): pure python, no simulator. They pin the CLAIMS the code makes — what a Monte Carlo yield covers, what wording was retired from the live prose — not measured numbers |
 | `scripts/` | `lint.py` (repo-specific checks on top of the harness), `baseline.py`, `draw_xschem.py` / `draw_lpf_core_022.py` (schematic drawers), `check_netlist.py` (connectivity gate) — the Makefile's implementation |
 
 ### The `lab/` package

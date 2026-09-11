@@ -10,7 +10,8 @@ A pure re-read of the committed sign-off artifacts under
 
 Panels:
   (a) fc and ph_max vs VDD, with the S2 band and the S1 floor drawn, points
-      coloured by whether EVERY spec line passed at that corner;
+      coloured by whether every SCORED line (the S1-S6 box one
+      `lab.metrics.evaluate` measures) passed at that corner;
   (b) the same vs temperature -- the axis on which experiment 023's hypothesis
       was falsified;
   (c) the five process corners at 27 C / 1.5 V: fc span and IRN;
@@ -71,7 +72,8 @@ def _axis(ax, xs, rs, xlabel, title):
 
     span = [x for x, g in zip(xs, good) if g]
     if span:
-        S.note(ax, f"every spec line passes\nfrom {min(span):g} to {max(span):g}\n"
+        S.note(ax, f"the scored box (S1-S6) passes\n"
+                   f"from {min(span):g} to {max(span):g}\n"
                    "green band = the 245–255 Hz\ncutoff box",
                loc="lower right", fontsize=6.2)
     return axb
@@ -140,10 +142,11 @@ def main() -> int:
     ax.set_xlabel("supply (V), grouped by temperature\nevery miss contains 1.35 V, $\\leq\\!-20\\,^\\circ$C or $\\geq\\!85\\,^\\circ$C", labelpad=17)
     ax.set_ylabel("process corner")
     n_ok = int(np.nansum(grid))
-    ax.set_title(f"(d) full grid — {n_ok} of {grid.size} corners pass every line")
+    ax.set_title(f"(d) full grid — {n_ok} of {grid.size} pass the scored box")
 
-    fig.suptitle("Operating window before layout, cell lpf_core   ·   "
-                 "green = every spec line passes, red = at least one fails")
+    fig.suptitle("Operating window before layout, cell lpf_core\n"
+                 "green = the scored box (S1\u2013S6) passes, "
+                 "red = at least one line fails")
     S.save(fig, "pvt_window")
     return 0
 

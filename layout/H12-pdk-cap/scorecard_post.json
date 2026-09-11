@@ -726,6 +726,33 @@
     "note": "BOUNDS defects, not layout-of-record defects: the delivered cell is at the defaults. Narrowing the three ranges is a round-5 generator change."
   },
   "all_pass": true,
+  "all_pass_scope": "all_pass is all(passes.values()) -- the NOMINAL bench only (mos_tt, 27 C, 1.5 V, the `scorecard` block). It never reads `corners` or `corner_miss`, so it cannot contradict them and must not be quoted as 'the cell passes'. The corner verdict is `corner_pass`. Added 2026-09-10 to close reviewer finding F23 / gap G18; the recorded value true is unchanged and correct for that scope. NOTE the name collision: lab/corners.py's own summary key `all_pass` means the opposite scope (every corner ok).",
+  "corner_pass": false,
+  "corner_pass_detail": {
+    "post_axes_pass": "6/9",
+    "post_cap_pass": "2/5",
+    "pre_axes_pass": "6/9",
+    "pre_cap_pass": "3/5",
+    "s1_violations_post": [
+      "corners.axes[tt_27c_1v350]: ph_max 307.535 < 330",
+      "corners.axes[tt_m40c_1v500]: ph_max 235.171 < 330",
+      "corners.axes[tt_125c_1v500]: ph_max 221.763 < 330",
+      "corners.cap[cap_bcs iref x1.0]: ph_max 329.758 < 330",
+      "corners.cap[cap_bcs iref x0.9]: ph_max 329.821 < 330"
+    ],
+    "certified_window": {
+      "vdd_v_at_27c": [
+        1.4,
+        1.65
+      ],
+      "temp_c_at_1v5": [
+        0.0,
+        70.0
+      ],
+      "source": "signoff/post-pvt/README.md, the H12 column ('supply @ 27 C: 1.40-1.65 V (1.35: dc -0.78, ph 308)'; 'temperature @ 1.5 V: 0 ... +70 C'). It is a ONE-AXIS-AT-A-TIME claim, not a box -- the cross product does not superpose. Mirrored in code as CERT_VDDS / CERT_TEMPS in signoff/paper-draft/scripts/extract_bench.py."
+    },
+    "note": "harness.yaml scores ph_max_deg with op '>=' bound 330.0, so the limit is a MINIMUM and 329.821 deg is a real S1 miss, not a rounding artefact. `corner_miss` records the A7 point the block owner approved delivering with; the cap_bcs iref x1.0 row misses S1 too. The three axes misses are 1.35 V, -40 C and 125 C -- every one OUTSIDE `certified_window` below, i.e. points this cell was never claimed to hold. Every axes row inside that window passes, on both DUTs."
+  },
   "reproduces_round3": {
     "gds_sha256": "fc59cfd7ef38b5d91d0e78ab2a0cf56aa8c284578ac7ec29abe1be04cf0500ed",
     "how": "the round-4 generator built at round-3 default values",

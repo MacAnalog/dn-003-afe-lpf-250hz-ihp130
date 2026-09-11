@@ -19,7 +19,10 @@ measured at the same supply, from decks built at that supply.
 
 Three outcomes are kept distinct, because they mean different things:
 
-* **PASS**    -- solved, every spec line inside its box.
+* **PASS**    -- solved, and every line of the SCORED box inside its bounds.
+                 Scored = what one `lab.metrics.evaluate` measures, today
+                 S1-S6; S7 (THD) needs its own long transient and S8 is not a
+                 measurement, so neither is in this verdict.
 * **FAIL**    -- solved, but out of spec (this is the graceful-degradation
                  region; the scorecard says which line went first).
 * **NO-CONV** -- the simulator never found a dc solution.  NOT a spec failure
@@ -107,7 +110,8 @@ class DroopPoint:
     def failing_keys(self) -> frozenset[str]:
         """Which SPEC KEYS are violated -- the identity of a failure, not its text.
 
-        `lab.metrics.check` renders each violation as "<label>: <measured> > <bound>",
+        `lab.metrics.check` renders each violation as "<label> <op> <bound>: got
+        <measured>" (`abs<=` as "|<label>| <= <bound>: got <measured>"),
         so two supplies that fail the SAME line produce DIFFERENT strings.  Comparing
         the strings makes every supply look like a new failure mode; comparing the
         keys is what "no new spec violation" actually means.
@@ -148,7 +152,7 @@ class DroopPoint:
 def _key_of(msg: str) -> str:
     """The SPEC key a violation sentence came from ('' -> the sentence itself)."""
     for k, (label, *_rest) in M.SPEC.items():
-        if msg.startswith(label + ":"):
+        if label in msg:   # substring: op+bound precede the colon, `abs<=` leads with |
             return k
     return msg              # unrecognised -- keep it, never silently drop it
 
@@ -232,12 +236,15 @@ def _walk_down(pts: list[DroopPoint], start: int, pred) -> tuple[int | None, int
 
 
 def vdd_min(results: list[DroopPoint]) -> dict:
-    """Lowest supply at which every spec line still passes, and what broke below.
+    """Lowest supply at which every SCORED spec line passes, and what broke below.
+
+    Scored is the S1-S6 box `lab.metrics.evaluate` measures -- this sweep runs
+    no THD transient, so no floor here speaks for S7 (or for S8).
 
     Two floors are reported, because they answer different questions:
 
-    * `vdd_min` -- ABSOLUTE: the lowest supply at which the design meets the
-      whole spec.  Undefined (None) for a cell that already fails a line at the
+    * `vdd_min` -- ABSOLUTE: the lowest supply at which the design meets that
+      box.  Undefined (None) for a cell that already fails a line at the
       nominal supply, and reported as undefined rather than papered over.
     * `vdd_min_rel` -- DROOP-RELATIVE: the lowest supply at which the design is
       no worse than it is at nominal, i.e. the supply drop introduces no NEW
@@ -274,19 +281,20 @@ def vdd_min(results: list[DroopPoint]) -> dict:
         "n_noconv": sum(1 for p in pts if p.status == "NO-CONV"),
     }
 
-    # --- absolute floor: every spec line passes
+    # --- absolute floor: every scored (S1-S6) spec line passes
     fi, bi = _walk_down(pts, start, lambda p: p.ok)
     if fi is None:
         out["vdd_min"] = None
-        out["reason"] = (f"the design does not meet the full spec even at the "
-                         f"anchor supply ({nom.vdd:.3f} V): "
+        out["reason"] = (f"the design does not meet the scored box (S1-S6) "
+                         f"even at the anchor supply ({nom.vdd:.3f} V): "
                          + "; ".join(nom.violations[:2]))
         out["first_fail"] = _fail_dict(pts[bi], None) if bi is not None else None
     else:
         out["vdd_min"] = pts[fi].vdd
         out["margin_v"] = round(C.VDD - pts[fi].vdd, 6)
         out["floor_point"] = pts[fi]
-        out["reason"] = (f"every spec line passes down to {pts[fi].vdd:.3f} V"
+        out["reason"] = (f"every scored (S1-S6) spec line passes down to "
+                         f"{pts[fi].vdd:.3f} V"
                          + (f"; {pts[bi].status} at {pts[bi].vdd:.3f} V"
                             if bi is not None else
                             " (the lowest supply tested)"))

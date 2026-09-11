@@ -346,13 +346,15 @@ def _line_ok(key: str, v: float) -> bool:
     """Does ONE spec line pass, given one value?
 
     `metrics.check` scores the whole dict and reports every key it did not find
-    as "NOT MEASURED", so calling it with a single-key dict returns seven
+    as "<label>: missing", so calling it with a single-key dict returns seven
     spurious violations.  Filtering by the line's own label reuses the real
     comparison operators instead of re-implementing them here (the SPEC table
     must stay the single source of truth) without inheriting that behaviour.
+    The label is matched ANYWHERE in the sentence: an `abs<=` row renders as
+    `|S3 passband gain| <= 0.2 dB`, which no prefix match ever found.
     """
     label = M.SPEC[key][0]
-    return not any(m.startswith(label) for m in M.check({key: v}))
+    return not any(label in m for m in M.check({key: v}))
 
 
 def summary(results: list[CornerResult]) -> dict:

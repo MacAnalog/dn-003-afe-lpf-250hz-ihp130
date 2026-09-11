@@ -61,6 +61,26 @@ otherwise.
 (`c_total_pf`, `idd_total_na`, `i_core_na`, `onoise_uv`, `ph_step_deg`,
 `f_scored_hi`, `mono_db`); none of them is a pass/fail.
 
+**Which lines ONE bench can score — and what a yield may therefore claim.**
+`lab.metrics.SPEC` (the harness.yaml acceptance box) holds only the lines a
+single `lab.deck.ac_noise` run measures: **S1–S6**. **S7** needs its own long
+transient (`lab.thd`) and **S8** is not a simulated quantity at all, so neither
+is in that box — `lab.metrics.SPEC_IDS_ALL` is the full eight, and
+`lab.metrics.spec_ids()` / `spec_ids_unscored()` split them. **Anything that
+reports a pass RATE over a population — the mismatch Monte Carlo above all —
+must name the ids it had evidence for on those very samples** and the ids it is
+silent about; `lab.mc` prints both and records them in its ledger row
+(`spec_ids_covered` / `spec_ids_excluded`), and it takes them from the metric
+keys the draws actually produced, so a spec row added to the box that no bench
+measures widens neither. An "all S1–S8" rate may only be quoted when every one
+of the eight was gated on the SAME draws — and **no such rate exists in this
+repo**: `lab.mc.sample` runs one `lab.deck.ac_noise` deck and no transient, so
+THD is never measured on a Monte Carlo draw at all.
+`experiments/021-publication-cell/certify.py` does AND S1–S6 with S7
+(`all_pass = not s.violations and s7_pass`), but on ONE NOMINAL cell — a single
+`lab.metrics.evaluate` and a single `lab.thd.measure` at the nominal corner —
+which is a per-cell verdict, not a rate over a population.
+
 ### Reference-baseline detail (all measured here, `runs/ledger.ndjson` tag `ref_fit`)
 
 | quantity | value |

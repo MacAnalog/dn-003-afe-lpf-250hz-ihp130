@@ -58,7 +58,7 @@ def simulate() -> dict:
     os.chdir(EXP)
 
     from common import from_json                       # noqa: E402
-    from lab import mc as MC, metrics as M             # noqa: E402
+    from lab import mc as MC                           # noqa: E402
 
     base = from_json(json.loads(SIZING.read_text())["design"])
     duts = {PRE: ("mcpaper_pre", base),
@@ -76,20 +76,27 @@ def simulate() -> dict:
             "wall_s": r.wall_s,
             "n": r.n, "n_pass": r.n_pass, "n_failed": r.n_failed,
             "all_pass_yield": r.all_pass_yield,
-            "line_yield": {k: r.line_yield(k) for k in M.SPEC},
+            # What that yield covers, and what it is silent about, travels WITH
+            # the number -- a figure caption regenerated from this file must not
+            # have to guess (lab.mc prints the same two spans).
+            "scope": {"covered": MC.id_span(r.spec_ids_covered),
+                      "excluded": MC.id_span(r.spec_ids_excluded)},
+            "line_yield": {k: r.line_yield(k) for k in r.scored_keys},
             "stats": {k: {kk: float(vv) for kk, vv in r.stats(k).items()
                           if isinstance(vv, (int, float))} for k in KEYS
                       if k in ("fc_hz", "irn_uv", "dc_db", "p_core_nw")},
             "rows": rows,
         }
-        print(f"{label}: {r.n_pass}/{r.n} all-pass ({100*r.all_pass_yield:.1f} %), "
+        print(f"{label}: {r.n_pass}/{r.n} pass the scored box "
+              f"{MC.id_span(r.spec_ids_covered)} ({100*r.all_pass_yield:.1f} %), "
               f"{r.n_failed} non-usable, wall {r.wall_s:.0f} s")
 
     # -- cross-check the pre-layout re-run against the CERTIFIED summary ------
     cert = json.loads(CERT.read_text())["mc"]
     got = out["campaigns"][PRE]
     print("\ncross-check vs certified summary (experiments/023-replica-bias/H12-pdk-cap.json):")
-    print(f"  all-pass yield  certified {cert['all_pass_yield']:.2f}   re-run {got['all_pass_yield']:.2f}")
+    print(f"  scored-box yield  certified {cert['all_pass_yield']:.2f}   "
+          f"re-run {got['all_pass_yield']:.2f}")
     for k in ("fc_hz", "irn_uv", "p_core_nw", "dc_db"):
         print(f"  {k:11s} mean  certified {cert[k+'_mean']:.5f}   re-run {got['stats'][k]['mean']:.5f}"
               f"   sigma {cert[k+'_sigma']:.5f} / {got['stats'][k]['sigma']:.5f}")
@@ -148,11 +155,17 @@ def plot(out: dict) -> None:
         ax.legend(loc="upper left", fontsize=6.2)
 
     pre, post = out["campaigns"][PRE], out["campaigns"][POST]
+    # The yield is the SCORED box only -- what the draws measured, which
+    # `lab.mc` records per campaign (McResult.spec_ids_covered).  Campaigns
+    # written before the scope was recorded carry the same S1-S6 / S7-S8 split.
+    scope = pre.get("scope") or {"covered": "S1–S6", "excluded": "S7, S8"}
     fig.suptitle("Mismatch Monte Carlo, 100 paired draws (same seeds), typical process "
                  "+ mismatch, 27 $^\\circ$C, 1.5 V\n"
-                 f"every-spec-passing yield {100 * pre['all_pass_yield']:.0f} % before "
+                 f"scored-box ({scope['covered']}) yield "
+                 f"{100 * pre['all_pass_yield']:.0f} % before "
                  f"layout, {100 * post['all_pass_yield']:.0f} % after — "
-                 "cutoff is the only binding line")
+                 "cutoff is the only binding line\n"
+                 f"{scope['excluded']} are measured separately and are not in these draws")
     S.save(fig, "mc_hist")
 
 
