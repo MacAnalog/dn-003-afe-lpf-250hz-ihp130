@@ -532,6 +532,8 @@ and for positioning what is *done* vs *planned*:
 | **T4** | agent pair + knowledge base | **agent definitions landed 2026-08-15**; acceptance criterion was *"a designer → reviewer episode on a real cell (first: LPF `H12-pdk-cap`)"* — **this campaign is that acceptance test** |
 | **T5** | closing the design loop — post-layout metrics as an optimizer scoring hook | **prototyped 2026-07-10** (`optimize_layout.py`: nevergrad over placement clearances, full-toolchain evaluator, **−11.3 % area**, 232 → 206 µm²); PR #101/#102 productionize it. Remaining: joint multi-corner PEX, FasterCap, density/fill |
 
+**Note (2026-09-26):** the platform retired the T5 prototype `PF: examples/layout/ihp-sg13g2/5t_ota_gf/optimize_layout.py` on 2026-09-26 (MacAnalog/spicexplorer-platform#304); the live path is `PF: examples/layout/ihp-sg13g2/5t_ota_gf/opt/` (`sim_engine: layout`, DRC/LVS/PEX through `spicexplorer-signoff`).
+
 Two design principles from the same doc that belong in the paper's discussion:
 *"**Agentic, not fully deterministic.** The agent chooses floorplan and per-block
 patterns, calls the tools, reads structured feedback, iterates. Verification is
