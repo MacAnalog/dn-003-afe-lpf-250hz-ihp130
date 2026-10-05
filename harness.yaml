@@ -3,6 +3,7 @@
 name: lpf-250hz-ihp130
 exp_env: LPF_EXP          # stamps every ledger row with the experiment id
 jobs_env: LPF_JOBS        # width of lab.parallel.batch (default cpu_count - 2)
+pdk: ihp-sg13g2           # the process id the preflight reports (lab/config.py PDK, `make doctor`)
 
 goal: "IRN(0.5-200 Hz) < 40 uVrms, down from the certified reference, by combining >= 2 papers, without giving anything else back"
 
@@ -25,7 +26,18 @@ frozen: [decks/reference]
 reference_scorecard: decks/reference/scorecard.json
 
 # Entries stay under 20 KB (one topic each); the index is one line per entry and may grow past that.
-memory: {index_size_cap: 32000}
+memory:
+  # The ceiling, in bytes, on the pack `make pack` assembles; lessons are cut to what the rest leaves.
+  pack_budget: 20000
+  # `dirs` is the indexed set, `load_dirs` what the pack reads: an entry moved to doc/memory/archive
+  # keeps its index row and its lint checks and leaves the pack (doc/memory/archive/README.md).
+  dirs: [doc/journal, doc/memory/semantic, doc/memory/procedural, doc/memory/archive]
+  load_dirs: [doc/journal, doc/memory/semantic, doc/memory/procedural]
+  # The design directory's index of every registered design's live lessons (a clone at
+  # <design directory>/designs/<name>/); a missing file leaves the pack's fleet section out.
+  fleet_index: ../../registry/fleet-lessons.json
+  # The live index rows measure 20761 B (`spicexplorer-harness health`), past the 20000 B default.
+  index_size_cap: 32000
 
 gitignore_must: ["runs/", "*.raw", "__pycache__/", "experiments/*/out/"]
 
